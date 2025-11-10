@@ -249,6 +249,13 @@ if (file_exists($config))
                         <div class="form-help">Например: 127.0.0.1:9050</div>
                     </div>
                 </label>
+                <label class="row">
+                    <div class="col --2:lg mb-1">Пользователь и пароль:</div>
+                    <div class="col --5:lg mb-2">
+                        <input type="text" name="proxyAuth" x-model="options.proxyAuth" placeholder="">
+                        <div class="form-help">Например: user:password</div>
+                    </div>
+                </label>
             </div>
         </div>
 
@@ -286,7 +293,7 @@ if (file_exists($config))
                 <label class="row">
                     <div class="col --2:lg mb-1">IP, порт торрент-клиента:</div>
                     <div class="col --5:lg mb-2">
-                        <input type="text" name="torrentAddress" x-model="options.torrentAddress" :required="options.useTorrent > 0" placeholder="127.0.0.1:58846">
+                        <input type="text" name="torrentServer" x-model="options.torrentServer" :required="options.useTorrent > 0" placeholder="127.0.0.1:58846">
                         <div class="form-help">Например: 127.0.0.1:58846</div>
                     </div>
                 </label>

@@ -173,6 +173,7 @@ class Sys
                 $proxy = $settingProxy[0]['val'];
                 $proxyAddress = $settingProxy[1]['val'];
                 $proxyType = $settingProxy[2]['val'];
+                $proxyAuth = $settingProxy[3]['val'];
             }
 
             $ext_proxy = Config::read('ext_proxy');
@@ -204,6 +205,8 @@ class Sys
             if ($proxy)
             {
                 curl_setopt($ch, CURLOPT_PROXY, $proxyAddress);
+                if(!empty($proxyAuth))
+                    curl_setopt($ch, CURLOPT_PROXYUSERPWD, $proxyAuth);
                 if ($proxyType == 'SOCKS5')
                     curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5);
                 elseif ($proxyType == 'HTTP')
