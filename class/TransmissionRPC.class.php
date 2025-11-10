@@ -53,7 +53,7 @@ class TransmissionRPC
    * Minimum PHP version required
    * TorrentMonitor requires PHP 7.4+ for modern compatibility
    */
-  const MIN_PHPVER = '7.4.0';
+  const MIN_PHPVER = '7.3.9';
 
   /**
    * The URL to the bittorent client you want to communicate with
