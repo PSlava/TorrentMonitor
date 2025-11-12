@@ -70,7 +70,7 @@ if (! empty($lastStart)) {
             </div>
             <?php if ($update) { ?>
             <div class="tm-update">
-                Доступна новая версия TorrentMonitor. <br>Пожалуйста, <button type="button" class="btn btn--text" @click="showPage('update')">обновитесь</button>
+                Доступна новая версия TorrentMonitor <?php echo $update; ?>. <br>Пожалуйста, <button type="button" class="btn btn--text" @click="showPage('update')">обновитесь</button>
             </div>
             <?php } ?>
             <?php include '_navigation.php' ?>

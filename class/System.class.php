@@ -101,11 +101,11 @@ class Sys
         if (false !== $xml)
         {
             if ($version->system < $xml->current_version)
-                return TRUE;
+                return $xml->current_version;
             elseif ($version->database < $xml->current_version)
-                return TRUE;
+                return "db-" . $xml->current_version;
             else
-                return FALSE;
+                return 0;
         }
     }
 
