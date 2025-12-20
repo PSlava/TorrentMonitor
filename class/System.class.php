@@ -398,7 +398,7 @@ class Sys
         else
         {
             Database::saveToTemp($id, $name, $path, $tracker, $date_str);
-            Errors::setWarnings($torrentClient, $status['msg']);
+            Errors::setWarnings($torrentClient, $status['msg'], $id);
             $return['status'] = FALSE;
         }
         return $return;
