@@ -101,11 +101,11 @@ class Sys
         if (false !== $xml)
         {
             if ($version->system < $xml->current_version)
-                return $xml->current_version;
+                return TRUE;
             elseif ($version->database < $xml->current_version)
-                return "db-" . $xml->current_version;
+                return TRUE;
             else
-                return 0;
+                return FALSE;
         }
     }
 
@@ -173,7 +173,6 @@ class Sys
                 $proxy = $settingProxy[0]['val'];
                 $proxyAddress = $settingProxy[1]['val'];
                 $proxyType = $settingProxy[2]['val'];
-                $proxyAuth = $settingProxy[3]['val'];
             }
 
             $ext_proxy = Config::read('ext_proxy');
@@ -205,10 +204,8 @@ class Sys
             if ($proxy)
             {
                 curl_setopt($ch, CURLOPT_PROXY, $proxyAddress);
-                if(!empty($proxyAuth))
-                    curl_setopt($ch, CURLOPT_PROXYUSERPWD, $proxyAuth);
                 if ($proxyType == 'SOCKS5')
-                    curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5);
+                    curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
                 elseif ($proxyType == 'HTTP')
                     curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
             }
@@ -398,7 +395,7 @@ class Sys
         else
         {
             Database::saveToTemp($id, $name, $path, $tracker, $date_str);
-            Errors::setWarnings($torrentClient, $status['msg'], $id);
+            Errors::setWarnings($torrentClient, $status['msg']);
             $return['status'] = FALSE;
         }
         return $return;
