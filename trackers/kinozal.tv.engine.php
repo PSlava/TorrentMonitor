@@ -1,5 +1,5 @@
 <?php
-class kinozal
+class kinozaltv
 {
 	protected static $sess_cookie;
 	protected static $exucution;
@@ -128,7 +128,7 @@ class kinozal
 					//устанавливаем варнинг
 					Errors::setWarnings($tracker, 'credential_wrong');
 					//останавливаем процесс выполнения, т.к. не может работать без кук
-					kinozal::$exucution = FALSE;
+					kinozaltv::$exucution = FALSE;
 				}
 				//проверяем нет ли блокировки
 				if (preg_match('/Превышен лимит попыток входа в профиль <br>Попробуйте через 2 часа/', $page, $array))
@@ -136,51 +136,51 @@ class kinozal
 					//устанавливаем варнинг
 					Errors::setWarnings($tracker, 'limit');
 					//останавливаем процесс выполнения, т.к. не может работать без кук
-					kinozal::$exucution = FALSE;
+					kinozaltv::$exucution = FALSE;
 				}
 				//если подходят - получаем куки
 				elseif (preg_match_all('/Set-Cookie: (.+);/iU', $page, $array))
 				{
-					kinozal::$sess_cookie = $array[1][0].'; '.$array[1][1].';';
-					Database::setCookie($tracker, kinozal::$sess_cookie);
+					kinozaltv::$sess_cookie = $array[1][0].'; '.$array[1][1].';';
+					Database::setCookie($tracker, kinozaltv::$sess_cookie);
 					//запускам процесс выполнения, т.к. не может работать без кук
-					kinozal::$exucution = TRUE;
+					kinozaltv::$exucution = TRUE;
 				}
 				else
 				{
 					//устанавливаем варнинг
-					if (kinozal::$warning == NULL)
+					if (kinozaltv::$warning == NULL)
 					{
-						kinozal::$warning = TRUE;
+						kinozaltv::$warning = TRUE;
 						Errors::setWarnings($tracker, 'cant_find_cookie');
 					}
 					//останавливаем процесс выполнения, т.к. не может работать без кук
-					kinozal::$exucution = FALSE;
+					kinozaltv::$exucution = FALSE;
 				}
 			}
 			//если вообще ничего не найдено
 			else
 			{
 				//устанавливаем варнинг
-				if (kinozal::$warning == NULL)
+				if (kinozaltv::$warning == NULL)
 				{
-					kinozal::$warning = TRUE;
+					kinozaltv::$warning = TRUE;
 					Errors::setWarnings($tracker, 'cant_get_auth_page');
 				}
 				//останавливаем процесс выполнения, т.к. не может работать без кук
-				kinozal::$exucution = FALSE;
+				kinozaltv::$exucution = FALSE;
 			}
 		}
 		else
 		{
 			//устанавливаем варнинг
-			if (kinozal::$warning == NULL)
+			if (kinozaltv::$warning == NULL)
 			{
-				kinozal::$warning = TRUE;
+				kinozaltv::$warning = TRUE;
 				Errors::setWarnings($tracker, 'credential_miss');
 			}
 			//останавливаем процесс выполнения, т.к. не может работать без кук
-			kinozal::$exucution = FALSE;
+			kinozaltv::$exucution = FALSE;
 		}
 	}
 	
@@ -195,8 +195,8 @@ class kinozal
 				//сбрасываем варнинг
 				Database::clearWarnings($tracker);
 				//приводим дату к общему виду
-				$date = kinozal::dateStringToNum($array[1]);
-				$date_str = kinozal::dateNumToString($array[1]);
+				$date = kinozaltv::dateStringToNum($array[1]);
+				$date_str = kinozaltv::dateNumToString($array[1]);
 				//если даты не совпадают, перекачиваем торрент
 				if ($date > $timestamp)
 				{
@@ -206,21 +206,21 @@ class kinozal
                     		'type'           => 'GET',
                     		'returntransfer' => 1,
                     		'url'            => 'http://kinozal.tv/download.php?id='.$torrent_id,
-                    		'cookie'         => kinozal::$sess_cookie,
-                    		'sendHeader'     => array('Host' => 'kinozal.tv', 'Content-length' => strlen(kinozal::$sess_cookie)),
+                    		'cookie'         => kinozaltv::$sess_cookie,
+                    		'sendHeader'     => array('Host' => 'kinozal.tv', 'Content-length' => strlen(kinozaltv::$sess_cookie)),
                     		'referer'        => 'http://kinozal.tv/details.php?id='.$torrent_id,
                     	)
                     );
 					if (preg_match('/<a href=\'\/pay_mode\.php\#tcounter\' class=sbab>/', $torrent))
 					{
         				//устанавливаем варнинг
-        				if (kinozal::$warning == NULL)
+        				if (kinozaltv::$warning == NULL)
         				{
-        					kinozal::$warning = TRUE;
+        					kinozaltv::$warning = TRUE;
         					Errors::setWarnings($tracker, 'max_torrent');
         				}
         				//останавливаем процесс выполнения
-        				kinozal::$exucution = FALSE;
+        				kinozaltv::$exucution = FALSE;
 					}
 					else
 					{
@@ -249,25 +249,25 @@ class kinozal
 			else
 			{
 				//устанавливаем варнинг
-				if (kinozal::$warning == NULL)
+				if (kinozaltv::$warning == NULL)
 				{
-					kinozal::$warning = TRUE;
+					kinozaltv::$warning = TRUE;
 					Errors::setWarnings($tracker, 'cant_find_date', $id);
 				}
 				//останавливаем процесс выполнения, т.к. не может работать без кук
-				kinozal::$exucution = FALSE;
+				kinozaltv::$exucution = FALSE;
 			}
 		}
 		else
 		{
 			//устанавливаем варнинг
-			if (kinozal::$warning == NULL)
+			if (kinozaltv::$warning == NULL)
 			{
-				kinozal::$warning = TRUE;
+				kinozaltv::$warning = TRUE;
 				Errors::setWarnings($tracker, 'cant_find_date', $id);
 			}
 			//останавливаем процесс выполнения, т.к. не может работать без кук
-			kinozal::$exucution = FALSE;
+			kinozaltv::$exucution = FALSE;
 		}
     }
 	
@@ -276,16 +276,16 @@ class kinozal
 	{
     	extract($params);
 		$cookie = Database::getCookie($tracker);
-		if (kinozal::checkCookie($cookie))
+		if (kinozaltv::checkCookie($cookie))
 		{
-			kinozal::$sess_cookie = $cookie;
+			kinozaltv::$sess_cookie = $cookie;
 			//запускам процесс выполнения
-			kinozal::$exucution = TRUE;
+			kinozaltv::$exucution = TRUE;
 		}			
 		else
-    		kinozal::getCookie($tracker);
+    		kinozaltv::getCookie($tracker);
 
-		if (kinozal::$exucution)
+		if (kinozaltv::$exucution)
 		{
 			//получаем страницу для парсинга
             $page = Sys::getUrlContent(
@@ -294,8 +294,8 @@ class kinozal
             		'header'         => 0,
             		'returntransfer' => 1,
             		'url'            => 'http://kinozal.tv/details.php?id='.$torrent_id,
-            		'cookie'         => kinozal::$sess_cookie,
-            		'sendHeader'     => array('Host' => 'kinozal.tv', 'Content-length' => strlen(kinozal::$sess_cookie)),
+            		'cookie'         => kinozaltv::$sess_cookie,
+            		'sendHeader'     => array('Host' => 'kinozal.tv', 'Content-length' => strlen(kinozaltv::$sess_cookie)),
             		'convert'        => array('windows-1251', 'utf-8//IGNORE'),
             	)
             );			
@@ -305,34 +305,34 @@ class kinozal
     			preg_match('/(<title>.*<\/title>)/', $page, $titlearray);
 				//ищем на странице дату регистрации торрента
 				if (preg_match('/<li>Обновлен<span class=\"floatright green n\">(.*)<\/span><\/li>/', $page, $array))
-    				kinozal::work($titlearray, $array, $id, $tracker, $name, $torrent_id, $timestamp, $hash, $auto_update);
+    				kinozaltv::work($titlearray, $array, $id, $tracker, $name, $torrent_id, $timestamp, $hash, $auto_update);
 				elseif (preg_match('/<li>Залит<span class=\"floatright green n\">(.*)<\/span><\/li>/', $page, $array))
-				    kinozal::work($titlearray, $array, $id, $tracker, $name, $torrent_id, $timestamp, $hash, $auto_update);
+				    kinozaltv::work($titlearray, $array, $id, $tracker, $name, $torrent_id, $timestamp, $hash, $auto_update);
 				else
 				{
 					//устанавливаем варнинг
-					if (kinozal::$warning == NULL)
+					if (kinozaltv::$warning == NULL)
 					{
-						kinozal::$warning = TRUE;
+						kinozaltv::$warning = TRUE;
 						Errors::setWarnings($tracker, 'cant_find_date', $id);
 					}
 					//останавливаем процесс выполнения, т.к. не может работать без даты
-					kinozal::$exucution = FALSE;
+					kinozaltv::$exucution = FALSE;
 				}
 			}			
 			else
 			{
 				//устанавливаем варнинг
-				if (kinozal::$warning == NULL)
+				if (kinozaltv::$warning == NULL)
 				{
-					kinozal::$warning = TRUE;
+					kinozaltv::$warning = TRUE;
 					Errors::setWarnings($tracker, 'cant_get_forum_page', $id);
 				}
 				//останавливаем процесс выполнения, т.к. не может работать без кук
-				kinozal::$exucution = FALSE;
+				kinozaltv::$exucution = FALSE;
 			}
 		}
-		kinozal::$warning = NULL;
+		kinozaltv::$warning = NULL;
 	}
 }
 ?>
