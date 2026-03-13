@@ -64,7 +64,7 @@ class Notification
         $msg = strip_tags($msg);
 
         $pieces = explode(';', $pushover);
-        $postfields = 'token='.$pieces[1].'&user='.$pieces[0].'&message='.$msg;
+        $postfields = http_build_query(['token' => $pieces[1], 'user' => $pieces[0], 'message' => $msg]);
         $forumPage = Sys::getUrlContent(
         	array(
         		'type'           => 'POST',
@@ -81,7 +81,7 @@ class Notification
 	{
     	$msg = Notification::generateMessage($date, $tracker, $message, $header_message, $name);
 
-        $postfields = 'apikey='.$prowl.'&application=TorrentMonitor&event=Notification&description='.$msg;
+        $postfields = http_build_query(['apikey' => $prowl, 'application' => 'TorrentMonitor', 'event' => 'Notification', 'description' => $msg]);
         $forumPage = Sys::getUrlContent(
             array(
                 'type'           => 'POST',
@@ -194,7 +194,8 @@ class Notification
                     {
                         $name = $id;
                     }
-                    if ( ! empty($service['address']))
+                    $allowed = ['Mail', 'Pushover', 'Prowl', 'Pushbullet', 'Pushall', 'Telegram'];
+                    if (in_array($service['service'], $allowed, true) && ! empty($service['address']))
                         call_user_func('Notification::send'.$service['service'], $service['address'], $date, $tracker, $message, $header_message, $name);
                 }
             }
@@ -219,7 +220,8 @@ class Notification
                         $message = str_replace('<br>', "\r\n", $message);
                         $message = strip_tags($message);
                     }
-                    if ( ! empty($service['address']))
+                    $allowed = ['Mail', 'Pushover', 'Prowl', 'Pushbullet', 'Pushall', 'Telegram'];
+                    if (in_array($service['service'], $allowed, true) && ! empty($service['address']))
                         call_user_func('Notification::send'.$service['service'], $service['address'], $date, $tracker, $message, $header_message, $name);
                 }
             }
