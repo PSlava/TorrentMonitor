@@ -16,6 +16,7 @@
             <svg><use href="assets/img/sprite.svg#errors" /></svg>Ошибок нет
         </div>
     </template>
+    <button class="btn" :class="{ 'active': pageCurrent == 'health' }" @click="showPage('health')"><svg><use href="assets/img/sprite.svg#health" /></svg>Состояние</button>
     <button class="btn" :class="{ 'active': pageCurrent == 'check' }" @click="showPage('check')"><svg><use href="assets/img/sprite.svg#health" /></svg>Тестирование</button>
     <button class="btn" :class="{ 'active': pageCurrent == 'execution' }" @click="showPage('execution')"><svg><use href="assets/img/sprite.svg#play" /></svg>Запуск</button>
     <div class="navigation-sep"></div>
