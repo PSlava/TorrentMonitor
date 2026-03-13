@@ -93,7 +93,7 @@ class Sys
         );
 
         //читаем xml
-        $xml = @simplexml_load_string($page);
+        $xml = @simplexml_load_string($page, 'SimpleXMLElement', LIBXML_NONET | LIBXML_NOCDATA);
         $dir = dirname(__FILE__);
         $dir = str_replace('class', '', $dir);
         $version = json_decode(file_get_contents($dir.'version.txt'));
@@ -101,11 +101,11 @@ class Sys
         if (false !== $xml)
         {
             if ($version->system < $xml->current_version)
-                return TRUE;
+                return $xml->current_version;
             elseif ($version->database < $xml->current_version)
-                return TRUE;
+                return "db-" . $xml->current_version;
             else
-                return FALSE;
+                return 0;
         }
     }
 
@@ -195,7 +195,8 @@ class Sys
                             $proxyAddress = $settingProxy[1]['val'];
                             $proxyType = $settingProxy[2]['val'];
                         }
-                        echo 'Use proxy: '.$proxyAddress;
+                        if (Database::getSetting('debug'))
+                            echo 'Use proxy: '.$proxyAddress;
                     }
                     else
                         $proxy = FALSE;
@@ -208,12 +209,22 @@ class Sys
                     curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5_HOSTNAME);
                 elseif ($proxyType == 'HTTP')
                     curl_setopt($ch, CURLOPT_PROXYTYPE, CURLPROXY_HTTP);
+                if (isset($settingProxy[3]) && !empty($settingProxy[3]['val']))
+                    curl_setopt($ch, CURLOPT_PROXYUSERPWD, $settingProxy[3]['val']);
             }
 
             if (Database::getSetting('debug'))
                 curl_setopt($ch, CURLOPT_VERBOSE, TRUE);
 
             $result = curl_exec($ch);
+            if ($result === false)
+            {
+                $debug = Database::getSetting('debug');
+                if ($debug)
+                    echo 'cURL error: ' . curl_error($ch) . "\r\n";
+                curl_close($ch);
+                return false;
+            }
             curl_close($ch);
 
             if (isset($param['convert']) && $param['convert'] != NULL)
@@ -370,7 +381,7 @@ class Sys
     {
         $script = Database::getScript($id);
         if ( ! empty($script['script']))
-            print(`{$script['script']} '{$tracker}' '{$name}' '{$hash}' '{$message}' '{$date_str}'`);
+            print(`{$script['script']} ` . escapeshellarg($tracker) . ' ' . escapeshellarg($name) . ' ' . escapeshellarg($hash) . ' ' . escapeshellarg($message) . ' ' . escapeshellarg($date_str));
 
     }
 
@@ -395,7 +406,7 @@ class Sys
         else
         {
             Database::saveToTemp($id, $name, $path, $tracker, $date_str);
-            Errors::setWarnings($torrentClient, $status['msg']);
+            Errors::setWarnings($torrentClient, $status['msg'], $id);
             $return['status'] = FALSE;
         }
         return $return;
@@ -541,7 +552,7 @@ class Sys
         );
 
         //читаем xml
-        $page = @simplexml_load_string($page);
+        $page = @simplexml_load_string($page, 'SimpleXMLElement', LIBXML_NONET | LIBXML_NOCDATA);
         if (!empty($page) && isset($page->news->id) && is_countable($page->news->id))
         {
             for ($i=0; $i<count($page->news->id); $i++)
@@ -577,7 +588,7 @@ class Sys
 
         if ($auth)
         {
-            if (isset($_COOKIE['TM']))
+            if (isset($_COOKIE['TM']) && (preg_match('/^[a-f0-9]{32}$/i', $_COOKIE['TM']) || preg_match('/^\$2[ayb]\$.+$/i', $_COOKIE['TM'])))
                 $_SESSION['TM'] = $_COOKIE['TM'];
 
             if (empty($_SESSION['TM']))
@@ -586,7 +597,7 @@ class Sys
             if ( ! empty($_SESSION['TM']))
             {
                 $hash_pass = Database::getSetting('password');
-                if ($_SESSION['TM'] != $hash_pass)
+                if ($_SESSION['TM'] !== $hash_pass)
                     return FALSE;
                 else
                     return TRUE;
@@ -595,7 +606,7 @@ class Sys
             if ( ! empty($_COOKIE['hash_pass']))
             {
                 $hash_pass = Database::getSetting('password');
-                if ($_COOKIE['hash_pass'] != $hash_pass)
+                if ($_COOKIE['hash_pass'] !== $hash_pass)
                     return FALSE;
                 else
                     return TRUE;
