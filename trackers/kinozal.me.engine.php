@@ -65,6 +65,7 @@ class kinozal
 
 			return $dateTime;
 	    }
+		return '';
 	}
 
 	//функция преобразования даты

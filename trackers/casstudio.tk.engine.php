@@ -61,7 +61,8 @@ class casstudio
 			$dateTime = $date.' '.$time;
 
 			return $dateTime;
-	    }	    
+	    }
+		return '';
 	}
 
 	//функция преобразования даты
@@ -112,7 +113,7 @@ class casstudio
 				}
 				//если подходят - получаем куки
 				elseif (preg_match_all('/Set-Cookie: (.*);/iU', $page, $array))
-				{var_dump($array);
+				{
 					casstudio::$sess_cookie = $array[1][3].'; '.$array[1][4].'; '.$array[1][5];
 					Database::setCookie($tracker, casstudio::$sess_cookie);
 					//запускам процесс выполнения, т.к. не может работать без кук

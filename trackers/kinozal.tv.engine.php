@@ -65,6 +65,7 @@ class kinozaltv
 
 			return $dateTime;
 	    }
+		return '';
 	}
 
 	//функция преобразования даты

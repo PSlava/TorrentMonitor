@@ -55,9 +55,10 @@ class animelayer
 			$hour = $pieces2[0];
 			
 		if (count($pieces) == 4)
-		    return date('Y').'-'.$month.'-'.$pieces[0].' '.$hour.':'.$pieces2[1].':00'; 
+		    return date('Y').'-'.$month.'-'.$pieces[0].' '.$hour.':'.$pieces2[1].':00';
 		else if (count($pieces) == 5)
 		    return $pieces[2].'-'.$month.'-'.$pieces[0].' '.$hour.':'.$pieces2[1].':00';
+		return '';
 	}
 	
 	//функция преобразования даты в строку
@@ -200,7 +201,6 @@ class animelayer
             				// Если даты не совпадают, перекачиваем торрент
             				if ($date != $timestamp)
             				{
-								var_dump($torrent);
             					// Сохраняем торрент в файл
                                 $torrent = Sys::getUrlContent(
                                 	array(
