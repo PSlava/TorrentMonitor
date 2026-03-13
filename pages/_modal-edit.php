@@ -1,7 +1,7 @@
 <div class="modal__backdrop"
     x-show="modalEditThemeShow"
     x-transition.opacity
-    x@click="closeModalEditTheme()"
+    @click="closeModalEditTheme()"
     >
     <div class="modal container-sm:max p-0" x-transition.scale @click.stop>
         <div class="modal__bar">
@@ -28,13 +28,29 @@
                         <div class="form-help">Пример: http://rutracker.org/forum/viewtopic.php?t=4201572</div>
                     </div>
                 </label>
-                <label class="row">
+                <div class="row">
                     <div class="col --12 mb-1">Директория для скачивания:</div>
                     <div class="col --12 mb-2">
-                        <input type="text" name="path" x-model="editData.path" list="path-history">
+                        <div class="path-wrap" @click.away="pathDropdownOpen = false">
+                            <input type="text" name="path" x-model="editData.path"
+                                @input="pathDropdownOpen = filteredPaths(editData.path).length > 0; pathHighlight = -1"
+                                @focus="if (getRecentPaths().length > 0) pathDropdownOpen = true"
+                                @keydown="pathKeydown($event, editData.path, function(v) { editData.path = v })"
+                                @keydown.escape="pathDropdownOpen = false"
+                                autocomplete="off">
+                            <div class="path-dropdown" x-show="pathDropdownOpen && filteredPaths(editData.path).length > 0" x-cloak>
+                                <template x-for="(p, idx) in filteredPaths(editData.path)" :key="p">
+                                    <div class="path-dropdown__item"
+                                        :class="idx === pathHighlight && '--highlighted'"
+                                        x-text="p"
+                                        @mousedown.prevent="editData.path = p; pathDropdownOpen = false; pathHighlight = -1"
+                                        @mouseenter="pathHighlight = idx"></div>
+                                </template>
+                            </div>
+                        </div>
                         <div class="form-help">Например: /var/lib/transmission/downloads или C:/downloads/</div>
                     </div>
-                </label>
+                </div>
                 <label class="row">
                     <div class="col --12 mb-1">Выполнить скрипт:</div>
                     <div class="col --12 mb-2">
@@ -79,7 +95,7 @@
 <div class="modal__backdrop"
     x-show="modalEditSeriesShow"
     x-transition.opacity
-    x@click="closeModalEditSeries()"
+    @click="closeModalEditSeries()"
     >
     <div class="modal container-sm:max p-0" x-transition.scale @click.stop>
         <div class="modal__bar">
@@ -123,13 +139,29 @@
                 </div>
                 </template>
 
-                <label class="row">
+                <div class="row">
                     <div class="col --12 mb-1">Директория для скачивания:</div>
                     <div class="col --12 mb-2">
-                        <input type="text" name="path" x-model="editData.path" list="path-history">
+                        <div class="path-wrap" @click.away="pathDropdownOpen = false">
+                            <input type="text" name="path" x-model="editData.path"
+                                @input="pathDropdownOpen = filteredPaths(editData.path).length > 0; pathHighlight = -1"
+                                @focus="if (getRecentPaths().length > 0) pathDropdownOpen = true"
+                                @keydown="pathKeydown($event, editData.path, function(v) { editData.path = v })"
+                                @keydown.escape="pathDropdownOpen = false"
+                                autocomplete="off">
+                            <div class="path-dropdown" x-show="pathDropdownOpen && filteredPaths(editData.path).length > 0" x-cloak>
+                                <template x-for="(p, idx) in filteredPaths(editData.path)" :key="p">
+                                    <div class="path-dropdown__item"
+                                        :class="idx === pathHighlight && '--highlighted'"
+                                        x-text="p"
+                                        @mousedown.prevent="editData.path = p; pathDropdownOpen = false; pathHighlight = -1"
+                                        @mouseenter="pathHighlight = idx"></div>
+                                </template>
+                            </div>
+                        </div>
                         <div class="form-help">Например: /var/lib/transmission/downloads или C:/downloads</div>
                     </div>
-                </label>
+                </div>
                 <label class="row">
                     <div class="col --12 mb-1">Выполнить скрипт:</div>
                     <div class="col --12 mb-2">

@@ -206,6 +206,39 @@ class newstudio
 		}	
 	}
 	
+	// Требуется ли авторизация для получения списка сериалов
+	public static function seriesListRequiresAuth() { return true; }
+
+	// Получение списка сериалов из RSS
+	public static function getSeriesList($limit = 50)
+	{
+		$tracker = 'newstudio.tv';
+		$cookie = Database::getCookie($tracker);
+		if ( ! newstudio::checkCookie($cookie))
+		{
+			newstudio::getCookie($tracker);
+			$cookie = Database::getCookie($tracker);
+			if (empty($cookie)) return [];
+		}
+		$page = Sys::getUrlContent([
+			'type' => 'GET', 'returntransfer' => 1,
+			'url' => 'https://newstudio.tv/rss.php',
+			'cookie' => $cookie,
+		]);
+		if (empty($page)) return [];
+		$xml = @simplexml_load_string($page);
+		if ( ! $xml) return [];
+		$names = [];
+		foreach ($xml->channel->item as $item)
+		{
+			$title = (string)$item->title;
+			if (preg_match("/^'(.+?)'/", $title, $m))
+				$names[$m[1]] = true;
+			if (count($names) >= $limit) break;
+		}
+		return array_keys($names);
+	}
+
 	//основная функция
 	public static function main($params)
 	{

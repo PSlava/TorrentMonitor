@@ -175,6 +175,43 @@ class hamsterstudio
 		}	
 	}
 
+	// Требуется ли авторизация для получения списка сериалов
+	public static function seriesListRequiresAuth() { return true; }
+
+	// Получение списка сериалов из RSS
+	public static function getSeriesList($limit = 50)
+	{
+		$tracker = 'hamsterstudio.org';
+		$cookie = Database::getCookie($tracker);
+		if ( ! hamsterstudio::checkCookie($cookie))
+		{
+			hamsterstudio::getCookie($tracker);
+			$cookie = Database::getCookie($tracker);
+			if (empty($cookie)) return [];
+		}
+		$page = Sys::getUrlContent([
+			'type' => 'GET', 'returntransfer' => 1,
+			'url' => 'http://hamsterstudio.org/rss.php?feed=dl',
+			'cookie' => $cookie,
+			'sendHeader' => ['Host' => 'hamsterstudio.org', 'Content-length' => strlen($cookie)],
+			'convert' => ['windows-1251', 'utf-8//IGNORE'],
+		]);
+		if (empty($page)) return [];
+		$page = str_replace('<?xml version="1.0" encoding="windows-1251" ?>','<?xml version="1.0" encoding="utf-8"?>', $page);
+		$page = str_replace(["&amp;", "&"], ["&", "&amp;"], $page);
+		$xml = @simplexml_load_string($page);
+		if ( ! $xml) return [];
+		$names = [];
+		foreach ($xml->channel->item as $item)
+		{
+			$title = (string)$item->title;
+			if (preg_match("/^'(.+?)'/", $title, $m))
+				$names[$m[1]] = true;
+			if (count($names) >= $limit) break;
+		}
+		return array_keys($names);
+	}
+
 	//основная функция
 	public static function main($params)
 	{

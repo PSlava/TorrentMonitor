@@ -175,6 +175,44 @@ class baibako
 		}	
 	}
 	
+	// Требуется ли авторизация для получения списка сериалов
+	public static function seriesListRequiresAuth() { return true; }
+
+	// Получение списка сериалов из RSS
+	public static function getSeriesList($limit = 50)
+	{
+		$tracker = 'baibako.tv';
+		$cookie = Database::getCookie($tracker);
+		if ( ! baibako::checkCookie($cookie))
+		{
+			baibako::getCookie($tracker);
+			$cookie = Database::getCookie($tracker);
+			if (empty($cookie)) return [];
+		}
+		$credentials = Database::getCredentials($tracker);
+		$page = Sys::getUrlContent([
+			'type' => 'POST', 'returntransfer' => 1,
+			'url' => 'http://baibako.tv/rss2.php?feed=dl&passkey='.$credentials['passkey'],
+			'cookie' => $cookie,
+			'sendHeader' => ['Host' => 'baibako.tv', 'Content-length' => strlen($cookie)],
+			'convert' => ['windows-1251', 'utf-8//IGNORE'],
+		]);
+		if (empty($page)) return [];
+		$page = str_replace('<?xml version="1.0" encoding="windows-1251" ?>','<?xml version="1.0" encoding="utf-8"?>', $page);
+		$page = str_replace(["&amp;", "&"], ["&", "&amp;"], $page);
+		$xml = @simplexml_load_string($page);
+		if ( ! $xml) return [];
+		$names = [];
+		foreach ($xml->channel->item as $item)
+		{
+			$title = (string)$item->title;
+			if (preg_match("/^'(.+?)'/", $title, $m))
+				$names[$m[1]] = true;
+			if (count($names) >= $limit) break;
+		}
+		return array_keys($names);
+	}
+
 	//основная функция
 	public static function main($params)
 	{

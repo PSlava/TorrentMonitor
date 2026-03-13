@@ -16,18 +16,43 @@ function saveRecentPath(path) {
     paths.unshift(path);
     if (paths.length > 10) paths = paths.slice(0, 10);
     localStorage.setItem('recentPaths', JSON.stringify(paths));
-    populatePathDatalist();
 }
 
-function populatePathDatalist() {
-    var dl = document.getElementById('path-history');
-    if (!dl) return;
-    dl.innerHTML = '';
-    getRecentPaths().forEach(function(p) {
-        var opt = document.createElement('option');
-        opt.value = p;
-        dl.appendChild(opt);
-    });
+function filteredPaths(q) {
+    var paths = getRecentPaths();
+    if (!q) return paths;
+    q = q.toLowerCase();
+    return paths.filter(function(p) { return p.toLowerCase().indexOf(q) !== -1; });
+}
+
+// pathKeydown(e, currentValue, setter) — вызывается из Alpine как метод компонента
+// setter — функция для установки выбранного значения
+function pathKeydown(e, model, setter) {
+    var list = filteredPaths(model);
+    if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (!this.pathDropdownOpen && list.length > 0) {
+            this.pathDropdownOpen = true;
+            this.pathHighlight = 0;
+        } else if (list.length > 0) {
+            this.pathHighlight = Math.min(this.pathHighlight + 1, list.length - 1);
+        }
+        pathScrollTo();
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (this.pathHighlight > 0) { this.pathHighlight--; } else { this.pathHighlight = -1; }
+        pathScrollTo();
+    } else if (e.key === 'Enter' && this.pathDropdownOpen && this.pathHighlight >= 0 && list.length > 0) {
+        e.preventDefault();
+        setter(list[this.pathHighlight]);
+        this.pathDropdownOpen = false;
+        this.pathHighlight = -1;
+    }
+}
+
+function pathScrollTo() {
+    var el = document.querySelector('.path-dropdown__item.--highlighted');
+    if (el) el.scrollIntoView({block: 'nearest'});
 }
 
 // Состояние системы с фоновой проверкой

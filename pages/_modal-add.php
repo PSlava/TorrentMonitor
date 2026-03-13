@@ -1,9 +1,39 @@
-<datalist id="path-history"></datalist>
+<?php
+// Маппинг трекер → класс (для проверки seriesListRequiresAuth)
+$_seriesTrackerMap = [
+    'baibako.tv'        => 'baibako',
+    'hamsterstudio.org' => 'hamsterstudio',
+    'lostfilm.tv'       => 'lostfilm',
+    'lostfilm-mirror'   => 'lostfilmmirror',
+    'newstudio.tv'      => 'newstudio',
+];
+// Собираем трекеры с заполненными credentials
+$_filledCreds = [];
+$_allCreds = Database::getAllCredentials();
+if (is_array($_allCreds)) {
+    foreach ($_allCreds as $c) {
+        if (!empty(trim($c['login'])) && !empty(trim($c['password'])))
+            $_filledCreds[] = $c['tracker'];
+    }
+}
+// Трекер доступен для списка, если не требует auth ИЛИ credentials заполнены
+$_credTrackers = [];
+foreach ($_seriesTrackerMap as $tr => $cls) {
+    $engineFile = dirname(__FILE__).'/../trackers/'.$tr.'.engine.php';
+    if (file_exists($engineFile)) {
+        include_once $engineFile;
+        if (method_exists($cls, 'seriesListRequiresAuth') && !$cls::seriesListRequiresAuth()) {
+            $_credTrackers[] = $tr;
+        } elseif (in_array($tr, $_filledCreds)) {
+            $_credTrackers[] = $tr;
+        }
+    }
+}
+?>
 <div class="modal__backdrop"
-    x-data="add"
+    x-data="add(<?= htmlspecialchars(json_encode(array_values(array_unique($_credTrackers))), ENT_QUOTES) ?>)"
     x-show="modalAdd"
     x-transition.opacity
-    x-effect="if (modalAdd) populatePathDatalist()"
     >
     <div class="modal container-sm:max p-0" x-transition.scale @click.stop>
         <div class="modal__bar">
@@ -32,13 +62,29 @@
                         <div class="form-help">Пример: http://rutracker.org/forum/viewtopic.php?t=4201572</div>
                     </div>
                 </label>
-                <label class="row">
+                <div class="row">
                     <div class="col --12 mb-1">Директория для скачивания:</div>
                     <div class="col --12 mb-2">
-                        <input type="text" name="path" x-model="theme.path" list="path-history">
+                        <div class="path-wrap" @click.away="pathDropdownOpen = false">
+                            <input type="text" name="path" x-model="theme.path"
+                                @input="pathDropdownOpen = filteredPaths(theme.path).length > 0; pathHighlight = -1"
+                                @focus="if (getRecentPaths().length > 0) pathDropdownOpen = true"
+                                @keydown="pathKeydown($event, theme.path, function(v) { theme.path = v })"
+                                @keydown.escape="pathDropdownOpen = false"
+                                autocomplete="off">
+                            <div class="path-dropdown" x-show="pathDropdownOpen && filteredPaths(theme.path).length > 0" x-cloak>
+                                <template x-for="(p, idx) in filteredPaths(theme.path)" :key="p">
+                                    <div class="path-dropdown__item"
+                                        :class="idx === pathHighlight && '--highlighted'"
+                                        x-text="p"
+                                        @mousedown.prevent="theme.path = p; pathDropdownOpen = false; pathHighlight = -1"
+                                        @mouseenter="pathHighlight = idx"></div>
+                                </template>
+                            </div>
+                        </div>
                         <div class="form-help">Например: /var/lib/transmission/downloads или C:/downloads/</div>
                     </div>
-                </label>
+                </div>
                 <label class="row" @click="theme.update_header = !theme.update_header">
                     <div class="col --12 toggler-wrap">
                         <div class="toggler" :class="theme.update_header && '--done'"></div> Обновлять заголовок автоматически
@@ -67,7 +113,7 @@
                 <label class="row">
                     <div class="col --12 mb-1">Трекер:</div>
                     <div class="col --12 mb-2">
-                        <select x-model="series.tracker" :required="type == 'series'">
+                        <select x-model="series.tracker" :required="type == 'series'" @change="onTrackerChange()">
                             <option value="" disabled>выберите</option>
                             <template x-for='tracker in ["baibako.tv","hamsterstudio.org","lostfilm.tv","lostfilm-mirror","newstudio.tv"]'>
                                 <option x-text="tracker" :selected="series.tracker == tracker"></option>
@@ -75,13 +121,36 @@
                         </select>
                     </div>
                 </label>
-                <label class="row">
-                    <div class="col --12 mb-1">Название:</div>
+                <div class="row">
+                    <div class="col --12 mb-1 series-label-row">
+                        <span>Название:</span>
+                        <button type="button" class="btn btn--secondary btn--sm series-fetch-btn"
+                            x-show="series.tracker" x-cloak
+                            :disabled="seriesLoading || !hasCredentials(series.tracker)"
+                            @click="fetchSeriesList()"
+                            x-text="!hasCredentials(series.tracker) ? 'Нет учётных данных' : (seriesLoading ? 'Загрузка...' : (seriesList.length > 0 ? 'Обновить (' + seriesList.length + ')' : 'Загрузить список'))"></button>
+                    </div>
                     <div class="col --12 mb-2">
-                        <input type="text" name="name" x-model="series.name" :required="type == 'series'">
+                        <div class="series-name-wrap" @click.away="seriesDropdownOpen = false">
+                            <input type="text" name="name" x-model="series.name" :required="type == 'series'"
+                                @input="seriesDropdownOpen = seriesList.length > 0; seriesResetHighlight()"
+                                @focus="if (seriesList.length > 0) seriesDropdownOpen = true"
+                                @keydown="seriesKeydown($event)"
+                                @keydown.escape="seriesDropdownOpen = false"
+                                autocomplete="off">
+                            <div class="series-dropdown" x-show="seriesDropdownOpen && seriesList.length > 0 && filteredSeries().length > 0" x-cloak>
+                                <template x-for="(name, idx) in filteredSeries()" :key="name">
+                                    <div class="series-dropdown__item"
+                                        :class="idx === seriesHighlight && '--highlighted'"
+                                        x-text="name"
+                                        @mousedown.prevent="series.name = name; seriesDropdownOpen = false; seriesHighlight = -1"
+                                        @mouseenter="seriesHighlight = idx"></div>
+                                </template>
+                            </div>
+                        </div>
                         <div class="form-help">На английском языке<br/>Пример: House, Lie to me</div>
                     </div>
-                </label>
+                </div>
 
                 <template x-if="series.tracker == 'baibako.tv' || series.tracker == 'hamsterstudio.org' || series.tracker == 'newstudio.tv'">
                 <div class="row">
@@ -109,13 +178,29 @@
                 </div>
                 </template>
 
-                <label class="row">
+                <div class="row">
                     <div class="col --12 mb-1">Директория для скачивания:</div>
                     <div class="col --12 mb-2">
-                        <input type="text" name="path" x-model="series.path" list="path-history">
+                        <div class="path-wrap" @click.away="pathDropdownOpen = false">
+                            <input type="text" name="path" x-model="series.path"
+                                @input="pathDropdownOpen = filteredPaths(series.path).length > 0; pathHighlight = -1"
+                                @focus="if (getRecentPaths().length > 0) pathDropdownOpen = true"
+                                @keydown="pathKeydown($event, series.path, function(v) { series.path = v })"
+                                @keydown.escape="pathDropdownOpen = false"
+                                autocomplete="off">
+                            <div class="path-dropdown" x-show="pathDropdownOpen && filteredPaths(series.path).length > 0" x-cloak>
+                                <template x-for="(p, idx) in filteredPaths(series.path)" :key="p">
+                                    <div class="path-dropdown__item"
+                                        :class="idx === pathHighlight && '--highlighted'"
+                                        x-text="p"
+                                        @mousedown.prevent="series.path = p; pathDropdownOpen = false; pathHighlight = -1"
+                                        @mouseenter="pathHighlight = idx"></div>
+                                </template>
+                            </div>
+                        </div>
                         <div class="form-help">Например: /var/lib/transmission/downloads или C:/downloads</div>
                     </div>
-                </label>
+                </div>
                 <label class="row" @click="series.subdir = !series.subdir">
                     <div class="col --12 toggler-wrap">
                         <div class="toggler" :class="series.subdir && '--done'"></div> В подкаталог с названием сериала

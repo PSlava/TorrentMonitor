@@ -67,6 +67,38 @@ class lostfilmmirror
 		}
 	}
 	
+	// Требуется ли авторизация для получения списка сериалов
+	public static function seriesListRequiresAuth() { return false; }
+
+	// Получение списка сериалов из RSS
+	public static function getSeriesList($limit = 50)
+	{
+		$page = Sys::getUrlContent([
+			'type' => 'GET', 'returntransfer' => 1,
+			'url' => 'https://rss.bzda.ru/rss.xml',
+		]);
+		if (empty($page)) return [];
+		$xml = @simplexml_load_string($page);
+		if ( ! $xml) return [];
+		$names = [];
+		foreach ($xml->channel->item as $item)
+		{
+			$title = (string)$item->title;
+			// Убираем [Русское название] в начале
+			$title = preg_replace('/^\[.*?\]\s*/', '', $title);
+			// Формат: Name.Of.Show.2026.S01E01.quality.ext
+			if (preg_match('/^(.+?)\.S\d{2}\.?E\d{2}/i', $title, $m))
+			{
+				$name = str_replace('.', ' ', $m[1]);
+				// Убираем год выпуска в конце (например "Young Sherlock 2026" → "Young Sherlock")
+				$name = preg_replace('/\s+\d{4}$/', '', $name);
+				$names[$name] = true;
+			}
+			if (count($names) >= $limit) break;
+		}
+		return array_keys($names);
+	}
+
 	//основная функция
 	public static function main($params)
 	{

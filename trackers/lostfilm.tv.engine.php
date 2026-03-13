@@ -182,6 +182,37 @@ class lostfilm
 		}	
 	}
 	
+	// Требуется ли авторизация для получения списка сериалов
+	public static function seriesListRequiresAuth() { return false; }
+
+	// Получение списка сериалов из RSS
+	public static function getSeriesList($limit = 50)
+	{
+		$page = Sys::getUrlContent([
+			'type' => 'GET', 'returntransfer' => 1,
+			'url' => 'https://www.lostfilm.today/rss.xml',
+		]);
+		if (empty($page)) return [];
+		$page = preg_replace('/\&/', '&amp;', $page);
+		$page = preg_replace('/\<\!\[CDATA\[/', '', $page);
+		$page = preg_replace('/\]\]/', '', $page);
+		$xml = @simplexml_load_string($page);
+		if ( ! $xml) return [];
+		$names = [];
+		foreach ($xml->channel->item as $item)
+		{
+			$title = (string)$item->title;
+			// Формат: "Название (English Name). Описание (S01E01)"
+			// Берём текст до первой точки с пробелом или до (S##E##)
+			if (preg_match('/^(.+?)\s*\((.+?)\)\.\s/', $title, $m))
+				$names[$m[2]] = true;
+			elseif (preg_match('/^(.+?)\s+\(S\d{2}E\d{2}\)/', $title, $m))
+				$names[$m[1]] = true;
+			if (count($names) >= $limit) break;
+		}
+		return array_keys($names);
+	}
+
 	//основная функция
 	public static function main($params)
 	{
