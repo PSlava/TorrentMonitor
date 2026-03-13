@@ -12,16 +12,29 @@ if (isset($_POST['action']))
 	//Проверяем пароль
 	if ($_POST['action'] == 'enter')
 	{
-		$password = md5($_POST['password']);
-		$count = Database::countCredentials($password);
+		$password = $_POST['password'];
+		$hash_pass = Database::getSetting('password');
 
-		if ($count == 1)
+		if ($hash_pass && (password_verify($password, $hash_pass) || md5($password) === $hash_pass))
 		{
+			// Если пароль хранится в MD5 — обновляем на bcrypt
+			if (md5($password) === $hash_pass)
+			{
+				$new_hash = password_hash($password, PASSWORD_BCRYPT);
+				Database::updateCredentials($new_hash);
+				$hash_pass = $new_hash;
+			}
+
 			session_start();
-			$_SESSION['TM'] = $password;
+			$_SESSION['TM'] = $hash_pass;
 			$return['error'] = FALSE;
 			if ($_POST['remember'] == 'true')
-			    setcookie('TM', $password, time()+3600*24*31, '/');
+				setcookie('TM', $hash_pass, [
+					'expires' => time()+3600*24*31,
+					'path' => '/',
+					'httponly' => true,
+					'samesite' => 'Lax'
+				]);
 		}
 		else
 		{
@@ -33,6 +46,22 @@ if (isset($_POST['action']))
 
     if ( ! Sys::checkAuth())
         exit();
+
+	// CSRF-токен: генерация
+	if (session_id() == '')
+		session_start();
+	if (empty($_SESSION['csrf_token']))
+		$_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+
+	// CSRF-проверка для POST-запросов (кроме login и logout)
+	if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && !in_array($_POST['action'], ['enter', 'logout']))
+	{
+		if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token']))
+		{
+			echo json_encode(array('response' => 'error', 'message' => 'CSRF token invalid'));
+			exit;
+		}
+	}
 
 	//Добавляем тему для мониторинга
 	if ($_POST['action'] == 'torrent_add')
@@ -117,13 +146,13 @@ if (isset($_POST['action']))
                                     else
                                     {
                                         $return['error'] = TRUE;
-                                        $return['msg'] = 'Произошла ошибка при сохранении в БД.'.var_dump($query);
+                                        $return['msg'] = 'Произошла ошибка при сохранении в БД.';
                                     }
         						}
         						else
         						{
             						$return['error'] = TRUE;
-                                    $return['msg'] = 'Вы уже следите за данной темой на трекере <b>'.$tracker.'</b>.';
+                                    $return['msg'] = 'Вы уже следите за данной темой на трекере <b>'.htmlspecialchars($tracker, ENT_QUOTES, 'UTF-8').'</b>.';
         						}
         					}
         					else
@@ -141,13 +170,13 @@ if (isset($_POST['action']))
     				else
     				{
         				$return['error'] = TRUE;
-                        $return['msg'] = 'Отсутствует модуль для трекера - <b>'.$tracker.'</b>.';
+                        $return['msg'] = 'Отсутствует модуль для трекера - <b>'.htmlspecialchars($tracker, ENT_QUOTES, 'UTF-8').'</b>.';
     				}
     			}
     			else
     			{
         			$return['error'] = TRUE;
-                    $return['msg'] = 'Вы не можете следить за этим сериалом на трекере - <b>'.$tracker.'</b>, пока не введёте свои учётные данные!';
+                    $return['msg'] = 'Вы не можете следить за этим сериалом на трекере - <b>'.htmlspecialchars($tracker, ENT_QUOTES, 'UTF-8').'</b>, пока не введёте свои учётные данные!';
     			}
             }
 		}
@@ -184,25 +213,25 @@ if (isset($_POST['action']))
                     else
                     {
                         $return['error'] = TRUE;
-                        $return['msg'] = 'Произошла ошибка при сохранении в БД.'.var_dump($query);
+                        $return['msg'] = 'Произошла ошибка при сохранении в БД.';
                     }
 				}
 				else
 				{
 					$return['error'] = TRUE;
-                    $return['msg'] = 'Вы уже следите за данным сериалом на этом трекере - <b>'.$tracker.'</b>.';
+                    $return['msg'] = 'Вы уже следите за данным сериалом на этом трекере - <b>'.htmlspecialchars($tracker, ENT_QUOTES, 'UTF-8').'</b>.';
 				}
 			}
 			else
 			{
 				$return['error'] = TRUE;
-                $return['msg'] = 'Отсутствует модуль для трекера - <b>'.$tracker.'</b>.';
+                $return['msg'] = 'Отсутствует модуль для трекера - <b>'.htmlspecialchars($tracker, ENT_QUOTES, 'UTF-8').'</b>.';
 			}
 		}
 		else
 		{
 			$return['error'] = TRUE;
-            $return['msg'] = 'Вы не можете следить за этим сериалом на трекере - <b>'.$tracker.'</b>, пока не введёте свои учётные данные!';
+            $return['msg'] = 'Вы не можете следить за этим сериалом на трекере - <b>'.htmlspecialchars($tracker, ENT_QUOTES, 'UTF-8').'</b>, пока не введёте свои учётные данные!';
 		}
 
 		echo json_encode($return);
@@ -316,19 +345,19 @@ if (isset($_POST['action']))
 				else
 				{
                     $return['error'] = TRUE;
-                    $return['msg'] = 'Вы уже следите за данным пользователем на этом трекере - <b>'.$tracker.'</b>.';
+                    $return['msg'] = 'Вы уже следите за данным пользователем на этом трекере - <b>'.htmlspecialchars($tracker, ENT_QUOTES, 'UTF-8').'</b>.';
 				}
 			}
 			else
 			{
     			$return['error'] = TRUE;
-                $return['msg'] = 'Отсутствует модуль для трекера - <b>'.$tracker.'</b>.';
+                $return['msg'] = 'Отсутствует модуль для трекера - <b>'.htmlspecialchars($tracker, ENT_QUOTES, 'UTF-8').'</b>.';
 			}
 		}
 		else
 		{
     		$return['error'] = TRUE;
-            $return['msg'] = 'Вы не можете следить за этим пользователем на трекере - <b>'.$tracker.'</b>, пока не введёте свои учётные данные!';
+            $return['msg'] = 'Вы не можете следить за этим пользователем на трекере - <b>'.htmlspecialchars($tracker, ENT_QUOTES, 'UTF-8').'</b>, пока не введёте свои учётные данные!';
 		}
 		echo json_encode($return);
 	}
@@ -422,7 +451,14 @@ if (isset($_POST['action']))
 	if ($_POST['action'] == 'update_extended')
 	{
 		$config = Config::read('ext_filename');
-		if (file_put_contents($config, $_POST['settings']))
+		$settings = $_POST['settings'];
+		$test = @simplexml_load_string($settings, 'SimpleXMLElement', LIBXML_NONET);
+		if ($test === false)
+		{
+			$return['error'] = TRUE;
+			$return['msg'] = 'Некорректный XML';
+		}
+		elseif (file_put_contents($config, $settings))
 		{
 			$return['error'] = FALSE;
 			$return['msg'] = 'Расширенные настройки сохранены.';
@@ -471,7 +507,7 @@ if (isset($_POST['action']))
 	//Меняем пароль
 	if ($_POST['action'] == 'update_auth')
 	{
-		$pass = md5($_POST['pass']);
+		$pass = password_hash($_POST['pass'], PASSWORD_BCRYPT);
 		$q = Database::updateCredentials($pass);
 		if ($q)
 		{
@@ -546,6 +582,21 @@ if (isset($_POST['action']))
 		return TRUE;
 	}
 
+	//Выход из системы
+	if ($_POST['action'] == 'logout')
+	{
+		session_start();
+		$_SESSION = [];
+		if (ini_get('session.use_cookies')) {
+			$params = session_get_cookie_params();
+			setcookie(session_name(), '', time() - 42000, $params['path'], $params['domain'], $params['secure'], $params['httponly']);
+		}
+		session_destroy();
+		setcookie('TM', '', ['expires' => time() - 42000, 'path' => '/', 'httponly' => true, 'samesite' => 'Lax']);
+		echo json_encode(['error' => FALSE, 'msg' => 'Выход выполнен.']);
+		exit;
+	}
+
 	//Очистка ошибок потрекерно
 	if ($_POST['action'] == 'clear_warnings')
 	{
@@ -574,10 +625,10 @@ if (isset($_GET['action']))
             $by = 'name';
         }
 		if (!in_array($dir, ['asc', 'desc'])) {
-            $by = 'asc';
+            $dir = 'asc';
         }
-		setcookie('order', $by, time()+3600*24*365);
-		setcookie('orderDir', $dir, time()+3600*24*365);
+		setcookie('order', $by, ['expires' => time()+3600*24*365, 'path' => '/', 'httponly' => true, 'samesite' => 'Lax']);
+		setcookie('orderDir', $dir, ['expires' => time()+3600*24*365, 'path' => '/', 'httponly' => true, 'samesite' => 'Lax']);
 		//header('Location: index.php');
         echo json_encode('ok');
 	}

@@ -11,7 +11,13 @@ include_once $dir."class/Database.class.php";
 include_once $dir."class/System.class.php";
 
 if (Sys::checkAuth())
+{
+    if (session_id() == '')
+        session_start();
+    if (empty($_SESSION['csrf_token']))
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     require_once "pages/main.php";
+}
 else
     require_once "pages/auth.php";
 ?>
