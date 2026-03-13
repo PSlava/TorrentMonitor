@@ -2,3 +2,5 @@ config.php
 config.xml
 laststart.*
 torrents
+docs/
+CLAUDE.md
