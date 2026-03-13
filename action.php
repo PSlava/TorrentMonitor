@@ -6,6 +6,10 @@ include_once $dir.'class/Errors.class.php';
 include_once $dir.'class/Notification.class.php';
 include_once $dir.'class/System.class.php';
 include_once $dir."class/Url.class.php";
+include_once $dir.'class/EventBus.class.php';
+include_once $dir.'class/Webhook.class.php';
+include_once $dir.'class/TaskQueue.class.php';
+include_once $dir.'class/Migration.class.php';
 
 if (isset($_POST['action']))
 {
@@ -62,6 +66,9 @@ if (isset($_POST['action']))
 			exit;
 		}
 	}
+
+	// Миграции БД (один вызов для всех action)
+	Migration::run();
 
 	//Добавляем тему для мониторинга
 	if ($_POST['action'] == 'torrent_add')
@@ -619,10 +626,100 @@ if (isset($_POST['action']))
         echo json_encode($return);
 	}
 
+	// === API-токены ===
+
+	if ($_POST['action'] == 'api_token_create')
+	{
+		$name = ! empty($_POST['name']) ? $_POST['name'] : 'API Token';
+		$token = bin2hex(random_bytes(32));
+		$now = date('Y-m-d H:i:s');
+		$stmt = Database::newStatement("INSERT INTO `api_tokens` (`name`, `token`, `created_at`) VALUES (:name, :token, :date)");
+		$stmt->bindParam(':name', $name);
+		$stmt->bindParam(':token', $token);
+		$stmt->bindParam(':date', $now);
+		if ($stmt->execute())
+		{
+			$return['error'] = FALSE;
+			$return['msg'] = 'API-токен создан.';
+			$return['token'] = $token;
+		}
+		else
+		{
+			$return['error'] = TRUE;
+			$return['msg'] = 'Ошибка создания токена.';
+		}
+		echo json_encode($return);
+	}
+
+	if ($_POST['action'] == 'api_token_delete')
+	{
+		$id = (int)$_POST['id'];
+		$stmt = Database::newStatement("DELETE FROM `api_tokens` WHERE `id` = :id");
+		$stmt->bindParam(':id', $id, PDO::PARAM_INT);
+		if ($stmt->execute())
+		{
+			$return['error'] = FALSE;
+			$return['msg'] = 'Токен удалён.';
+		}
+		else
+		{
+			$return['error'] = TRUE;
+			$return['msg'] = 'Ошибка удаления токена.';
+		}
+		echo json_encode($return);
+	}
+
+	// === Вебхуки ===
+
+	if ($_POST['action'] == 'webhook_create')
+	{
+		if ( ! empty($_POST['name']) && ! empty($_POST['url']))
+		{
+			$url = $_POST['url'];
+			if ( ! preg_match('#^https?://#i', $url))
+			{
+				$return['error'] = TRUE;
+				$return['msg'] = 'URL должен начинаться с http:// или https://';
+			}
+			else
+			{
+				$events = ! empty($_POST['events']) ? $_POST['events'] : '*';
+				Webhook::create($_POST['name'], $url, $events);
+				$return['error'] = FALSE;
+				$return['msg'] = 'Вебхук создан.';
+			}
+		}
+		else
+		{
+			$return['error'] = TRUE;
+			$return['msg'] = 'Укажите имя и URL вебхука.';
+		}
+		echo json_encode($return);
+	}
+
+	if ($_POST['action'] == 'webhook_delete')
+	{
+		if (Webhook::delete((int)$_POST['id']))
+		{
+			$return['error'] = FALSE;
+			$return['msg'] = 'Вебхук удалён.';
+		}
+		else
+		{
+			$return['error'] = TRUE;
+			$return['msg'] = 'Ошибка удаления вебхука.';
+		}
+		echo json_encode($return);
+	}
+
 }
 
 if (isset($_GET['action']))
 {
+	if ( ! Sys::checkAuth())
+		exit();
+	Migration::run();
+
 	//Сортировка вывода торрентов
 	if ($_GET['action'] == 'order')
 	{
@@ -641,6 +738,23 @@ if (isset($_GET['action']))
 		//header('Location: index.php');
         echo json_encode('ok');
 	}
+
+    // Список API-токенов
+    if ($_GET['action'] == 'api_tokens_list') {
+        $stmt = Database::newStatement("SELECT `id`, `name`, `created_at`, `last_used`, `active` FROM `api_tokens` ORDER BY `id`");
+        $tokens = [];
+        if ($stmt->execute()) {
+            foreach ($stmt as $row)
+                $tokens[] = $row;
+        }
+        echo json_encode(['tokens' => $tokens]);
+    }
+
+    // Список вебхуков (без секретов)
+    if ($_GET['action'] == 'webhooks_list') {
+        $hooks = Webhook::getAllSafe();
+        echo json_encode(['hooks' => $hooks]);
+    }
 
     // Single item data
     if ($_GET['action'] == 'item_data') {

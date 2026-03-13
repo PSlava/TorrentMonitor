@@ -35,6 +35,8 @@ if (file_exists($config))
         <button :class="currentTab == 'proxy' && '--current'" @click="setTab('proxy')">Прокси</button>
         <button :class="currentTab == 'torrent' && '--current'" @click="setTab('torrent')">Торрент-клиент</button>
         <button :class="currentTab == 'extended' && '--current'" @click="setTab('extended')">Расширенные</button>
+        <button :class="currentTab == 'api' && '--current'" @click="setTab('api')">API</button>
+        <button :class="currentTab == 'webhooks' && '--current'" @click="setTab('webhooks')">Вебхуки</button>
     </nav>
 
     <div class="form-error mb-2" x-show="error.length > 0" x-text="error" x-transition.opacity></div>
@@ -369,6 +371,87 @@ if (file_exists($config))
         </div>
 
     </form>
+
+
+    <div x-show="currentTab == 'api'" x-data="apiTokens()">
+        <div class="api-section">
+            <div class="api-section__title">API-токены</div>
+            <p class="form-help mb-2">Токены используются для доступа к REST API (api.php). Передавайте токен в заголовке: <code>Authorization: Bearer &lt;token&gt;</code></p>
+
+            <div class="row mb-2">
+                <div class="col --5:lg">
+                    <input type="text" x-model="newTokenName" placeholder="Название токена">
+                </div>
+                <div class="col --3:lg">
+                    <button type="button" class="btn btn--primary" @click="createToken()">Создать токен</button>
+                </div>
+            </div>
+
+            <div x-show="newToken.length > 0" class="row mb-2" x-transition>
+                <div class="col --8:lg">
+                    <div class="form-help" style="background:var(--c-success-light);padding:.5rem;border-radius:4px">
+                        Новый токен (скопируйте, он больше не будет показан):<br>
+                        <code x-text="newToken" style="word-break:break-all"></code>
+                    </div>
+                </div>
+            </div>
+
+            <div class="token-list">
+                <template x-for="token in tokens" :key="token.id">
+                    <div class="token-item">
+                        <div class="token-item__name" x-text="token.name"></div>
+                        <div class="token-item__meta">
+                            <span>Создан: </span><span x-text="token.created_at"></span>
+                            <template x-if="token.last_used">
+                                <span> | Использован: <span x-text="token.last_used"></span></span>
+                            </template>
+                        </div>
+                        <button type="button" class="btn btn--secondary" @click="deleteToken(token.id)">Удалить</button>
+                    </div>
+                </template>
+                <div x-show="tokens.length === 0" class="form-help">Токенов нет</div>
+            </div>
+        </div>
+    </div>
+
+
+    <div x-show="currentTab == 'webhooks'" x-data="webhooksManager()">
+        <div class="api-section">
+            <div class="api-section__title">Вебхуки</div>
+            <p class="form-help mb-2">Вебхуки отправляют HTTP POST запрос на указанный URL при наступлении события. Подпись HMAC-SHA256 передаётся в заголовке <code>X-TM-Signature</code>.</p>
+
+            <div class="row mb-2">
+                <div class="col --3:lg mb-1">
+                    <input type="text" x-model="newHook.name" placeholder="Название">
+                </div>
+                <div class="col --4:lg mb-1">
+                    <input type="text" x-model="newHook.url" placeholder="URL (https://...)">
+                </div>
+                <div class="col --3:lg mb-1">
+                    <input type="text" x-model="newHook.events" placeholder="События (* = все)">
+                </div>
+                <div class="col --2:lg">
+                    <button type="button" class="btn btn--primary" @click="createHook()">Добавить</button>
+                </div>
+            </div>
+
+            <div class="form-help mb-2">Типы событий: <code>torrent.updated</code>, <code>torrent.added</code>, <code>torrent.deleted</code>, <code>download.start</code>, <code>download.done</code>, <code>download.error</code>, <code>warning</code>, <code>engine.start</code>, <code>engine.done</code></div>
+
+            <div class="token-list">
+                <template x-for="hook in hooks" :key="hook.id">
+                    <div class="token-item">
+                        <div class="token-item__name" x-text="hook.name"></div>
+                        <div class="token-item__meta">
+                            <span x-text="hook.url"></span> |
+                            <span>События: <span x-text="hook.events"></span></span>
+                        </div>
+                        <button type="button" class="btn btn--secondary" @click="deleteHook(hook.id)">Удалить</button>
+                    </div>
+                </template>
+                <div x-show="hooks.length === 0" class="form-help">Вебхуков нет</div>
+            </div>
+        </div>
+    </div>
 
 
 </div>
