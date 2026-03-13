@@ -2,7 +2,7 @@
 class rustorka
 {
 	protected static $sess_cookie;
-	protected static $exucution;
+	protected static $execution;
 	protected static $warning;
 
 	//проверяем cookie
@@ -87,7 +87,7 @@ class rustorka
 					//устанавливаем варнинг
 					Errors::setWarnings($tracker, 'credential_wrong');
 					//останавливаем процесс выполнения, т.к. не может работать без кук
-					rustorka::$exucution = FALSE;
+					rustorka::$execution = FALSE;
 				}
 				//если подходят - получаем куки
 				elseif (preg_match('/bb_data=.+;/U', $page, $array))
@@ -95,7 +95,7 @@ class rustorka
 					rustorka::$sess_cookie = $array[0];
 					Database::setCookie($tracker, rustorka::$sess_cookie);
 					//запускам процесс выполнения, т.к. не может работать без кук
-					rustorka::$exucution = TRUE;
+					rustorka::$execution = TRUE;
 				}
 				else
 				{
@@ -106,7 +106,7 @@ class rustorka
 						Errors::setWarnings($tracker, 'cant_find_cookie');
 					}
 					//останавливаем процесс выполнения, т.к. не может работать без кук
-					rustorka::$exucution = FALSE;
+					rustorka::$execution = FALSE;
 				}
 			}
 			//если вообще ничего не найдено
@@ -119,7 +119,7 @@ class rustorka
 					Errors::setWarnings($tracker, 'cant_get_auth_page');
 				}
 				//останавливаем процесс выполнения, т.к. не может работать без кук
-				rustorka::$exucution = FALSE;
+				rustorka::$execution = FALSE;
 			}
 		}
 		else
@@ -131,7 +131,7 @@ class rustorka
 				Errors::setWarnings($tracker, 'credential_miss');
 			}
 			//останавливаем процесс выполнения, т.к. не может работать без кук
-			rustorka::$exucution = FALSE;
+			rustorka::$execution = FALSE;
 		}
 		
 		return rustorka::$sess_cookie;
@@ -146,12 +146,12 @@ class rustorka
 		{
 			rustorka::$sess_cookie = $cookie;
 			//запускам процесс выполнения
-			rustorka::$exucution = TRUE;
+			rustorka::$execution = TRUE;
 		}
 		else
     		rustorka::getCookie($tracker);
 
-		if (rustorka::$exucution)
+		if (rustorka::$execution)
 		{
 			//получаем страницу для парсинга
             $page = Sys::getUrlContent(
@@ -235,7 +235,7 @@ class rustorka
 								Errors::setWarnings($tracker, 'cant_find_date', $id);
 							}
 							//останавливаем процесс выполнения, т.к. не может работать без кук
-							rustorka::$exucution = FALSE;
+							rustorka::$execution = FALSE;
 						}
 					}
 					else
@@ -247,7 +247,7 @@ class rustorka
 							Errors::setWarnings($tracker, 'cant_find_date', $id);
 						}
 						//останавливаем процесс выполнения, т.к. не может работать без кук
-						rustorka::$exucution = FALSE;
+						rustorka::$execution = FALSE;
 					}
 				}
 				else
@@ -259,7 +259,7 @@ class rustorka
 						Errors::setWarnings($tracker, 'cant_find_date', $id);
 					}
 					//останавливаем процесс выполнения, т.к. не может работать без кук
-					rustorka::$exucution = FALSE;
+					rustorka::$execution = FALSE;
 				}
 			}
 			else
@@ -271,7 +271,7 @@ class rustorka
 					Errors::setWarnings($tracker, 'cant_get_forum_page', $id);
 				}
 				//останавливаем процесс выполнения, т.к. не может работать без кук
-				rustorka::$exucution = FALSE;
+				rustorka::$execution = FALSE;
 			}
 		}
 		rustorka::$warning = NULL;

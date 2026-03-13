@@ -12,12 +12,12 @@ class pornolabSearch extends pornolab
 		{
 			pornolab::$sess_cookie = $cookie;
 			//запускам процесс выполнения
-			pornolab::$exucution = TRUE;
+			pornolab::$execution = TRUE;
 		}
 		else
     		pornolab::getCookie($tracker);
 
-		if (pornolab::$exucution)
+		if (pornolab::$execution)
 		{
     		$user = iconv('utf-8', 'windows-1251', $name);
     		$page = Sys::getUrlContent(

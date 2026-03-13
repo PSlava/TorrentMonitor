@@ -1,7 +1,7 @@
 <?php
 class tfile
 {
-	protected static $exucution;
+	protected static $execution;
 	protected static $warning;
 
 	//функция проверки введёного URL`а
@@ -36,9 +36,9 @@ class tfile
 	public static function main($params)
 	{
     	extract($params);
-		tfile::$exucution = TRUE;
+		tfile::$execution = TRUE;
 
-		if (tfile::$exucution)
+		if (tfile::$execution)
 		{
 			//получаем страницу для парсинга
 			$page = Sys::getUrlContent(
@@ -118,7 +118,7 @@ class tfile
 									Errors::setWarnings($tracker, 'cant_find_dowload_link', $id);
 								}
 								//останавливаем процесс выполнения, т.к. не может работать без кук
-								tfile::$exucution = FALSE;
+								tfile::$execution = FALSE;
 							}
 						}
 						else
@@ -130,7 +130,7 @@ class tfile
 								Errors::setWarnings($tracker, 'cant_find_date', $id);
 							}
 							//останавливаем процесс выполнения, т.к. не может работать без кук
-							tfile::$exucution = FALSE;
+							tfile::$execution = FALSE;
 						}
 					}
 					else
@@ -142,7 +142,7 @@ class tfile
 							Errors::setWarnings($tracker, 'cant_find_date', $id);
 						}
 						//останавливаем процесс выполнения, т.к. не может работать без кук
-						tfile::$exucution = FALSE;
+						tfile::$execution = FALSE;
 					}
 				}
 				else
@@ -154,7 +154,7 @@ class tfile
 						Errors::setWarnings($tracker, 'cant_find_date', $id);
 					}
 					//останавливаем процесс выполнения, т.к. не может работать без кук
-					tfile::$exucution = FALSE;
+					tfile::$execution = FALSE;
 				}
 			}
 			else
@@ -166,7 +166,7 @@ class tfile
 					Errors::setWarnings($tracker, 'cant_get_forum_page', $id);
 				}
 				//останавливаем процесс выполнения, т.к. не может работать без кук
-				tfile::$exucution = FALSE;
+				tfile::$execution = FALSE;
 			}
 		}
 		tfile::$warning = NULL;

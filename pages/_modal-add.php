@@ -111,9 +111,14 @@
 
                 <label class="row">
                     <div class="col --12 mb-1">Директория для скачивания:</div>
-                    <div class="col --12">
+                    <div class="col --12 mb-2">
                         <input type="text" name="path" x-model="series.path" list="path-history">
                         <div class="form-help">Например: /var/lib/transmission/downloads или C:/downloads</div>
+                    </div>
+                </label>
+                <label class="row" @click="series.subdir = !series.subdir">
+                    <div class="col --12 toggler-wrap">
+                        <div class="toggler" :class="series.subdir && '--done'"></div> В подкаталог с названием сериала
                     </div>
                 </label>
             </div>

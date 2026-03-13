@@ -30,40 +30,76 @@ function populatePathDatalist() {
     });
 }
 
-// Health Dashboard с прогрессом загрузок
-function healthDashboard() {
+// Состояние системы с фоновой проверкой
+function healthRunner() {
     return {
-        progress: [],
-        init: function() {
-            this.loadProgress();
-        },
-        loadProgress: function() {
+        running: false,
+        phase: '',
+        checks: [],
+        pollTimer: null,
+        autoStart: function() {
             var self = this;
-            fetch('include/progress.php')
+            fetch('include/health_status.php')
+                .then(function(r) { return r.json(); })
+                .then(function(resp) {
+                    if (resp.running) {
+                        self.running = true;
+                        self.applyData(resp.data);
+                        self.startPolling();
+                    } else if (resp.data && resp.data.status === 'done') {
+                        self.applyData(resp.data);
+                    } else {
+                        self.startHealth();
+                    }
+                })
+                .catch(function() {
+                    self.startHealth();
+                });
+        },
+        startHealth: function() {
+            var self = this;
+            this.checks = [];
+            this.running = true;
+            this.phase = 'Запуск проверки...';
+            fetch('include/health_run.php')
                 .then(function(r) { return r.json(); })
                 .then(function(data) {
-                    if (data.data) self.progress = data.data;
+                    if (data.error) {
+                        self.running = false;
+                        notyf.error(data.msg);
+                    } else {
+                        self.startPolling();
+                    }
                 })
-                .catch(function() {});
+                .catch(function() {
+                    self.running = false;
+                    notyf.error('Ошибка запуска проверки');
+                });
         },
-        formatSpeed: function(bytes) {
-            if (!bytes || bytes <= 0) return '';
-            if (bytes < 1024) return bytes + ' Б/с';
-            if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' КБ/с';
-            return (bytes / 1048576).toFixed(1) + ' МБ/с';
+        startPolling: function() {
+            if (this.pollTimer) return;
+            var self = this;
+            this.pollTimer = setInterval(function() {
+                fetch('include/health_status.php')
+                    .then(function(r) { return r.json(); })
+                    .then(function(resp) {
+                        self.applyData(resp.data);
+                        if (!resp.running) {
+                            self.running = false;
+                            clearInterval(self.pollTimer);
+                            self.pollTimer = null;
+                        }
+                    })
+                    .catch(function() {});
+            }, 1000);
         },
-        formatStatus: function(status) {
-            var map = {
-                'downloading': 'Скачивание',
-                'seeding': 'Раздача',
-                'stopped': 'Остановлен',
-                'checking': 'Проверка',
-                'download_wait': 'В очереди',
-                'seed_wait': 'Ожидание раздачи',
-                'check_wait': 'Ожидание проверки',
-                'unknown': ''
-            };
-            return map[status] || status;
+        applyData: function(data) {
+            if (!data) return;
+            this.phase = data.phase || '';
+            this.checks = data.checks || [];
+        },
+        countByStatus: function(status) {
+            return this.checks.filter(function(c) { return c.status === status; }).length;
         }
     };
 }

@@ -28,7 +28,7 @@ if ($news != NULL && is_array($news) && count($news) > 0)
 <div x-data="news" class="content col --8:xl news-item<?= ($news[$i]['new']) ? ' news-item--new' : '' ?>"
     data-news-id="<?= $news[$i]['id'] ?>"
 >
-<?php echo $news[$i]['text']?>
+<?php echo strip_tags($news[$i]['text'], '<a><b><strong><i><em><br><p><ul><ol><li><h3><h4><code>') ?>
 </div>
 <?php
     }

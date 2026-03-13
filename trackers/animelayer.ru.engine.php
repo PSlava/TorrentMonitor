@@ -3,7 +3,7 @@
 class animelayer
 {
 	protected static $sess_cookie;
-	protected static $exucution;
+	protected static $execution;
 	protected static $warning;
 	
 	// Проверяем cookie
@@ -107,7 +107,7 @@ class animelayer
 					// Устанавливаем варнинг
 					Errors::setWarnings($tracker, 'credential_wrong');
 					// Останавливаем процесс выполнения, т.к. не может работать без кук
-					animelayer::$exucution = FALSE;
+					animelayer::$execution = FALSE;
 				}
 				// Если подходят - получаем куки
 				elseif (preg_match_all('/Set-Cookie: (.+);/iU', $page, $array))
@@ -117,7 +117,7 @@ class animelayer
 					    animelayer::$sess_cookie .= $val.'; ';
 					Database::setCookie($tracker, animelayer::$sess_cookie);
 					// Запускам процесс выполнения
-					animelayer::$exucution = TRUE;
+					animelayer::$execution = TRUE;
 				}
 				else
 				{
@@ -128,7 +128,7 @@ class animelayer
 						Errors::setWarnings($tracker, 'cant_find_cookie');
 					}
 					// Останавливаем процесс выполнения, т.к. не может работать без кук
-					animelayer::$exucution = FALSE;
+					animelayer::$execution = FALSE;
 				}
 			}
 			else
@@ -140,7 +140,7 @@ class animelayer
 					Errors::setWarnings($tracker, 'cant_get_auth_page');
 				}
 				// Останавливаем процесс выполнения, т.к. не может работать без кук
-				animelayer::$exucution = FALSE;
+				animelayer::$execution = FALSE;
 			}
 		}
 		else
@@ -153,7 +153,7 @@ class animelayer
 			}
 			
 			// Останавливаем процесс выполнения, т.к. не может работать без кук
-			animelayer::$exucution = FALSE;
+			animelayer::$execution = FALSE;
 		}
 	}
 
@@ -166,12 +166,12 @@ class animelayer
 		{
 			animelayer::$sess_cookie = $cookie;
 			// Запускам процесс выполнения
-			animelayer::$exucution = TRUE;
+			animelayer::$execution = TRUE;
 		}			
 		else
 			animelayer::getCookie($tracker);
 		
-		if (animelayer::$exucution)
+		if (animelayer::$execution)
 		{
 			// Получаем страницу для парсинга
 			$page = Sys::getUrlContent(
@@ -248,7 +248,7 @@ class animelayer
             					Errors::setWarnings($tracker, 'cant_find_date', $id);
             				}
             				// Останавливаем процесс выполнения, т.к. не может работать без даты
-            				animelayer::$exucution = FALSE;
+            				animelayer::$execution = FALSE;
             			}
             		}
             		else
@@ -260,7 +260,7 @@ class animelayer
             				Errors::setWarnings($tracker, 'cant_find_date', $id);
             			}
             			// Останавливаем процесс выполнения, т.к. не может работать без даты
-            			animelayer::$exucution = FALSE;
+            			animelayer::$execution = FALSE;
             		}                    
                 }
 				else
@@ -272,7 +272,7 @@ class animelayer
 						Errors::setWarnings($tracker, 'cant_find_date', $id);
 					}
 					// Останавливаем процесс выполнения, т.к. не может работать без даты
-					animelayer::$exucution = FALSE;
+					animelayer::$execution = FALSE;
 				}
 			}			
 			else
@@ -284,7 +284,7 @@ class animelayer
 					Errors::setWarnings($tracker, 'cant_get_forum_page', $id);
 				}
 				// Останавливаем процесс выполнения, т.к. не может работать без данных
-				animelayer::$exucution = FALSE;
+				animelayer::$execution = FALSE;
 			}
 		}
 		animelayer::$warning = NULL;

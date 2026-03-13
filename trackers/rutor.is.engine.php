@@ -1,7 +1,7 @@
 <?php
 class rutor
 {
-	protected static $exucution;
+	protected static $execution;
 	protected static $warning;
 
 	//функция проверки введёного URL`а
@@ -36,9 +36,9 @@ class rutor
 	public static function main($params)
 	{
     	extract($params);
-		rutor::$exucution = TRUE;
+		rutor::$execution = TRUE;
 
-		if (rutor::$exucution)
+		if (rutor::$execution)
 		{
 			//получаем страницу для парсинга
 			$page = Sys::getUrlContent(
@@ -112,7 +112,7 @@ class rutor
 								Errors::setWarnings($tracker, 'cant_find_date', $id);
 							}
 							//останавливаем процесс выполнения, т.к. не может работать без кук
-							rutor::$exucution = FALSE;
+							rutor::$execution = FALSE;
 						}
 					}
 					else
@@ -124,7 +124,7 @@ class rutor
 							Errors::setWarnings($tracker, 'cant_find_date', $id);
 						}
 						//останавливаем процесс выполнения, т.к. не может работать без кук
-						rutor::$exucution = FALSE;
+						rutor::$execution = FALSE;
 					}
 				}
 				else
@@ -136,7 +136,7 @@ class rutor
 						Errors::setWarnings($tracker, 'cant_find_date', $id);
 					}
 					//останавливаем процесс выполнения, т.к. не может работать без кук
-					rutor::$exucution = FALSE;
+					rutor::$execution = FALSE;
 				}
 			}
 			else
@@ -148,7 +148,7 @@ class rutor
 					Errors::setWarnings($tracker, 'cant_get_forum_page', $id);
 				}
 				//останавливаем процесс выполнения, т.к. не может работать без кук
-				rutor::$exucution = FALSE;
+				rutor::$execution = FALSE;
 			}
 		}
 		rutor::$warning = NULL;

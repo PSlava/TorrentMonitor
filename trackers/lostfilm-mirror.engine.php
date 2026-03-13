@@ -1,7 +1,7 @@
 <?php
 class lostfilmmirror
 {
-	protected static $exucution;
+	protected static $execution;
 	protected static $warning;
 	
 	protected static $page;	
@@ -98,12 +98,12 @@ class lostfilmmirror
         				Errors::setWarnings($tracker, 'rss_parse_false');
         			}
 					//останавливаем выполнение цепочки
-					lostfilmmirror::$exucution = FALSE;
+					lostfilmmirror::$execution = FALSE;
 				}
 				else
 				{
 					lostfilmmirror::$log_page = TRUE;
-					lostfilmmirror::$exucution = TRUE;
+					lostfilmmirror::$execution = TRUE;
 				}
 			}
 			else
@@ -115,12 +115,12 @@ class lostfilmmirror
     				Errors::setWarnings($tracker, 'cant_find_rss');
     			}
 				//останавливаем выполнение цепочки
-				lostfilmmirror::$exucution = FALSE;							
+				lostfilmmirror::$execution = FALSE;							
 			}
 		}
 
 		//если выполнение цепочки не остановлено
-		if (lostfilmmirror::$exucution)
+		if (lostfilmmirror::$execution)
 		{
 			if ( ! empty(lostfilmmirror::$xml_page))
 			{

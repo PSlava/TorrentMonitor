@@ -2,7 +2,7 @@
 class kinozal
 {
 	protected static $sess_cookie;
-	protected static $exucution;
+	protected static $execution;
 	protected static $warning;
 
 	//проверяем cookie
@@ -129,7 +129,7 @@ class kinozal
 					//устанавливаем варнинг
 					Errors::setWarnings($tracker, 'credential_wrong');
 					//останавливаем процесс выполнения, т.к. не может работать без кук
-					kinozal::$exucution = FALSE;
+					kinozal::$execution = FALSE;
 				}
 				//проверяем нет ли блокировки
 				if (preg_match('/Превышен лимит попыток входа в профиль <br>Попробуйте через 2 часа/', $page, $array))
@@ -137,7 +137,7 @@ class kinozal
 					//устанавливаем варнинг
 					Errors::setWarnings($tracker, 'limit');
 					//останавливаем процесс выполнения, т.к. не может работать без кук
-					kinozal::$exucution = FALSE;
+					kinozal::$execution = FALSE;
 				}
 				//если подходят - получаем куки
 				elseif (preg_match_all('/Set-Cookie: (.+);/iU', $page, $array))
@@ -145,7 +145,7 @@ class kinozal
 					kinozal::$sess_cookie = $array[1][0].'; '.$array[1][1].';';
 					Database::setCookie($tracker, kinozal::$sess_cookie);
 					//запускам процесс выполнения, т.к. не может работать без кук
-					kinozal::$exucution = TRUE;
+					kinozal::$execution = TRUE;
 				}
 				else
 				{
@@ -156,7 +156,7 @@ class kinozal
 						Errors::setWarnings($tracker, 'cant_find_cookie');
 					}
 					//останавливаем процесс выполнения, т.к. не может работать без кук
-					kinozal::$exucution = FALSE;
+					kinozal::$execution = FALSE;
 				}
 			}
 			//если вообще ничего не найдено
@@ -169,7 +169,7 @@ class kinozal
 					Errors::setWarnings($tracker, 'cant_get_auth_page');
 				}
 				//останавливаем процесс выполнения, т.к. не может работать без кук
-				kinozal::$exucution = FALSE;
+				kinozal::$execution = FALSE;
 			}
 		}
 		else
@@ -181,7 +181,7 @@ class kinozal
 				Errors::setWarnings($tracker, 'credential_miss');
 			}
 			//останавливаем процесс выполнения, т.к. не может работать без кук
-			kinozal::$exucution = FALSE;
+			kinozal::$execution = FALSE;
 		}
 	}
 	
@@ -221,7 +221,7 @@ class kinozal
         					Errors::setWarnings($tracker, 'max_torrent');
         				}
         				//останавливаем процесс выполнения
-        				kinozal::$exucution = FALSE;
+        				kinozal::$execution = FALSE;
 					}
 					else
 					{
@@ -258,7 +258,7 @@ class kinozal
 					Errors::setWarnings($tracker, 'cant_find_date', $id);
 				}
 				//останавливаем процесс выполнения, т.к. не может работать без кук
-				kinozal::$exucution = FALSE;
+				kinozal::$execution = FALSE;
 			}
 		}
 		else
@@ -270,7 +270,7 @@ class kinozal
 				Errors::setWarnings($tracker, 'cant_find_date', $id);
 			}
 			//останавливаем процесс выполнения, т.к. не может работать без кук
-			kinozal::$exucution = FALSE;
+			kinozal::$execution = FALSE;
 		}
     }
 	
@@ -283,12 +283,12 @@ class kinozal
 		{
 			kinozal::$sess_cookie = $cookie;
 			//запускам процесс выполнения
-			kinozal::$exucution = TRUE;
+			kinozal::$execution = TRUE;
 		}			
 		else
     		kinozal::getCookie($tracker);
 
-		if (kinozal::$exucution)
+		if (kinozal::$execution)
 		{
 			//получаем страницу для парсинга
             $page = Sys::getUrlContent(
@@ -320,7 +320,7 @@ class kinozal
 						Errors::setWarnings($tracker, 'cant_find_date', $id);
 					}
 					//останавливаем процесс выполнения, т.к. не может работать без даты
-					kinozal::$exucution = FALSE;
+					kinozal::$execution = FALSE;
 				}
 			}			
 			else
@@ -332,7 +332,7 @@ class kinozal
 					Errors::setWarnings($tracker, 'cant_get_forum_page', $id);
 				}
 				//останавливаем процесс выполнения, т.к. не может работать без кук
-				kinozal::$exucution = FALSE;
+				kinozal::$execution = FALSE;
 			}
 		}
 		kinozal::$warning = NULL;

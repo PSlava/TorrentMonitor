@@ -2,7 +2,7 @@
 class booktracker
 {
 	protected static $sess_cookie;
-	protected static $exucution;
+	protected static $execution;
 	protected static $warning;
 
 	//проверяем cookie
@@ -86,7 +86,7 @@ class booktracker
 						Errors::setWarnings($tracker, 'credential_wrong');
 					}
 					//останавливаем процесс выполнения, т.к. не может работать без кук
-					booktracker::$exucution = FALSE;
+					booktracker::$execution = FALSE;
 				}
 				else
 				{
@@ -96,7 +96,7 @@ class booktracker
 						booktracker::$sess_cookie = $array[1][0];
                         Database::setCookie($tracker, booktracker::$sess_cookie);
 						//запускам процесс выполнения, т.к. не может работать без кук
-						booktracker::$exucution = TRUE;
+						booktracker::$execution = TRUE;
 					}
 				}
 			}
@@ -110,7 +110,7 @@ class booktracker
 					Errors::setWarnings($tracker, 'cant_get_auth_page');
 				}
 				//останавливаем процесс выполнения, т.к. не может работать без кук
-				booktracker::$exucution = FALSE;
+				booktracker::$execution = FALSE;
 			}
 		}
 		else
@@ -122,7 +122,7 @@ class booktracker
 				Errors::setWarnings($tracker, 'credential_miss');
 			}
 			//останавливаем процесс выполнения, т.к. не может работать без кук
-			booktracker::$exucution = FALSE;
+			booktracker::$execution = FALSE;
 		}
 	}
 
@@ -134,12 +134,12 @@ class booktracker
 		{
 			booktracker::$sess_cookie = $cookie;
 			//запускам процесс выполнения
-			booktracker::$exucution = TRUE;
+			booktracker::$execution = TRUE;
 		}
 		else
     		booktracker::getCookie($tracker);
 
-		if (booktracker::$exucution)
+		if (booktracker::$execution)
 		{
 			//получаем страницу для парсинга
             $page = Sys::getUrlContent(
@@ -219,7 +219,7 @@ class booktracker
                     				Errors::setWarnings($tracker, 'cant_find_dowload_link', $id);
                     			}
                     			//останавливаем процесс выполнения, т.к. не может работать без кук
-								booktracker::$exucution = FALSE;
+								booktracker::$execution = FALSE;
 							}
 						}
 						else
@@ -231,7 +231,7 @@ class booktracker
                 				Errors::setWarnings($tracker, 'cant_find_date', $id);
                 			}
                 			//останавливаем процесс выполнения, т.к. не может работать без кук
-							booktracker::$exucution = FALSE;
+							booktracker::$execution = FALSE;
 						}
 					}
 					else
@@ -243,7 +243,7 @@ class booktracker
             				Errors::setWarnings($tracker, 'cant_find_date', $id);
             			}
             			//останавливаем процесс выполнения, т.к. не может работать без кук
-						booktracker::$exucution = FALSE;
+						booktracker::$execution = FALSE;
 					}
 				}
 				else
@@ -255,7 +255,7 @@ class booktracker
         				Errors::setWarnings($tracker, 'cant_find_date', $id);
         			}
         			//останавливаем процесс выполнения, т.к. не может работать без кук
-					booktracker::$exucution = FALSE;
+					booktracker::$execution = FALSE;
 				}
 			}
 			else
@@ -267,7 +267,7 @@ class booktracker
     				Errors::setWarnings($tracker, 'cant_get_forum_page', $id);
     			}
     			//останавливаем процесс выполнения, т.к. не может работать без кук
-				booktracker::$exucution = FALSE;
+				booktracker::$execution = FALSE;
 			}
 		}
 		booktracker::$warning = NULL;

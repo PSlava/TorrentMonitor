@@ -103,7 +103,7 @@ class tfileSearch extends tfile
     						Errors::setWarnings($tracker, 'cant_find_dowload_link');
     					}
     					//останавливаем процесс выполнения, т.к. не может работать без кук
-    					tfile::$exucution = FALSE;
+    					tfile::$execution = FALSE;
     				}
                 }
             }

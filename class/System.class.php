@@ -331,21 +331,21 @@ class Sys
             }
 
             $cookie = Database::getCookie($tracker);
-            $exucution = FALSE;
+            $execution = FALSE;
             if (call_user_func($functionClass.'::checkCookie', $cookie))
             {
                 $sess_cookie = $cookie;
                 //запускам процесс выполнения
-                $exucution = TRUE;
+                $execution = TRUE;
             }
             else
             {
                 $sess_cookie = call_user_func($functionClass.'::getCookie', $tracker);
                 //запускам процесс выполнения
-                $exucution = TRUE;
+                $execution = TRUE;
             }
 
-            if ($exucution)
+            if ($execution)
             {
                 //получаем страницу для парсинга
                 if ($tracker == 'rustorka.com')

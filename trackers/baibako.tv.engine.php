@@ -2,7 +2,7 @@
 class baibako
 {
     protected static $sess_cookie;
-	protected static $exucution;
+	protected static $execution;
 	protected static $warning;
 	
 	protected static $page;	
@@ -122,7 +122,7 @@ class baibako
 			            }
     					Database::setCookie($tracker, baibako::$sess_cookie);
     					//запускам процесс выполнения, т.к. не может работать без кук
-    					baibako::$exucution = TRUE;
+    					baibako::$execution = TRUE;
     				}
     				//иначе не верный логин или пароль
     				else
@@ -134,7 +134,7 @@ class baibako
             				Errors::setWarnings($tracker, 'credential_wrong');
             			}
     					//останавливаем выполнение цепочки
-    					baibako::$exucution = FALSE;
+    					baibako::$execution = FALSE;
     				}
 				}
 				//если не удалось получить никаких данных со страницы, значит трекер не доступен
@@ -147,7 +147,7 @@ class baibako
         				Errors::setWarnings($tracker, 'cant_find_cookie');
         			}
 					//останавливаем выполнение цепочки
-					baibako::$exucution = FALSE;
+					baibako::$execution = FALSE;
 				}
 			}
 			else
@@ -159,7 +159,7 @@ class baibako
     				Errors::setWarnings($tracker, 'cant_get_auth_page');
     			}
 				//останавливаем выполнение цепочки
-				baibako::$exucution = FALSE;
+				baibako::$execution = FALSE;
 			}
 		}
 		else
@@ -171,7 +171,7 @@ class baibako
 				Errors::setWarnings($tracker, 'credential_miss');
 			}
 			//останавливаем выполнение цепочки
-			baibako::$exucution = FALSE;						
+			baibako::$execution = FALSE;						
 		}	
 	}
 	
@@ -180,7 +180,7 @@ class baibako
 	{
         extract($params);
 		//проверяем небыло ли до этого уже ошибок
-		if (empty(baibako::$exucution) || (baibako::$exucution))
+		if (empty(baibako::$execution) || (baibako::$execution))
 		{
 			//проверяем получена ли уже кука
 			if (empty(baibako::$sess_cookie))
@@ -190,7 +190,7 @@ class baibako
         		{
         			baibako::$sess_cookie = $cookie;
         			//запускам процесс выполнения
-        			baibako::$exucution = TRUE;
+        			baibako::$execution = TRUE;
         		}			
         		else
                     baibako::getCookie($tracker);
@@ -199,7 +199,7 @@ class baibako
 			//проверяем получена ли уже RSS лента
 			if ( ! baibako::$log_page)
 			{
-				if (baibako::$exucution)
+				if (baibako::$execution)
 				{
     				$credentials = Database::getCredentials('baibako.tv');
 					//получаем страницу
@@ -231,7 +231,7 @@ class baibako
                 				Errors::setWarnings($tracker, 'rss_parse_false');
                 			}
 							//останавливаем выполнение цепочки
-							baibako::$exucution = FALSE;
+							baibako::$execution = FALSE;
 						}
 						else
 							baibako::$log_page = TRUE;
@@ -245,14 +245,14 @@ class baibako
             				Errors::setWarnings($tracker, 'cant_find_rss');
             			}
 						//останавливаем выполнение цепочки
-						baibako::$exucution = FALSE;
+						baibako::$execution = FALSE;
 					}
 				}
 			}
         }
         
 		//если выполнение цепочки не остановлено
-		if (baibako::$exucution)
+		if (baibako::$execution)
 		{
 			if ( ! empty(baibako::$xml_page))
 			{

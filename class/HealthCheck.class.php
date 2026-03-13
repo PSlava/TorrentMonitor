@@ -7,29 +7,29 @@ class HealthCheck
         $checks = [];
 
         // 1. Интернет
-        $checks[] = self::check('internet', 'Подключение к интернету', function() {
+        $checks[] = self::checkSingle('internet', 'Подключение к интернету', function() {
             return Sys::checkInternet();
         });
 
         // 2. Конфиг
-        $checks[] = self::check('config', 'Конфигурационный файл', function() {
+        $checks[] = self::checkSingle('config', 'Конфигурационный файл', function() {
             return Sys::checkConfigExist();
         });
 
         // 3. cURL
-        $checks[] = self::check('curl', 'Расширение cURL', function() {
+        $checks[] = self::checkSingle('curl', 'Расширение cURL', function() {
             return Sys::checkCurl();
         });
 
         // 4. Запись в директорию торрентов
         $torrentPath = dirname(__FILE__) . '/../torrents/';
-        $checks[] = self::check('write_torrents', 'Запись в ' . basename($torrentPath), function() use ($torrentPath) {
+        $checks[] = self::checkSingle('write_torrents', 'Запись в ' . basename($torrentPath), function() use ($torrentPath) {
             return Sys::checkWriteToPath($torrentPath);
         });
 
         // 5. Запись в системную директорию
         $sysPath = dirname(__FILE__) . '/../';
-        $checks[] = self::check('write_system', 'Запись в системную директорию', function() use ($sysPath) {
+        $checks[] = self::checkSingle('write_system', 'Запись в системную директорию', function() use ($sysPath) {
             return Sys::checkWriteToPath($sysPath);
         });
 
@@ -46,7 +46,7 @@ class HealthCheck
         return $checks;
     }
 
-    private static function check($id, $title, $fn)
+    public static function checkSingle($id, $title, $fn)
     {
         try {
             $ok = $fn();
@@ -64,6 +64,10 @@ class HealthCheck
             ];
         }
     }
+
+    public static function checkLastRunPublic() { return self::checkLastRun(); }
+    public static function checkTorrentClientPublic() { return self::checkTorrentClient(); }
+    public static function checkTrackerCookiesPublic() { return self::checkTrackerCookies(); }
 
     // Проверка последнего запуска
     private static function checkLastRun()

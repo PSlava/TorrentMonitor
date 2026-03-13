@@ -12,12 +12,12 @@ class booktrackerSearch extends booktracker
 		{
 			booktracker::$sess_cookie = $cookie;
 			//запускам процесс выполнения
-			booktracker::$exucution = TRUE;
+			booktracker::$execution = TRUE;
 		}
 		else
     		booktracker::getCookie($tracker);
 
-		if (booktracker::$exucution)
+		if (booktracker::$execution)
 		{
     		$page = Sys::getUrlContent(
             	array(

@@ -2,7 +2,7 @@
 class hamsterstudio
 {
     protected static $sess_cookie;
-	protected static $exucution;
+	protected static $execution;
 	protected static $warning;
 	
 	protected static $page;	
@@ -121,7 +121,7 @@ class hamsterstudio
     					hamsterstudio::$sess_cookie = $array[1][1].'='.$array[2][1].' '.$array[1][2].'='.$array[2][2];
     					Database::setCookie($tracker, hamsterstudio::$sess_cookie);
     					//запускам процесс выполнения, т.к. не может работать без кук
-    					hamsterstudio::$exucution = TRUE;
+    					hamsterstudio::$execution = TRUE;
     				}
     				//иначе не верный логин или пароль
     				else
@@ -133,7 +133,7 @@ class hamsterstudio
             				Errors::setWarnings($tracker, 'credential_wrong');
             			}
     					//останавливаем выполнение цепочки
-    					hamsterstudio::$exucution = FALSE;
+    					hamsterstudio::$execution = FALSE;
     				}
 				}
 				//если не удалось получить никаких данных со страницы, значит трекер не доступен
@@ -146,7 +146,7 @@ class hamsterstudio
         				Errors::setWarnings($tracker, 'cant_find_cookie');
         			}
 					//останавливаем выполнение цепочки
-					hamsterstudio::$exucution = FALSE;
+					hamsterstudio::$execution = FALSE;
 				}
 			}
 			else
@@ -158,7 +158,7 @@ class hamsterstudio
     				Errors::setWarnings($tracker, 'cant_get_auth_page');
     			}
 				//останавливаем выполнение цепочки
-				hamsterstudio::$exucution = FALSE;
+				hamsterstudio::$execution = FALSE;
 			}
 
 		}
@@ -171,7 +171,7 @@ class hamsterstudio
 				Errors::setWarnings($tracker, 'credential_miss');
 			}
 			//останавливаем выполнение цепочки
-			hamsterstudio::$exucution = FALSE;						
+			hamsterstudio::$execution = FALSE;						
 		}	
 	}
 
@@ -180,7 +180,7 @@ class hamsterstudio
 	{
     	extract($params);
 		//проверяем небыло ли до этого уже ошибок
-		if (empty(hamsterstudio::$exucution) || (hamsterstudio::$exucution))
+		if (empty(hamsterstudio::$execution) || (hamsterstudio::$execution))
 		{
 			//проверяем получена ли уже кука
 			if (empty(hamsterstudio::$sess_cookie))
@@ -190,7 +190,7 @@ class hamsterstudio
         		{
         			hamsterstudio::$sess_cookie = $cookie;
         			//запускам процесс выполнения
-        			hamsterstudio::$exucution = TRUE;
+        			hamsterstudio::$execution = TRUE;
         		}			
         		else
                     hamsterstudio::getCookie($tracker);
@@ -199,7 +199,7 @@ class hamsterstudio
 			//проверяем получена ли уже RSS лента
 			if ( ! hamsterstudio::$log_page)
 			{
-				if (hamsterstudio::$exucution)
+				if (hamsterstudio::$execution)
 				{
 					//получаем страницу
 			        $page = Sys::getUrlContent(
@@ -229,7 +229,7 @@ class hamsterstudio
                 				Errors::setWarnings($tracker, 'rss_parse_false');
                 			}
 							//останавливаем выполнение цепочки
-							hamsterstudio::$exucution = FALSE;
+							hamsterstudio::$execution = FALSE;
 						}
 						else
 							hamsterstudio::$log_page = TRUE;
@@ -243,14 +243,14 @@ class hamsterstudio
             				Errors::setWarnings($tracker, 'cant_find_rss');
             			}
 						//останавливаем выполнение цепочки
-						hamsterstudio::$exucution = FALSE;
+						hamsterstudio::$execution = FALSE;
 					}
 				}
 			}
         }
         
 		//если выполнение цепочки не остановлено
-		if (hamsterstudio::$exucution)
+		if (hamsterstudio::$execution)
 		{
 			if ( ! empty(hamsterstudio::$xml_page))
 			{

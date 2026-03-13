@@ -84,12 +84,6 @@ if (Sys::checkCurl())
 				$class = $class[0];
 				$functionClass = str_replace('-', '', $class);
 				
-				if ($tracker == 'tracker.0day.kiev.ua')
-				    $functionClass = 'kiev';
-				    
-                if ($tracker == 'tv.mekc.info')
-				    $functionClass = 'mekc';
-				    
 				if ($tracker == 'baibako.tv_forum')
 				    $functionClass = 'baibako_f';
 

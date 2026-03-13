@@ -2,7 +2,7 @@
 class riperam
 {
 	protected static $sess_cookie;
-	protected static $exucution;
+	protected static $execution;
 	protected static $warning;
 	
 	protected static $domain = 'http://riperam.org/';
@@ -90,7 +90,7 @@ class riperam
 						Errors::setWarnings($tracker, 'credential_wrong');
 					}
 					//останавливаем процесс выполнения, т.к. не может работать без кук
-					riperam::$exucution = FALSE;
+					riperam::$execution = FALSE;
 				}
 				else
 				{
@@ -100,7 +100,7 @@ class riperam
 						riperam::$sess_cookie = implode('; ', $array[1]);
 						Database::setCookie($tracker, riperam::$sess_cookie);
 						//запускам процесс выполнения, т.к. не может работать без кук
-						riperam::$exucution = TRUE;
+						riperam::$execution = TRUE;
 					}
 				}
 			}
@@ -114,7 +114,7 @@ class riperam
 					Errors::setWarnings($tracker, 'cant_get_auth_page');
 				}
 				//останавливаем процесс выполнения, т.к. не может работать без кук
-				riperam::$exucution = FALSE;
+				riperam::$execution = FALSE;
 			}
 		}
 		else
@@ -126,7 +126,7 @@ class riperam
 				Errors::setWarnings($tracker, 'credential_miss');
 			}
 			//останавливаем процесс выполнения, т.к. не может работать без кук
-			riperam::$exucution = FALSE;
+			riperam::$execution = FALSE;
 		}
 	}
 
@@ -138,12 +138,12 @@ class riperam
 		{
 			riperam::$sess_cookie = $cookie;
 			//запускам процесс выполнения
-			riperam::$exucution = TRUE;
+			riperam::$execution = TRUE;
 		}
 		else
     		riperam::getCookie($tracker);
 
-		if (riperam::$exucution)
+		if (riperam::$execution)
 		{
 			//получаем страницу для парсинга
             $page = Sys::getUrlContent(
@@ -224,7 +224,7 @@ class riperam
                     				Errors::setWarnings($tracker, 'cant_find_dowload_link', $id);
                     			}
                     			//останавливаем процесс выполнения, т.к. не может работать без кук
-								riperam::$exucution = FALSE;
+								riperam::$execution = FALSE;
 							}
 						}
 						else
@@ -236,7 +236,7 @@ class riperam
                 				Errors::setWarnings($tracker, 'cant_find_date', $id);
                 			}
                 			//останавливаем процесс выполнения, т.к. не может работать без кук
-							riperam::$exucution = FALSE;
+							riperam::$execution = FALSE;
 						}
 					}
 					else
@@ -248,7 +248,7 @@ class riperam
             				Errors::setWarnings($tracker, 'cant_find_date', $id);
             			}
             			//останавливаем процесс выполнения, т.к. не может работать без кук
-						riperam::$exucution = FALSE;
+						riperam::$execution = FALSE;
 					}
 				}
 				else
@@ -260,7 +260,7 @@ class riperam
         				Errors::setWarnings($tracker, 'cant_find_date', $id);
         			}
         			//останавливаем процесс выполнения, т.к. не может работать без кук
-					riperam::$exucution = FALSE;
+					riperam::$execution = FALSE;
 				}
 			}
 			else
@@ -272,7 +272,7 @@ class riperam
     				Errors::setWarnings($tracker, 'cant_get_forum_page', $id);
     			}
     			//останавливаем процесс выполнения, т.к. не может работать без кук
-				riperam::$exucution = FALSE;
+				riperam::$execution = FALSE;
 			}
 		}
 		riperam::$warning = NULL;

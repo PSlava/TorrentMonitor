@@ -2,7 +2,7 @@
 class anidub
 {
     protected static $sess_cookie;
-    protected static $exucution;
+    protected static $execution;
     protected static $warning;
 
     //проверяем cookie
@@ -91,7 +91,7 @@ class anidub
                     //устанавливаем варнинг
                     Errors::setWarnings($tracker, 'credential_wrong');
                     //останавливаем процесс выполнения, т.к. не может работать без кук
-                    anidub::$exucution = FALSE;
+                    anidub::$execution = FALSE;
                 }
                 //если подходят - получаем куки
                 elseif (preg_match_all('/set-cookie: (.*);/Ui', $page, $array))
@@ -99,7 +99,7 @@ class anidub
                     anidub::$sess_cookie = $array[1][1].'; '.$array[1][2].'; '.$array[1][3].';';
                     Database::setCookie($tracker, anidub::$sess_cookie);
                     //запускам процесс выполнения, т.к. не может работать без кук
-                    anidub::$exucution = TRUE;
+                    anidub::$execution = TRUE;
                 }
                 else
                 {
@@ -110,7 +110,7 @@ class anidub
                         Errors::setWarnings($tracker, 'cant_find_cookie');
                     }
                     //останавливаем процесс выполнения, т.к. не может работать без кук
-                    anidub::$exucution = FALSE;
+                    anidub::$execution = FALSE;
                 }
             }
             //если вообще ничего не найдено
@@ -123,7 +123,7 @@ class anidub
                     Errors::setWarnings($tracker, 'cant_get_auth_page');
                 }
                 //останавливаем процесс выполнения, т.к. не может работать без кук
-                anidub::$exucution = FALSE;
+                anidub::$execution = FALSE;
             }
         }
         else
@@ -135,7 +135,7 @@ class anidub
                 Errors::setWarnings($tracker, 'credential_miss');
             }
             //останавливаем процесс выполнения, т.к. не может работать без кук
-            anidub::$exucution = FALSE;
+            anidub::$execution = FALSE;
         }
     }
     
@@ -148,12 +148,12 @@ class anidub
         {
             anidub::$sess_cookie = $cookie;
             //запускам процесс выполнения
-            anidub::$exucution = TRUE;
+            anidub::$execution = TRUE;
         }            
         else
             anidub::getCookie($tracker);
 
-        if (anidub::$exucution)
+        if (anidub::$execution)
         {
             //получаем страницу для парсинга
             $page = Sys::getUrlContent(
@@ -241,7 +241,7 @@ class anidub
                                 Errors::setWarnings($tracker, 'cant_find_date', $id);
                             }
                             //останавливаем процесс выполнения, т.к. не может работать без кук
-                            anidub::$exucution = FALSE;
+                            anidub::$execution = FALSE;
                         }
                     }
                     else
@@ -253,7 +253,7 @@ class anidub
                             Errors::setWarnings($tracker, 'cant_find_date', $id);
                         }
                         //останавливаем процесс выполнения, т.к. не может работать без кук
-                        anidub::$exucution = FALSE;
+                        anidub::$execution = FALSE;
                     }
                 }
                 else
@@ -265,7 +265,7 @@ class anidub
                         Errors::setWarnings($tracker, 'cant_find_date', $id);
                     }
                     //останавливаем процесс выполнения, т.к. не может работать без кук
-                    anidub::$exucution = FALSE;
+                    anidub::$execution = FALSE;
                 }
             }            
             else
@@ -277,7 +277,7 @@ class anidub
                     Errors::setWarnings($tracker, 'cant_get_forum_page', $id);
                 }
                 //останавливаем процесс выполнения, т.к. не может работать без кук
-                anidub::$exucution = FALSE;
+                anidub::$execution = FALSE;
             }
         }
         anidub::$warning = NULL;

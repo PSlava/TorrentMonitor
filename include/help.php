@@ -19,7 +19,7 @@ $opts = stream_context_create(array(
         'timeout' => 1
         )
     ));
-$xmlstr = @file_get_contents('http://xml.tormon.ru/help.xml', false, $opts);
+$xmlstr = @file_get_contents('https://xml.tormon.ru/help.xml', false, $opts);
 $xml = @simplexml_load_string($xmlstr);
 if (false !== $xml)
 {
@@ -33,15 +33,15 @@ if (false !== $xml)
     }">
         <article class="collapsar__item" :class="{'--expanded': current == 'help'}" @click="change('help', $el)">
             <div class="collapsar__title">Помощь</div>
-            <div class="collapsar__content" x-show="current=='help'" x-collapse><?php echo $xml->help ?></div>
+            <div class="collapsar__content" x-show="current=='help'" x-collapse><?php echo strip_tags($xml->help, '<a><b><strong><i><em><br><p><ul><ol><li><h3><h4><code><div><span><img>') ?></div>
         </article>
         <article class="collapsar__item" :class="{'--expanded': current == 'about'}" @click="change('about', $el)">
             <div class="collapsar__title">О проекте</div>
-            <div class="collapsar__content" x-cloak x-show="current=='about'" x-collapse><?php echo $xml->about ?></div>
+            <div class="collapsar__content" x-cloak x-show="current=='about'" x-collapse><?php echo strip_tags($xml->about, '<a><b><strong><i><em><br><p><ul><ol><li><h3><h4><code><div><span><img>') ?></div>
         </article>
         <article class="collapsar__item" :class="{'--expanded': current == 'devs'}" @click="change('devs', $el)">
             <div class="collapsar__title">Разработчики</div>
-            <div class="collapsar__content" x-cloak x-show="current=='devs'" x-collapse><?php echo $xml->developers ?></div>
+            <div class="collapsar__content" x-cloak x-show="current=='devs'" x-collapse><?php echo strip_tags($xml->developers, '<a><b><strong><i><em><br><p><ul><ol><li><h3><h4><code><div><span><img>') ?></div>
         </article>
     </div>
     <?php

@@ -2,7 +2,7 @@
 class rutracker
 {
 	protected static $sess_cookie;
-	protected static $exucution;
+	protected static $execution;
 	protected static $warning;
 
 	//проверяем cookie
@@ -87,7 +87,7 @@ class rutracker
 					//устанавливаем варнинг
 					Errors::setWarnings($tracker, 'credential_wrong');
 					//останавливаем процесс выполнения, т.к. не может работать без кук
-					rutracker::$exucution = FALSE;
+					rutracker::$execution = FALSE;
 				}
 				//если подходят - получаем куки
 				elseif (preg_match('/bb_session=.+;/U', $page, $array))
@@ -95,7 +95,7 @@ class rutracker
 					rutracker::$sess_cookie = $array[0];
 					Database::setCookie($tracker, rutracker::$sess_cookie);
 					//запускам процесс выполнения, т.к. не может работать без кук
-					rutracker::$exucution = TRUE;
+					rutracker::$execution = TRUE;
 				}
 				else
 				{
@@ -106,7 +106,7 @@ class rutracker
 						Errors::setWarnings($tracker, 'cant_find_cookie');
 					}
 					//останавливаем процесс выполнения, т.к. не может работать без кук
-					rutracker::$exucution = FALSE;
+					rutracker::$execution = FALSE;
 				}
 			}
 			//если вообще ничего не найдено
@@ -119,7 +119,7 @@ class rutracker
 					Errors::setWarnings($tracker, 'cant_get_auth_page');
 				}
 				//останавливаем процесс выполнения, т.к. не может работать без кук
-				rutracker::$exucution = FALSE;
+				rutracker::$execution = FALSE;
 			}
 		}
 		else
@@ -131,7 +131,7 @@ class rutracker
 				Errors::setWarnings($tracker, 'credential_miss');
 			}
 			//останавливаем процесс выполнения, т.к. не может работать без кук
-			rutracker::$exucution = FALSE;
+			rutracker::$execution = FALSE;
 		}
 	}
 
@@ -144,12 +144,12 @@ class rutracker
 		{
 			rutracker::$sess_cookie = $cookie;
 			//запускам процесс выполнения
-			rutracker::$exucution = TRUE;
+			rutracker::$execution = TRUE;
 		}
 		else
     		rutracker::getCookie($tracker);
 
-		if (rutracker::$exucution)
+		if (rutracker::$execution)
 		{
 			//получаем страницу для парсинга
             $page = Sys::getUrlContent(
@@ -228,7 +228,7 @@ class rutracker
 								Errors::setWarnings($tracker, 'cant_find_date', $id);
 							}
 							//останавливаем процесс выполнения, т.к. не может работать без кук
-							rutracker::$exucution = FALSE;
+							rutracker::$execution = FALSE;
 						}
 					}
 					else
@@ -240,7 +240,7 @@ class rutracker
 							Errors::setWarnings($tracker, 'cant_find_date', $id);
 						}
 						//останавливаем процесс выполнения, т.к. не может работать без кук
-						rutracker::$exucution = FALSE;
+						rutracker::$execution = FALSE;
 					}
 				}
 				else
@@ -252,7 +252,7 @@ class rutracker
 						Errors::setWarnings($tracker, 'cant_find_date', $id);
 					}
 					//останавливаем процесс выполнения, т.к. не может работать без кук
-					rutracker::$exucution = FALSE;
+					rutracker::$execution = FALSE;
 				}
 			}
 			else
@@ -264,7 +264,7 @@ class rutracker
 					Errors::setWarnings($tracker, 'cant_get_forum_page', $id);
 				}
 				//останавливаем процесс выполнения, т.к. не может работать без кук
-				rutracker::$exucution = FALSE;
+				rutracker::$execution = FALSE;
 			}
 		}
 		rutracker::$warning = NULL;

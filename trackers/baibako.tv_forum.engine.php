@@ -2,7 +2,7 @@
 class baibako_f
 {
     protected static $sess_cookie;
-	protected static $exucution;
+	protected static $execution;
 	protected static $warning;
 
 	//проверяем cookie
@@ -93,7 +93,7 @@ class baibako_f
 			            }
     					Database::setCookie($tracker, baibako_f::$sess_cookie);
     					//запускам процесс выполнения, т.к. не может работать без кук
-    					baibako_f::$exucution = TRUE;
+    					baibako_f::$execution = TRUE;
     				}
     				//иначе не верный логин или пароль
     				else
@@ -105,7 +105,7 @@ class baibako_f
             				Errors::setWarnings($tracker, 'credential_wrong');
             			}
     					//останавливаем выполнение цепочки
-    					baibako_f::$exucution = FALSE;
+    					baibako_f::$execution = FALSE;
     				}
 				}
 				//если не удалось получить никаких данных со страницы, значит трекер не доступен
@@ -118,7 +118,7 @@ class baibako_f
         				Errors::setWarnings($tracker, 'cant_find_cookie');
         			}
 					//останавливаем выполнение цепочки
-					baibako_f::$exucution = FALSE;
+					baibako_f::$execution = FALSE;
 				}
 			}
 			else
@@ -130,7 +130,7 @@ class baibako_f
     				Errors::setWarnings($tracker, 'cant_get_auth_page');
     			}
 				//останавливаем выполнение цепочки
-				baibako_f::$exucution = FALSE;
+				baibako_f::$execution = FALSE;
 			}
 		}
 		else
@@ -142,7 +142,7 @@ class baibako_f
 				Errors::setWarnings($tracker, 'credential_miss');
 			}
 			//останавливаем выполнение цепочки
-			baibako_f::$exucution = FALSE;						
+			baibako_f::$execution = FALSE;						
 		}	
 	}
 	
@@ -155,13 +155,13 @@ class baibako_f
 		{
 			baibako_f::$sess_cookie = $cookie;
 			//запускам процесс выполнения
-			baibako_f::$exucution = TRUE;
+			baibako_f::$execution = TRUE;
 		}
 		else
     		baibako_f::getCookie($tracker);
     		
     		
-		if (baibako_f::$exucution)
+		if (baibako_f::$execution)
 		{
 			//получаем страницу для парсинга
             $page = Sys::getUrlContent(
@@ -239,7 +239,7 @@ class baibako_f
 								Errors::setWarnings($tracker, 'cant_find_date', $id);
 							}
 							//останавливаем процесс выполнения, т.к. не может работать без кук
-							baibako_f::$exucution = FALSE;
+							baibako_f::$execution = FALSE;
 						}
 					}
 					else
@@ -251,7 +251,7 @@ class baibako_f
 							Errors::setWarnings($tracker, 'cant_find_date', $id);
 						}
 						//останавливаем процесс выполнения, т.к. не может работать без кук
-						baibako_f::$exucution = FALSE;
+						baibako_f::$execution = FALSE;
 					}
                 }
 			}
@@ -264,7 +264,7 @@ class baibako_f
 					Errors::setWarnings($tracker, 'cant_get_forum_page', $id);
 				}
 				//останавливаем процесс выполнения, т.к. не может работать без кук
-				baibako_f::$exucution = FALSE;
+				baibako_f::$execution = FALSE;
 			}
 		}
 		baibako_f::$warning = NULL;		

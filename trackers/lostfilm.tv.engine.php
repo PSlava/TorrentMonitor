@@ -2,7 +2,7 @@
 class lostfilm
 {
 	protected static $sess_cookie;
-	protected static $exucution;
+	protected static $execution;
 	protected static $warning;
 	
 	protected static $page;	
@@ -122,7 +122,7 @@ class lostfilm
         				Errors::setWarnings($tracker, 'captcha');
         			}
 					//останавливаем выполнение цепочки
-					lostfilm::$exucution = FALSE;        			
+					lostfilm::$execution = FALSE;        			
                 }
 				elseif (preg_match_all('/\"error\"/', $page, $array))
     			{
@@ -133,7 +133,7 @@ class lostfilm
         				Errors::setWarnings($tracker, 'credential_wrong');
         			}
 					//останавливаем выполнение цепочки
-					lostfilm::$exucution = FALSE;        			
+					lostfilm::$execution = FALSE;        			
                 }
 				//проверяем подходят ли учётные данные
 				elseif (preg_match_all('/Set-Cookie: lf_session=(.*);/Ui', $page, $array))
@@ -142,7 +142,7 @@ class lostfilm
     				lostfilm::$sess_cookie = 'lf_session='.$array[1][$num-1];
 					Database::setCookie($tracker, lostfilm::$sess_cookie);
 					//запускам процесс выполнения, т.к. не может работать без кук
-					lostfilm::$exucution = TRUE;
+					lostfilm::$execution = TRUE;
 				}
 				//если не удалось получить никаких данных со страницы, значит трекер не доступен
 				else
@@ -154,7 +154,7 @@ class lostfilm
         				Errors::setWarnings($tracker, 'cant_find_cookie');
         			}
 					//останавливаем выполнение цепочки
-					lostfilm::$exucution = FALSE;
+					lostfilm::$execution = FALSE;
 				}
 			}
 			else
@@ -166,7 +166,7 @@ class lostfilm
     				Errors::setWarnings($tracker, 'cant_get_auth_page');
     			}
 				//останавливаем выполнение цепочки
-				lostfilm::$exucution = FALSE;
+				lostfilm::$execution = FALSE;
 			}
 		}
 		else
@@ -178,7 +178,7 @@ class lostfilm
 				Errors::setWarnings($tracker, 'credential_miss');
 			}
 			//останавливаем выполнение цепочки
-			lostfilm::$exucution = FALSE;						
+			lostfilm::$execution = FALSE;						
 		}	
 	}
 	
@@ -187,7 +187,7 @@ class lostfilm
 	{
     	extract($params);
 		//проверяем небыло ли до этого уже ошибок
-		if (empty(lostfilm::$exucution) || (lostfilm::$exucution))
+		if (empty(lostfilm::$execution) || (lostfilm::$execution))
 		{
 			//проверяем получена ли уже кука
 			if (empty(lostfilm::$sess_cookie))
@@ -197,7 +197,7 @@ class lostfilm
         		{
         			lostfilm::$sess_cookie = $cookie;
         			//запускам процесс выполнения
-        			lostfilm::$exucution = TRUE;
+        			lostfilm::$execution = TRUE;
         		}			
         		else
             		lostfilm::getCookie($tracker);
@@ -206,7 +206,7 @@ class lostfilm
 			//проверяем получена ли уже RSS лента
 			if ( ! lostfilm::$log_page)
 			{
-				if (lostfilm::$exucution)
+				if (lostfilm::$execution)
 				{
 					//получаем страницу
 			        lostfilm::$page = Sys::getUrlContent(
@@ -234,7 +234,7 @@ class lostfilm
                 				Errors::setWarnings($tracker, 'rss_parse_false');
                 			}
 							//останавливаем выполнение цепочки
-							lostfilm::$exucution = FALSE;
+							lostfilm::$execution = FALSE;
 						}
 						else
 							lostfilm::$log_page = TRUE;
@@ -248,14 +248,14 @@ class lostfilm
             				Errors::setWarnings($tracker, 'cant_find_rss');
             			}
 						//останавливаем выполнение цепочки
-						lostfilm::$exucution = FALSE;
+						lostfilm::$execution = FALSE;
 					}
 				}
 			}
 		}
 	
 		//если выполнение цепочки не остановлено
-		if (lostfilm::$exucution)
+		if (lostfilm::$execution)
 		{
 			if ( ! empty(lostfilm::$xml_page))
 			{

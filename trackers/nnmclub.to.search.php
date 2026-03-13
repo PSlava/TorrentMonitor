@@ -12,12 +12,12 @@ class nnmclubSearch extends nnmclub
 		{
 			nnmclub::$sess_cookie = $cookie;
 			//запускам процесс выполнения
-			nnmclub::$exucution = TRUE;
+			nnmclub::$execution = TRUE;
 		}
 		else
     		nnmclub::getCookie($tracker);
 
-		if (nnmclub::$exucution)
+		if (nnmclub::$execution)
 		{
     		$user = iconv('utf-8', 'windows-1251', $name);
     		$user = str_replace(' ', '+', $user);

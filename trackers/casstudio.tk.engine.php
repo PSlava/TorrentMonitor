@@ -2,7 +2,7 @@
 class casstudio
 {
 	protected static $sess_cookie;
-	protected static $exucution;
+	protected static $execution;
 	protected static $warning;
 
 	//проверяем cookie
@@ -109,7 +109,7 @@ class casstudio
 					//устанавливаем варнинг
 					Errors::setWarnings($tracker, 'credential_wrong');
 					//останавливаем процесс выполнения, т.к. не может работать без кук
-					casstudio::$exucution = FALSE;
+					casstudio::$execution = FALSE;
 				}
 				//если подходят - получаем куки
 				elseif (preg_match_all('/Set-Cookie: (.*);/iU', $page, $array))
@@ -117,7 +117,7 @@ class casstudio
 					casstudio::$sess_cookie = $array[1][3].'; '.$array[1][4].'; '.$array[1][5];
 					Database::setCookie($tracker, casstudio::$sess_cookie);
 					//запускам процесс выполнения, т.к. не может работать без кук
-					casstudio::$exucution = TRUE;
+					casstudio::$execution = TRUE;
 				}
 				else
 				{
@@ -128,7 +128,7 @@ class casstudio
 						Errors::setWarnings($tracker, 'cant_find_cookie');
 					}
 					//останавливаем процесс выполнения, т.к. не может работать без кук
-					casstudio::$exucution = FALSE;
+					casstudio::$execution = FALSE;
 				}
 			}
 			//если вообще ничего не найдено
@@ -141,7 +141,7 @@ class casstudio
 					Errors::setWarnings($tracker, 'cant_get_auth_page');
 				}
 				//останавливаем процесс выполнения, т.к. не может работать без кук
-				casstudio::$exucution = FALSE;
+				casstudio::$execution = FALSE;
 			}
 		}
 		else
@@ -153,7 +153,7 @@ class casstudio
 				Errors::setWarnings($tracker, 'credential_miss');
 			}
 			//останавливаем процесс выполнения, т.к. не может работать без кук
-			casstudio::$exucution = FALSE;
+			casstudio::$execution = FALSE;
 		}
 	}
 
@@ -166,12 +166,12 @@ class casstudio
 		{
 			casstudio::$sess_cookie = $cookie;
 			//запускам процесс выполнения
-			casstudio::$exucution = TRUE;
+			casstudio::$execution = TRUE;
 		}
 		else
     		casstudio::getCookie($tracker);
 
-		if (casstudio::$exucution)
+		if (casstudio::$execution)
 		{
 			//получаем страницу для парсинга
             $page = Sys::getUrlContent(
@@ -248,7 +248,7 @@ class casstudio
         								Errors::setWarnings($tracker, 'cant_find_dowload_link', $id);
         							}
         							//останавливаем процесс выполнения, т.к. не может работать без кук
-        							casstudio::$exucution = FALSE;
+        							casstudio::$execution = FALSE;
                                 }
 							}
 							Database::setErrorToThreme($id, 0);
@@ -262,7 +262,7 @@ class casstudio
 								Errors::setWarnings($tracker, 'cant_find_date', $id);
 							}
 							//останавливаем процесс выполнения, т.к. не может работать без кук
-							casstudio::$exucution = FALSE;
+							casstudio::$execution = FALSE;
 						}
 					}
 					else
@@ -274,7 +274,7 @@ class casstudio
 							Errors::setWarnings($tracker, 'cant_find_date', $id);
 						}
 						//останавливаем процесс выполнения, т.к. не может работать без кук
-						casstudio::$exucution = FALSE;
+						casstudio::$execution = FALSE;
 					}
 				}
 				else
@@ -286,7 +286,7 @@ class casstudio
 						Errors::setWarnings($tracker, 'cant_find_date', $id);
 					}
 					//останавливаем процесс выполнения, т.к. не может работать без кук
-					casstudio::$exucution = FALSE;
+					casstudio::$execution = FALSE;
 				}
 			}
 			else
@@ -298,7 +298,7 @@ class casstudio
 					Errors::setWarnings($tracker, 'cant_get_forum_page');
 				}
 				//останавливаем процесс выполнения, т.к. не может работать без кук
-				casstudio::$exucution = FALSE;
+				casstudio::$execution = FALSE;
 			}
 		}
 		casstudio::$warning = NULL;

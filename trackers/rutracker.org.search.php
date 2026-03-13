@@ -12,12 +12,12 @@ class rutrackerSearch extends rutracker
 		{
 			rutracker::$sess_cookie = $cookie;
 			//запускам процесс выполнения
-			rutracker::$exucution = TRUE;
+			rutracker::$execution = TRUE;
 		}
 		else
     		rutracker::getCookie($tracker);
 
-		if (rutracker::$exucution)
+		if (rutracker::$execution)
 		{
     		$user = iconv('utf-8', 'windows-1251', $name);
     		$page = Sys::getUrlContent(

@@ -2,7 +2,7 @@
 class newstudio
 {
 	protected static $sess_cookie;
-	protected static $exucution;
+	protected static $execution;
 	protected static $warning;
 	
 	protected static $page;	
@@ -154,7 +154,7 @@ class newstudio
 					newstudio::$sess_cookie = $array[1][0];
 					Database::setCookie($tracker, newstudio::$sess_cookie);
 					//запускам процесс выполнения, т.к. не может работать без кук
-					newstudio::$exucution = TRUE;
+					newstudio::$execution = TRUE;
 				}
 				//проверяем нет ли сообщения о неправильном логине/пароле
 				elseif (preg_match('/profile\.php\?mode=sendpassword/', $page, $out))
@@ -166,7 +166,7 @@ class newstudio
         				Errors::setWarnings($tracker, 'credential_wrong');
         			}
 					//останавливаем выполнение цепочки
-					newstudio::$exucution = FALSE;
+					newstudio::$execution = FALSE;
 				}
 				//если не удалось получить никаких данных со страницы, значит трекер не доступен
 				else
@@ -178,7 +178,7 @@ class newstudio
         				Errors::setWarnings($tracker, 'cant_find_cookie');
         			}
 					//останавливаем выполнение цепочки
-					newstudio::$exucution = FALSE;
+					newstudio::$execution = FALSE;
 				}
 			}
 			else
@@ -190,7 +190,7 @@ class newstudio
     				Errors::setWarnings($tracker, 'cant_get_auth_page');
     			}
 				//останавливаем выполнение цепочки
-				newstudio::$exucution = FALSE;
+				newstudio::$execution = FALSE;
 			}
 		}
 		else
@@ -202,7 +202,7 @@ class newstudio
 				Errors::setWarnings($tracker, 'credential_miss');
 			}
 			//останавливаем выполнение цепочки
-			newstudio::$exucution = FALSE;						
+			newstudio::$execution = FALSE;						
 		}	
 	}
 	
@@ -211,7 +211,7 @@ class newstudio
 	{
     	extract($params);
 		//проверяем небыло ли до этого уже ошибок
-		if (empty(newstudio::$exucution) || (newstudio::$exucution))
+		if (empty(newstudio::$execution) || (newstudio::$execution))
 		{
 			//проверяем получена ли уже кука
 			if (empty(newstudio::$sess_cookie))
@@ -221,7 +221,7 @@ class newstudio
         		{
         			newstudio::$sess_cookie = $cookie;
         			//запускам процесс выполнения
-        			newstudio::$exucution = TRUE;
+        			newstudio::$execution = TRUE;
         		}			
         		else
             		newstudio::getCookie($tracker);
@@ -230,7 +230,7 @@ class newstudio
 			//проверяем получена ли уже RSS лента
 			if ( ! newstudio::$log_page)
 			{
-				if (newstudio::$exucution)
+				if (newstudio::$execution)
 				{
 					//получаем страницу
 			        newstudio::$page = Sys::getUrlContent(
@@ -255,7 +255,7 @@ class newstudio
                 				Errors::setWarnings($tracker, 'rss_parse_false');
                 			}
 							//останавливаем выполнение цепочки
-							newstudio::$exucution = FALSE;
+							newstudio::$execution = FALSE;
 						}
 						else
 							newstudio::$log_page = TRUE;
@@ -269,14 +269,14 @@ class newstudio
             				Errors::setWarnings($tracker, 'cant_find_rss');
             			}
 						//останавливаем выполнение цепочки
-						newstudio::$exucution = FALSE;
+						newstudio::$execution = FALSE;
 					}
 				}
 			}
 		}
 	
 		//если выполнение цепочки не остановлено
-		if (newstudio::$exucution)
+		if (newstudio::$execution)
 		{
 			if ( ! empty(newstudio::$xml_page))
 			{

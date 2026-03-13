@@ -2,7 +2,7 @@
 class nnmclub
 {
 	protected static $sess_cookie;
-	protected static $exucution;
+	protected static $execution;
 	protected static $warning;
 	
 	protected static $domain = 'nnmclub.to';
@@ -91,7 +91,7 @@ class nnmclub
 						Errors::setWarnings($tracker, 'credential_wrong');
 					}
 					//останавливаем процесс выполнения, т.к. не может работать без кук
-					nnmclub::$exucution = FALSE;
+					nnmclub::$execution = FALSE;
 				}
 				else
 				{
@@ -101,7 +101,7 @@ class nnmclub
 						nnmclub::$sess_cookie = implode('; ', $array[1]);
 						Database::setCookie($tracker, nnmclub::$sess_cookie);
 						//запускам процесс выполнения, т.к. не может работать без кук
-						nnmclub::$exucution = TRUE;
+						nnmclub::$execution = TRUE;
 					}
 				}
 			}
@@ -115,7 +115,7 @@ class nnmclub
 					Errors::setWarnings($tracker, 'cant_get_auth_page');
 				}
 				//останавливаем процесс выполнения, т.к. не может работать без кук
-				nnmclub::$exucution = FALSE;
+				nnmclub::$execution = FALSE;
 			}
 		}
 		else
@@ -127,7 +127,7 @@ class nnmclub
 				Errors::setWarnings($tracker, 'credential_miss');
 			}
 			//останавливаем процесс выполнения, т.к. не может работать без кук
-			nnmclub::$exucution = FALSE;
+			nnmclub::$execution = FALSE;
 		}
 	}
 
@@ -139,12 +139,12 @@ class nnmclub
 		{
 			nnmclub::$sess_cookie = $cookie;
 			//запускам процесс выполнения
-			nnmclub::$exucution = TRUE;
+			nnmclub::$execution = TRUE;
 		}
 		else
     		nnmclub::getCookie($tracker);
 
-		if (nnmclub::$exucution)
+		if (nnmclub::$execution)
 		{
 			//получаем страницу для парсинга
             $page = Sys::getUrlContent(
@@ -226,7 +226,7 @@ class nnmclub
                     				Errors::setWarnings($tracker, 'cant_find_dowload_link', $id);
                     			}
                     			//останавливаем процесс выполнения, т.к. не может работать без кук
-								nnmclub::$exucution = FALSE;
+								nnmclub::$execution = FALSE;
 							}
 						}
 						else
@@ -238,7 +238,7 @@ class nnmclub
                 				Errors::setWarnings($tracker, 'cant_find_date', $id);
                 			}
                 			//останавливаем процесс выполнения, т.к. не может работать без кук
-							nnmclub::$exucution = FALSE;
+							nnmclub::$execution = FALSE;
 						}
 					}
 					else
@@ -250,7 +250,7 @@ class nnmclub
             				Errors::setWarnings($tracker, 'cant_find_date', $id);
             			}
             			//останавливаем процесс выполнения, т.к. не может работать без кук
-						nnmclub::$exucution = FALSE;
+						nnmclub::$execution = FALSE;
 					}
 				}
 				else
@@ -262,7 +262,7 @@ class nnmclub
         				Errors::setWarnings($tracker, 'cant_find_date', $id);
         			}
         			//останавливаем процесс выполнения, т.к. не может работать без кук
-					nnmclub::$exucution = FALSE;
+					nnmclub::$execution = FALSE;
 				}
 			}
 			else
@@ -274,7 +274,7 @@ class nnmclub
     				Errors::setWarnings($tracker, 'cant_get_forum_page', $id);
     			}
     			//останавливаем процесс выполнения, т.к. не может работать без кук
-				nnmclub::$exucution = FALSE;
+				nnmclub::$execution = FALSE;
 			}
 		}
 		nnmclub::$warning = NULL;
