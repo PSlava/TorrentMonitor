@@ -1073,6 +1073,16 @@ class Database
             return FALSE;
     }
 
+    //Помечаем все новости как прочитанные
+    public static function markAllNews()
+    {
+        $stmt = self::newStatement("UPDATE `news` SET `new` = 0 WHERE `new` = 1");
+        if ($stmt->execute())
+            return TRUE;
+        else
+            return FALSE;
+    }
+
     //
     public static function getScript($id)
     {
