@@ -14,12 +14,14 @@ class Url
             'quality' => false,
         ];
 
+        $name_safe = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+
         if ($torrent_id) {
-            $data['url'] = '<a href="' . self::href($tracker, $torrent_id) . '" target="_blank">' . $name . '</a>';
+            $data['url'] = '<a href="' . self::href($tracker, $torrent_id) . '" target="_blank">' . $name_safe . '</a>';
         }
         elseif (in_array($tracker, self::$strackerslf))
         {
-            $data['url'] = '<a href="https://www.lostfilmtv5.site/search?q=' . urlencode($name) . '" target="_blank">' . $name . '</a>';
+            $data['url'] = '<a href="https://www.lostfilmtv5.site/search?q=' . urlencode($name) . '" target="_blank">' . $name_safe . '</a>';
             if ($hd == 1) {
                 $data['quality'] = '1080';
             } elseif ($hd == 2) {
@@ -45,6 +47,7 @@ class Url
 
     public static function href($tracker, $torrent_id)
     {
+        $torrent_id = htmlspecialchars($torrent_id, ENT_QUOTES, 'UTF-8');
         $url = '';
         if ($tracker == 'rutracker.org' || $tracker == 'nnmclub.to' || $tracker == 'tfile.cc' || $tracker == 'pornolab.net' || $tracker == 'rustorka.com')
         {

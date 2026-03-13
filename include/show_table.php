@@ -27,7 +27,7 @@ $torrents_list = Database::getTorrentsList($order, $orderDir);
 <?php } ?>
 
 <?php if ( ! is_array($torrents_list)) { ?>
-    <div class="torrents-fs --error"><div><?= $torrents_list ?></div></div>
+    <div class="torrents-fs --error"><div><?= htmlspecialchars($torrents_list, ENT_QUOTES, 'UTF-8') ?></div></div>
 <?php } else { ?>
 
 
@@ -68,7 +68,7 @@ $torrents_list = Database::getTorrentsList($order, $orderDir);
     >
 
     <div class="col --auto">
-        <div class="tracker-icon" style="background-image: url(img/<?= $tracker ?>.ico)" title="<?= $tracker ?>"></div>
+        <div class="tracker-icon" style="background-image: url(img/<?= htmlspecialchars($tracker, ENT_QUOTES, 'UTF-8') ?>.ico)" title="<?= htmlspecialchars($tracker, ENT_QUOTES, 'UTF-8') ?>"></div>
     </div>
 
     <div class="col">
