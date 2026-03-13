@@ -48,7 +48,7 @@ class Database
             elseif ($this->dbType == 'mysql')
                $this->dbh = new PDO($dsn, $username, $password, $options);
         } catch (PDOException $e) {
-            print 'Error!: '.$e->getMessage().'<br/>';
+            print 'Ошибка подключения к базе данных<br/>';
             die();
         }
     }
@@ -318,6 +318,8 @@ class Database
 
     public static function getTorrentsList($order, $dir = 'ASC')
     {
+    	$dir = in_array(strtoupper($dir), ['ASC', 'DESC']) ? strtoupper($dir) : 'ASC';
+
     	if ($order == 'date')
     		$order = 't.timestamp ' . $dir;
     	else
@@ -325,7 +327,7 @@ class Database
 
         if (Database::getDbType() == 'pgsql')
         {
-            $stmt = Database::getInstance()->dbh->prepare("SELECT t.id, t.tracker, t.name, t.hd, t.path, t.torrent_id, t.ep, t.timestamp, t.auto_update, t.script, t.pause,
+            $stmt = self::newStatement("SELECT t.id, t.tracker, t.name, t.hd, t.path, t.torrent_id, t.ep, t.timestamp, t.auto_update, t.script, t.pause,
                             to_char(t.timestamp, 'dd') AS day,
                             to_char(t.timestamp, 'mm') AS month,
                             to_char(t.timestamp, 'YYYY') AS year,
@@ -337,7 +339,7 @@ class Database
         }
         elseif (Database::getDbType() == 'mysql')
         {
-            $stmt = Database::getInstance()->dbh->prepare("SELECT `t`.`id`, `t`.`tracker`, `t`.`name`, `t`.`hd`, `t`.`path`, `t`.`torrent_id`, `t`.`ep`, `t`.`timestamp`, `t`.`auto_update`, `t`.`script`, `t`.`pause`,
+            $stmt = self::newStatement("SELECT `t`.`id`, `t`.`tracker`, `t`.`name`, `t`.`hd`, `t`.`path`, `t`.`torrent_id`, `t`.`ep`, `t`.`timestamp`, `t`.`auto_update`, `t`.`script`, `t`.`pause`,
                             DATE_FORMAT(`t`.`timestamp`, '%d') AS `day`,
                             DATE_FORMAT(`t`.`timestamp`, '%m') AS `month`,
                             DATE_FORMAT(`t`.`timestamp`, '%Y') AS `year`,
@@ -349,7 +351,7 @@ class Database
         }
         elseif (Database::getDbType() == 'sqlite')
         {
-            $stmt = Database::getInstance()->dbh->prepare("SELECT `t`.`id`, `t`.`tracker`, `t`.`name`, `t`.`hd`, `t`.`path`, `t`.`torrent_id`, `t`.`ep`, `t`.`timestamp`, `t`.`auto_update`, `t`.`script`, `t`.`pause`,
+            $stmt = self::newStatement("SELECT `t`.`id`, `t`.`tracker`, `t`.`name`, `t`.`hd`, `t`.`path`, `t`.`torrent_id`, `t`.`ep`, `t`.`timestamp`, `t`.`auto_update`, `t`.`script`, `t`.`pause`,
                             strftime('%d', `t`.`timestamp`) AS `day`,
                             strftime('%m', `t`.`timestamp`) AS `month`,
                             strftime('%Y', `t`.`timestamp`) AS `year`,
@@ -748,21 +750,20 @@ class Database
         $stmt->bindParam(':path', $path);
         $stmt->bindParam(':script', $script);
         $stmt->bindParam(':torrent_id', $threme);
-	    $stmt->bindParam(':auto_update', $update);
+        $stmt->bindParam(':auto_update', $update);
         $stmt->bindParam(':id', $id);
         $stmt->bindParam(':pause', $pause);
-        $stmt->execute();
+        if ( ! $stmt->execute())
+            return FALSE;
 
         if ($reset)
         {
             $stmt = self::newStatement("UPDATE `torrent` SET `timestamp` = '2000-01-01 00:00:00', `hash` = '' WHERE `id` = :id");
             $stmt->bindParam(':id', $id);
+            if ( ! $stmt->execute())
+                return FALSE;
         }
-        if ($stmt->execute())
-            return TRUE;
-        else
-            return FALSE;
-
+        return TRUE;
     }
 
     public static function updateHash($id, $hash)
@@ -835,18 +836,18 @@ class Database
     {
         if (Database::getDbType() == 'pgsql')
         {
-            $stmt = Database::getInstance()->dbh->prepare("SELECT \"time\", \"reason\", \"where\", \"t_id\",
+            $stmt = self::newStatement("SELECT `time`, `reason`, `where`, `t_id`,
                             to_char(time, 'dd') AS day,
                             to_char(time, 'mm') AS month,
                             to_char(time, 'YYYY') AS year,
                             to_char(time, 'HH24:MI') AS hours
                             FROM warning
-                            WHERE \"where\" = :tracker
+                            WHERE `where` = :tracker
                             ORDER BY time DESC");
         }
         elseif (Database::getDbType() == 'mysql')
         {
-            $stmt = Database::getInstance()->dbh->prepare("SELECT `time`, `reason`, `where`, `t_id`,
+            $stmt = self::newStatement("SELECT `time`, `reason`, `where`, `t_id`,
                             DATE_FORMAT(`time`, '%d') as 'day',
                             DATE_FORMAT(`time`, '%m') as 'month',
                             DATE_FORMAT(`time`, '%Y') as 'year',
@@ -857,7 +858,7 @@ class Database
         }
         elseif (Database::getDbType() == 'sqlite')
         {
-            $stmt = Database::getInstance()->dbh->prepare("SELECT `time`, `reason`, `where`, `t_id`,
+            $stmt = self::newStatement("SELECT `time`, `reason`, `where`, `t_id`,
                             strftime('%d', `time`) as 'day',
                             strftime('%m', `time`) as 'month',
                             strftime('%Y', `time`) as 'year',
@@ -893,7 +894,7 @@ class Database
         $stmt->bindParam(':date', $date);
         $stmt->bindParam(':tracker', $tracker);
         $stmt->bindParam(':message', $message);
-        $stmt->bindParam(':id', $id);
+        $stmt->bindValue(':id', ($id === null ? 0 : $id), \PDO::PARAM_INT);
         if ($stmt->execute())
             return TRUE;
         else
