@@ -1,15 +1,6 @@
 <?php
 $dir = dirname(__FILE__).'/';
 include_once $dir.'config.php';
-include_once $dir.'class/Database.class.php';
-include_once $dir.'class/Errors.class.php';
-include_once $dir.'class/Notification.class.php';
-include_once $dir.'class/System.class.php';
-include_once $dir."class/Url.class.php";
-include_once $dir.'class/EventBus.class.php';
-include_once $dir.'class/Webhook.class.php';
-include_once $dir.'class/TaskQueue.class.php';
-include_once $dir.'class/Migration.class.php';
 
 if (isset($_POST['action']))
 {

@@ -3,17 +3,6 @@
 // Работает параллельно с action.php для обратной совместимости
 $dir = dirname(__FILE__).'/';
 include_once $dir.'config.php';
-include_once $dir.'class/Database.class.php';
-include_once $dir.'class/System.class.php';
-include_once $dir.'class/Errors.class.php';
-include_once $dir.'class/Notification.class.php';
-include_once $dir.'class/Url.class.php';
-include_once $dir.'class/Router.class.php';
-include_once $dir.'class/EventBus.class.php';
-include_once $dir.'class/Webhook.class.php';
-include_once $dir.'class/HealthCheck.class.php';
-include_once $dir.'class/TaskQueue.class.php';
-include_once $dir.'class/Migration.class.php';
 
 header('Content-Type: application/json; charset=utf-8');
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
@@ -280,13 +269,6 @@ Router::get('/tasks', function() {
 // Прогресс загрузок
 Router::get('/progress', function() {
     apiAuth();
-    include_once dirname(__FILE__).'/class/Transmission.class.php';
-    include_once dirname(__FILE__).'/class/TransmissionRPC.class.php';
-    include_once dirname(__FILE__).'/class/qBittorrent.class.php';
-    include_once dirname(__FILE__).'/class/Deluge.class.php';
-    include_once dirname(__FILE__).'/class/TorrServer.class.php';
-    include_once dirname(__FILE__).'/class/SynologyDS.class.php';
-
     $settings = Database::getAllSetting();
     $csettings = [];
     if ($settings)

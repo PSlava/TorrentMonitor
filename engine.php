@@ -6,14 +6,6 @@ set_time_limit(0);
 
 $dir = dirname(__FILE__).'/';
 include_once $dir.'config.php';
-include_once $dir.'class/System.class.php';
-include_once $dir.'class/Database.class.php';
-include_once $dir.'class/Errors.class.php';
-include_once $dir.'class/Notification.class.php';
-include_once $dir.'class/EventBus.class.php';
-include_once $dir.'class/Webhook.class.php';
-include_once $dir.'class/TaskQueue.class.php';
-include_once $dir.'class/Migration.class.php';
 
 // Авторизация при HTTP-доступе (CLI — без проверки)
 $is_console = PHP_SAPI == 'cli';
@@ -286,7 +278,6 @@ if (Sys::checkCurl())
     {
         echo getTimestamp();
         echo 'Установка обновлений.'.$NL;
-        include_once $dir.'class/Update.class.php';
         Update::main();
     }
     else

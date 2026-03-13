@@ -2,8 +2,6 @@
 // Запуск engine.php в фоновом процессе
 $dir = dirname(__FILE__).'/../';
 include_once $dir.'config.php';
-include_once $dir.'class/Database.class.php';
-include_once $dir.'class/System.class.php';
 
 header('Content-Type: application/json; charset=utf-8');
 

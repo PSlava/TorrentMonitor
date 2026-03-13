@@ -7,9 +7,6 @@ if (PHP_VERSION_ID < 80000 && function_exists('libxml_disable_entity_loader')) {
 
 $dir = dirname(__FILE__)."/";
 include_once $dir."config.php";
-include_once $dir."class/Database.class.php";
-include_once $dir."class/System.class.php";
-include_once $dir."class/Migration.class.php";
 
 if (Sys::checkAuth())
 {

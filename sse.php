@@ -4,9 +4,6 @@ ignore_user_abort(true);
 
 $dir = dirname(__FILE__).'/';
 include_once $dir.'config.php';
-include_once $dir.'class/Database.class.php';
-include_once $dir.'class/System.class.php';
-include_once $dir.'class/EventBus.class.php';
 
 // Проверка авторизации (только cookie/session)
 if ( ! Sys::checkAuth())

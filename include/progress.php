@@ -2,15 +2,6 @@
 // Прогресс загрузок — JSON для health dashboard (session-авторизация)
 $dir = dirname(__FILE__)."/../";
 include_once $dir."config.php";
-include_once $dir."class/Database.class.php";
-include_once $dir."class/System.class.php";
-include_once $dir."class/HealthCheck.class.php";
-include_once $dir."class/Transmission.class.php";
-include_once $dir."class/TransmissionRPC.class.php";
-include_once $dir."class/qBittorrent.class.php";
-include_once $dir."class/Deluge.class.php";
-include_once $dir."class/TorrServer.class.php";
-include_once $dir."class/SynologyDS.class.php";
 
 header('Content-Type: application/json; charset=utf-8');
 

@@ -1,5 +1,6 @@
 <?php
 include_once dirname(__FILE__).'/class/Config.class.php';
+include_once dirname(__FILE__).'/autoload.php';
 Config::extended();
 
 #Пользовательские настройки подключения к БД

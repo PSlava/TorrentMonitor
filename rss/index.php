@@ -1,6 +1,6 @@
 <?php
 $dir = dirname(__FILE__).'/../';
-include_once $dir.'class/Database.class.php';
+include_once $dir.'config.php';
 
 $rss = Database::getSetting('rss');
 

@@ -205,7 +205,7 @@ class Update {
 
             $version = NULL;
             $version['system'] = strval(Update::$versionSystem);
-            $version['database'] = strval(Update::$versionSystem);
+            $version['database'] = strval(Update::$versionDatabase);
             file_put_contents($ROOTPATH . 'version.txt', json_encode($version));
     
             if (Update::$isUpdated)

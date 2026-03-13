@@ -3,7 +3,6 @@
 <?php
 //Проверка обновления
 $dir = __DIR__.'/';
-include_once $dir.'../class/System.class.php';
 $update = Sys::checkUpdate();
 $version = Sys::version();
 
