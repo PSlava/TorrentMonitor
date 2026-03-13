@@ -173,6 +173,98 @@ function webhooksManager() {
     };
 }
 
+// Тестирование системы с реал-тайм прогрессом
+function checkRunner() {
+    return {
+        running: false,
+        phase: '',
+        current: 0,
+        total: 0,
+        results: [],
+        errorCount: 0,
+        pollTimer: null,
+        autoStart: function() {
+            var self = this;
+            fetch('include/check_status.php')
+                .then(function(r) { return r.json(); })
+                .then(function(resp) {
+                    if (resp.running) {
+                        self.running = true;
+                        self.applyData(resp.data);
+                        self.startPolling();
+                    } else if (resp.data && resp.data.status === 'done') {
+                        self.applyData(resp.data);
+                    } else {
+                        self.startCheck();
+                    }
+                })
+                .catch(function() {
+                    self.startCheck();
+                });
+        },
+        startCheck: function() {
+            var self = this;
+            this.results = [];
+            this.errorCount = 0;
+            this.running = true;
+            this.phase = 'Запуск тестирования...';
+            fetch('include/check_run.php')
+                .then(function(r) { return r.json(); })
+                .then(function(data) {
+                    if (data.error) {
+                        self.running = false;
+                        notyf.error(data.msg);
+                    } else {
+                        self.startPolling();
+                    }
+                })
+                .catch(function() {
+                    self.running = false;
+                    notyf.error('Ошибка запуска тестирования');
+                });
+        },
+        startPolling: function() {
+            if (this.pollTimer) return;
+            var self = this;
+            this.pollTimer = setInterval(function() {
+                fetch('include/check_status.php')
+                    .then(function(r) { return r.json(); })
+                    .then(function(resp) {
+                        self.applyData(resp.data);
+                        if (!resp.running) {
+                            self.running = false;
+                            clearInterval(self.pollTimer);
+                            self.pollTimer = null;
+                        }
+                    })
+                    .catch(function() {});
+            }, 1000);
+        },
+        applyData: function(data) {
+            if (!data) return;
+            this.phase = data.phase || '';
+            this.current = data.current || 0;
+            this.total = data.total || 0;
+            this.results = data.results || [];
+            this.errorCount = data.errors || 0;
+        },
+        systemResults: function() {
+            return this.results.filter(function(r) { return r.group === 'system'; });
+        },
+        trackerGroups: function() {
+            var seen = [];
+            for (var i = 0; i < this.results.length; i++) {
+                var g = this.results[i].group;
+                if (g !== 'system' && seen.indexOf(g) === -1) seen.push(g);
+            }
+            return seen;
+        },
+        trackerResults: function(tracker) {
+            return this.results.filter(function(r) { return r.group === tracker; });
+        }
+    };
+}
+
 // Запуск синхронизации с реал-тайм прогрессом
 function engineRunner() {
     return {

@@ -6,6 +6,7 @@ class Migration
         '002' => 'createEventsLog',
         '003' => 'createWebhooks',
         '004' => 'createTaskQueue',
+        '005' => 'addProxyAuth',
     ];
 
     private static $done = false;
@@ -275,6 +276,17 @@ class Migration
             $idx1->execute();
             $idx2 = Database::newStatement("CREATE INDEX IF NOT EXISTS `idx_task_next_run` ON `task_queue` (`next_run`)");
             $idx2->execute();
+        }
+    }
+    // Миграция 005: Настройка proxyAuth (авторизация прокси)
+    private static function addProxyAuth()
+    {
+        // Проверяем, есть ли уже такая настройка
+        $val = Database::getSetting('proxyAuth');
+        if ($val === null || $val === false)
+        {
+            $stmt = Database::newStatement("INSERT INTO `settings` (`key`, `val`) VALUES ('proxyAuth', '')");
+            $stmt->execute();
         }
     }
 }

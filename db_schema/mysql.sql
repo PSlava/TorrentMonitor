@@ -136,6 +136,7 @@ VALUES
 	(33,'sendUpdateService',''),
 	(35,'sendWarningService',''),
 	(37,'proxyType',''),
+	(41,'proxyAuth',''),
 	(38,'autoUpdate','0'),
 	(39,'sentUpdateNotification','0'),
 	(40,'userAgent','Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0');

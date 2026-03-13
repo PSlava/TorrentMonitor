@@ -263,7 +263,7 @@ class Sys
             )
         );
 
-        if (preg_match('/HTTP\/1\.1 200 OK/', $page))
+        if ( ! empty($page) && preg_match('/HTTP\/[\d.]+ [23]\d{2}/', $page))
             return true;
         else
             return false;

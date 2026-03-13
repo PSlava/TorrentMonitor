@@ -4,105 +4,60 @@ include_once $dir."config.php";
 
 if ( ! Sys::checkAuth())
     die(header('Location: ../'));
-
 ?>
 <div class="top-bar mb-2">
     <div class="top-bar__title"><svg><use href="assets/img/sprite.svg#health" /></svg> Тестирование</div>
 </div>
+<div x-data="checkRunner()" x-init="autoStart()">
 
-<div class="check">
-    <div class="check-title">Основные настройки</div>
+    <!-- Прогресс -->
+    <div class="engine-progress mb-2" x-show="running" x-cloak>
+        <div class="engine-progress__phase" x-text="phase"></div>
+        <div x-show="total > 0">
+            <div class="engine-progress__bar">
+                <div class="engine-progress__fill" :style="'width:' + (total ? Math.round(current / total * 100) : 0) + '%'"></div>
+            </div>
+            <div class="engine-progress__text">
+                <span x-text="current + ' / ' + total"></span>
+                <span class="engine-progress__pct" x-text="Math.round(current / total * 100) + '%'"></span>
+            </div>
+        </div>
+    </div>
 
-<?php if (Sys::checkInternet()) { ?>
-    <div class="check-item">Подключение к интернету установлено.</div>
-<?php } else { ?>
-    <div class="check-item --error">Отсутствует подключение к интернету.</div>
-<?php die; } ?>
+    <!-- Статус завершения -->
+    <div class="engine-progress mb-2" x-show="!running && results.length > 0" x-cloak
+         :style="'border-left-color:var(' + (errorCount > 0 ? '--c-danger' : '--c-success') + ')'">
+        <div class="engine-progress__phase" x-text="errorCount > 0 ? 'Тестирование завершено, ошибок: ' + errorCount : 'Тестирование завершено, ошибок нет'"></div>
+    </div>
 
-<?php if (Sys::checkConfigExist()) { ?>
-    <div class="check-item">Конфигурационный файл существует.</div>
-<?php } else { ?>
-    <div class="check-item --error">Для корректной работы необходимо внести изменения в конфигурационный файл.</div>
-<?php die; } ?>
+    <!-- Результаты -->
+    <template x-if="results.length > 0">
+        <div>
+            <!-- Основные настройки -->
+            <template x-if="systemResults().length > 0">
+                <div class="check">
+                    <div class="check-title">Основные настройки</div>
+                    <template x-for="r in systemResults()" :key="r.text">
+                        <div class="check-item" :class="r.ok ? '' : '--error'" x-text="r.text"></div>
+                    </template>
+                </div>
+            </template>
+            <!-- Трекеры -->
+            <template x-for="tracker in trackerGroups()" :key="tracker">
+                <div class="check">
+                    <div class="check-subtitle" x-text="tracker"></div>
+                    <template x-for="r in trackerResults(tracker)" :key="r.text">
+                        <div class="check-item" :class="r.ok ? '' : '--error'" x-text="r.text"></div>
+                    </template>
+                </div>
+            </template>
+        </div>
+    </template>
 
-<?php if (Sys::checkCurl()) { ?>
-    <div class="check-item">Расширение cURL установлено.</div>
-<?php } else { ?>
-    <div class="check-item --error">Для работы системы необходимо включить <a href="http://php.net/manual/en/book.curl.php">расширение cURL</a>.</div>
-<?php die; } ?>
-
-<?php
-$torrentPath = str_replace('class/../', '', $dir).'torrents/';
-if (Sys::checkWriteToPath($torrentPath)) { ?>
-    <div class="check-item">Запись в директорию для torrent-файлов <strong><?= $torrentPath ?></strong> разрешена.</div>
-<?php } else { ?>
-    <div class="check-item --error">Запись в директорию для torrent-файлов <strong><?= $torrentPath ?></strong> запрещена.</div>
-<?php die; } ?>
-
-<?php
-$dir = str_replace('include', '', dirname(__FILE__));
-if (Sys::checkWriteToPath($dir)) { ?>
-    <div class="check-item">Запись в системную директорию <strong><?= $dir ?></strong> разрешена.</div>
-<?php } else { ?>
-    <div class="check-item --error">Запись в системную директорию <strong><?= $dir ?></strong> запрещена.</div>
-<?php die; } ?>
-
-</div>
-<div class="check">
-    <div class="check-title">Настройки трекеров</div>
-
-<?php
-$trackers = Database::getTrackersList();
-foreach ($trackers as $tracker)
-{
-    ?>
-    <div class="check-subtitle"><?= $tracker ?></div>
-    <?php
-    if (file_exists($dir.'trackers/'.$tracker.'.engine.php')) { ?>
-    <div class="check-item">Основной файл для работы с трекером <strong><?= $tracker ?></strong> найден.</div>
-    <?php } else { ?>
-    <div class="check-item --error">Основной файл для работы с трекером <strong><?= $tracker ?></strong> не найден.</div>
-    <?php } ?>
-
-    <?php if ($tracker == 'nnmclub.to' || $tracker == 'pornolab.net' || $tracker == 'rutracker.org' || $tracker == 'tapochek.net' || $tracker == 'tfile.cc') {
-        if (file_exists($dir.'trackers/'.$tracker.'.search.php')) { ?>
-    <div class="check-item">Дополнительный файл для работы с трекером <strong><?= $tracker ?></strong> найден.</div>
-        <?php } else { ?>
-    <div class="check-item --error">Дополнительный файл для работы с трекером <strong><?= $tracker ?></strong> не найден.</div>
-        <?php
-        }
-    } ?>
-
-    <?php if ($tracker == 'lostfilm-mirror' || $tracker == 'rutor.org' || $tracker == 'tfile.cc') { ?>
-    <div class="check-item">Учётные данные для работы с трекером <strong><?= $tracker ?></strong> не требуются.</div>
-    <?php } elseif (Database::checkTrackersCredentialsExist($tracker)) { ?>
-    <div class="check-item">Учётные данные для работы с трекером <strong><?= $tracker ?></strong> найдены.</div>
-    <?php } else { ?>
-    <div class="check-item --error">Учётные данные для работы с трекером <strong><?= $tracker ?></strong> не найдены.</div>
-    <?php } ?>
-
-    <?php
-    if ($tracker == 'baibako.tv_forum')
-        $page = 'http://baibako.tv/';
-    elseif ($tracker == 'lostfilm.tv')
-        $page = 'https://www.lostfilm.tv/';
-    elseif ($tracker == 'lostfilm-mirror')
-        $page = 'https://rss.bzda.ru/rss.xml';
-    elseif ($tracker == 'nnmclub.to')
-        $page = 'https://nnmclub.to/forum/index.php';
-    elseif ($tracker == 'rutor.org')
-        $page = 'http://rutor.info/';
-    elseif ($tracker == 'rutracker.org')
-        $page = 'http://rutracker.org/forum/index.php';
-    else
-        $page = 'http://'.$tracker;
-    if (Sys::checkavAilability($page))
-    {
-    ?>
-    <div class="check-item">Трекер <strong><?= $tracker ?></strong> доступен.</div>
-    <?php } else { ?>
-    <div class="check-item --error">Трекер <strong><?= $tracker ?></strong> не доступен.</div>
-    <?php
-    } ?>
-<?php } ?>
+    <!-- Пустое состояние -->
+    <div x-show="running && results.length === 0" x-cloak>
+        <div class="check">
+            <div class="check-item">Запуск тестирования...</div>
+        </div>
+    </div>
 </div>
