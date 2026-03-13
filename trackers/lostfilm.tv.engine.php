@@ -66,7 +66,7 @@ class lostfilm
 	//функция анализа xml ленты
 	private static function analysis($name, $item)
 	{
-		if (preg_match('/'.$name.'/i', $item->title))
+		if (preg_match('/'.preg_quote($name, '/').'/i', $item->title))
 		{
     		preg_match('/S\d{2}E\d{2}/', $item->title, $matches);
     		if (isset($matches[0]))
