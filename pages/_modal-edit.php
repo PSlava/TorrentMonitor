@@ -11,7 +11,7 @@
 
         <div x-show="editData.closed" class="form-error">Тема закрыта на форуме!</div>
 
-        <form @submit.prevent="updateItem($el, editData.id)" action="action.php">
+        <form @submit.prevent="saveRecentPath(editData.path); updateItem($el, editData.id)" action="action.php">
 
             <div class="modal__body">
                 <label class="row">
@@ -31,7 +31,7 @@
                 <label class="row">
                     <div class="col --12 mb-1">Директория для скачивания:</div>
                     <div class="col --12 mb-2">
-                        <input type="text" name="path" x-model="editData.path">
+                        <input type="text" name="path" x-model="editData.path" list="path-history">
                         <div class="form-help">Например: /var/lib/transmission/downloads или C:/downloads/</div>
                     </div>
                 </label>
@@ -87,7 +87,7 @@
             <button class="modal__close" @click="closeModalEditSeries()"><svg><use href="assets/img/sprite.svg#close" /></svg></button>
         </div>
 
-        <form @submit.prevent="updateItem($el, editData.id)" action="action.php">
+        <form @submit.prevent="saveRecentPath(editData.path); updateItem($el, editData.id)" action="action.php">
 
             <div class="modal__body">
                 <label class="row">
@@ -126,7 +126,7 @@
                 <label class="row">
                     <div class="col --12 mb-1">Директория для скачивания:</div>
                     <div class="col --12 mb-2">
-                        <input type="text" name="path" x-model="editData.path">
+                        <input type="text" name="path" x-model="editData.path" list="path-history">
                         <div class="form-help">Например: /var/lib/transmission/downloads или C:/downloads</div>
                     </div>
                 </label>

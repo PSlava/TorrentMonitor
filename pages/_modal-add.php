@@ -1,7 +1,9 @@
+<datalist id="path-history"></datalist>
 <div class="modal__backdrop"
     x-data="add"
     x-show="modalAdd"
     x-transition.opacity
+    x-effect="if (modalAdd) populatePathDatalist()"
     >
     <div class="modal container-sm:max p-0" x-transition.scale @click.stop>
         <div class="modal__bar">
@@ -13,7 +15,7 @@
             <button class="modal__close" @click="closeModalAdd()"><svg><use href="assets/img/sprite.svg#close" /></svg></button>
         </div>
 
-        <form x-show="type == 'theme'" @submit.prevent="addTheme('torrent_add', $el)" action="action.php">
+        <form x-show="type == 'theme'" @submit.prevent="saveRecentPath(theme.path); addTheme('torrent_add', $el)" action="action.php">
 
             <div class="modal__body">
                 <label class="row">
@@ -33,7 +35,7 @@
                 <label class="row">
                     <div class="col --12 mb-1">Директория для скачивания:</div>
                     <div class="col --12 mb-2">
-                        <input type="text" name="path" x-model="theme.path">
+                        <input type="text" name="path" x-model="theme.path" list="path-history">
                         <div class="form-help">Например: /var/lib/transmission/downloads или C:/downloads/</div>
                     </div>
                 </label>
@@ -59,7 +61,7 @@
         </form>
 
 
-        <form x-show="type == 'series'" @submit.prevent="addSeries('serial_add', $el)" action="action.php">
+        <form x-show="type == 'series'" @submit.prevent="saveRecentPath(series.path); addSeries('serial_add', $el)" action="action.php">
 
             <div class="modal__body">
                 <label class="row">
@@ -110,7 +112,7 @@
                 <label class="row">
                     <div class="col --12 mb-1">Директория для скачивания:</div>
                     <div class="col --12">
-                        <input type="text" name="path" x-model="series.path">
+                        <input type="text" name="path" x-model="series.path" list="path-history">
                         <div class="form-help">Например: /var/lib/transmission/downloads или C:/downloads</div>
                     </div>
                 </label>

@@ -1,5 +1,35 @@
 "use strict";
 
+// История каталогов для скачивания (localStorage, последние 10)
+function getRecentPaths() {
+    try {
+        return JSON.parse(localStorage.getItem('recentPaths') || '[]');
+    } catch (e) {
+        return [];
+    }
+}
+
+function saveRecentPath(path) {
+    if (!path || !path.trim()) return;
+    path = path.trim();
+    var paths = getRecentPaths().filter(function(p) { return p !== path; });
+    paths.unshift(path);
+    if (paths.length > 10) paths = paths.slice(0, 10);
+    localStorage.setItem('recentPaths', JSON.stringify(paths));
+    populatePathDatalist();
+}
+
+function populatePathDatalist() {
+    var dl = document.getElementById('path-history');
+    if (!dl) return;
+    dl.innerHTML = '';
+    getRecentPaths().forEach(function(p) {
+        var opt = document.createElement('option');
+        opt.value = p;
+        dl.appendChild(opt);
+    });
+}
+
 // Health Dashboard с прогрессом загрузок
 function healthDashboard() {
     return {
