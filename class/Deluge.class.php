@@ -23,17 +23,22 @@ class Deluge
                     $delOpt = '--remove_data';
                 #удяляем существующую закачку из torrent-клиента
                 if ($deleteDistribution)
-                   $command = `deluge-console 'connect $torrentAddress $torrentLogin $torrentPassword; rm $hash $delOpt'`;
+                {
+                    $rmCmd = 'connect ' . escapeshellarg($torrentAddress) . ' ' . escapeshellarg($torrentLogin) . ' ' . escapeshellarg($torrentPassword) . '; rm ' . escapeshellarg($hash) . ' ' . $delOpt;
+                    $command = `deluge-console $rmCmd`;
+                }
             }
             else
             {
                 #удяляем существующую закачку из torrent-клиента
-                $command = `deluge-console 'connect $torrentAddress $torrentLogin $torrentPassword; rm $hash $delOpt'`;
+                $rmCmd = 'connect ' . escapeshellarg($torrentAddress) . ' ' . escapeshellarg($torrentLogin) . ' ' . escapeshellarg($torrentPassword) . '; rm ' . escapeshellarg($hash) . ' ' . $delOpt;
+                $command = `deluge-console $rmCmd`;
             }
         }
 
         #добавляем торрент в torrent-клиента
-        $command = `deluge-console 'connect $torrentAddress $torrentLogin $torrentPassword; add -p "$pathToDownload" $file'`;
+        $addCmd = 'connect ' . escapeshellarg($torrentAddress) . ' ' . escapeshellarg($torrentLogin) . ' ' . escapeshellarg($torrentPassword) . '; add -p ' . escapeshellarg($pathToDownload) . ' ' . escapeshellarg($file);
+        $command = `deluge-console $addCmd`;
         
         if ( ! preg_match('/Torrent added!/', $command))
         {
@@ -43,7 +48,8 @@ class Deluge
         else
         {
             #получаем хэш раздачи
-            $hashNew = `deluge-console 'connect $torrentAddress $torrentLogin $torrentPassword; info --sort-reverse=active_time' | grep ID: | awk '{print $2}' | tail -n -1`;
+            $infoCmd = 'connect ' . escapeshellarg($torrentAddress) . ' ' . escapeshellarg($torrentLogin) . ' ' . escapeshellarg($torrentPassword) . '; info --sort-reverse=active_time';
+            $hashNew = `deluge-console $infoCmd | grep ID: | awk '{print $2}' | tail -n -1`;
             #обновляем hash в базе
             Database::updateHash($id, $hashNew);
 
