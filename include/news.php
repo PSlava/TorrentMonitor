@@ -16,7 +16,7 @@ if ( ! Sys::checkAuth())
         foreach ($news as $n) { if ($n['new']) { $hasNew = true; break; } }
     }
     if ($hasNew) { ?>
-        <button class="btn btn--secondary" x-data @click="$dispatch('mark-all-news')">Отметить все как прочитанные</button>
+        <button class="btn btn--secondary" x-data="markAllNews">Отметить все как прочитанные</button>
     <?php } ?>
 </div>
 
@@ -28,7 +28,6 @@ if ($news != NULL && is_array($news) && count($news) > 0)
 ?>
 <div x-data="news" class="content col --8:xl news-item<?= ($news[$i]['new']) ? ' news-item--new' : '' ?>"
     data-news-id="<?= $news[$i]['id'] ?>"
-    @mark-all-news.window="markRead($el)"
 >
 <?php echo $news[$i]['text']?>
 </div>
