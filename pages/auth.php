@@ -25,7 +25,7 @@
     Photo by <a href="https://unsplash.com/photos/4yta6mU66dE">Luca Bravo</a> on <a href="https://unsplash.com/">Unsplash</a>
     </div>
 </div>
-<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script>
     document.addEventListener('alpine:init', () => {
         Alpine.data('auth', () => ({
