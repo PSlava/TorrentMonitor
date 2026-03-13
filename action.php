@@ -572,7 +572,8 @@ if (isset($_POST['action']))
 	if ($_POST['action'] == 'markNews')
 	{
 		Database::markNews($_POST['id']);
-		return TRUE;
+		echo json_encode(['error' => FALSE]);
+		exit;
 	}
 
 	//Выполняем обновление системы
