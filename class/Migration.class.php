@@ -8,10 +8,18 @@ class Migration
         '004' => 'createTaskQueue',
     ];
 
+    private static $done = false;
+
     public static function run()
     {
+        if (self::$done) return;
+        self::$done = true;
+
         self::ensureMigrationsTable();
         $applied = self::getApplied();
+
+        // Все миграции уже применены — выходим быстро
+        if (count($applied) >= count(self::$migrations)) return;
 
         foreach (self::$migrations as $version => $method)
         {
@@ -135,6 +143,22 @@ class Migration
         }
         $stmt = Database::newStatement($sql);
         $stmt->execute();
+
+        // Индексы для PostgreSQL и SQLite
+        if ($dbType == 'pgsql')
+        {
+            $idx1 = Database::newStatement("CREATE INDEX IF NOT EXISTS \"idx_events_type\" ON \"events_log\" (\"type\")");
+            $idx1->execute();
+            $idx2 = Database::newStatement("CREATE INDEX IF NOT EXISTS \"idx_events_created\" ON \"events_log\" (\"created_at\")");
+            $idx2->execute();
+        }
+        elseif ($dbType == 'sqlite' || $dbType == 'sqlite2')
+        {
+            $idx1 = Database::newStatement("CREATE INDEX IF NOT EXISTS `idx_events_type` ON `events_log` (`type`)");
+            $idx1->execute();
+            $idx2 = Database::newStatement("CREATE INDEX IF NOT EXISTS `idx_events_created` ON `events_log` (`created_at`)");
+            $idx2->execute();
+        }
     }
 
     // Миграция 003: Таблица вебхуков
@@ -236,6 +260,22 @@ class Migration
         }
         $stmt = Database::newStatement($sql);
         $stmt->execute();
+
+        // Индексы для PostgreSQL и SQLite
+        if ($dbType == 'pgsql')
+        {
+            $idx1 = Database::newStatement("CREATE INDEX IF NOT EXISTS \"idx_task_status\" ON \"task_queue\" (\"status\")");
+            $idx1->execute();
+            $idx2 = Database::newStatement("CREATE INDEX IF NOT EXISTS \"idx_task_next_run\" ON \"task_queue\" (\"next_run\")");
+            $idx2->execute();
+        }
+        elseif ($dbType == 'sqlite' || $dbType == 'sqlite2')
+        {
+            $idx1 = Database::newStatement("CREATE INDEX IF NOT EXISTS `idx_task_status` ON `task_queue` (`status`)");
+            $idx1->execute();
+            $idx2 = Database::newStatement("CREATE INDEX IF NOT EXISTS `idx_task_next_run` ON `task_queue` (`next_run`)");
+            $idx2->execute();
+        }
     }
 }
 ?>

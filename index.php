@@ -9,9 +9,11 @@ $dir = dirname(__FILE__)."/";
 include_once $dir."config.php";
 include_once $dir."class/Database.class.php";
 include_once $dir."class/System.class.php";
+include_once $dir."class/Migration.class.php";
 
 if (Sys::checkAuth())
 {
+    Migration::run();
     if (session_id() == '')
         session_start();
     if (empty($_SESSION['csrf_token']))
