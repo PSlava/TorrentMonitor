@@ -12,7 +12,7 @@ CREATE TABLE `buffer` (
   `new` tinyint(1) unsigned NOT NULL DEFAULT '1',
   `tracker` varchar(20) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 DROP TABLE IF EXISTS `credentials`;
@@ -27,7 +27,7 @@ CREATE TABLE `credentials` (
   `type` varchar(32) DEFAULT NULL,
   `necessarily` tinyint(1) NOT NULL DEFAULT '1',
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 LOCK TABLES `credentials` WRITE;
 
@@ -64,7 +64,7 @@ CREATE TABLE `news` (
   `text` text,
   `new` tinyint(1) unsigned NOT NULL DEFAULT '1',
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 DROP TABLE IF EXISTS `notifications`;
@@ -75,7 +75,7 @@ CREATE TABLE `notifications` (
   `address` varchar(100) DEFAULT NULL,
   `type` varchar(13) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 LOCK TABLES `notifications` WRITE;
@@ -105,7 +105,7 @@ CREATE TABLE `settings` (
   `key` varchar(32) NOT NULL,
   `val` varchar(100) NOT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 LOCK TABLES `settings` WRITE;
@@ -152,7 +152,7 @@ CREATE TABLE `temp` (
   `tracker` varchar(30) DEFAULT NULL,
   `date` varchar(120) DEFAULT NULL,
   UNIQUE KEY `id` (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 DROP TABLE IF EXISTS `torrent`;
@@ -173,7 +173,7 @@ CREATE TABLE `torrent` (
   `error` int(1) unsigned NOT NULL DEFAULT '0',
   `closed` int(1) unsigned NOT NULL DEFAULT '0',  
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 DROP TABLE IF EXISTS `warning`;
@@ -185,7 +185,7 @@ CREATE TABLE `warning` (
   `reason` varchar(200) NOT NULL,
   `t_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
 DROP TABLE IF EXISTS `watch`;
@@ -195,4 +195,4 @@ CREATE TABLE `watch` (
   `tracker` varchar(30) NOT NULL DEFAULT '',
   `name` varchar(30) NOT NULL DEFAULT '',
   PRIMARY KEY (`id`)
-) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
