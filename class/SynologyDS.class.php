@@ -11,27 +11,50 @@ class SynologyDS
 
     private static function _login()
     {
-        $response = json_decode(file_get_contents(self::$schema.'://'.self::$torrentAddress.'/webapi/auth.cgi?api=SYNO.API.Auth&version=7&method=login&account='.self::$torrentLogin.'&passwd='.self::$torrentPassword.'&session=DownloadStation&format=sid'));
+        $query = http_build_query([
+            'api' => 'SYNO.API.Auth',
+            'version' => '7',
+            'method' => 'login',
+            'account' => self::$torrentLogin,
+            'passwd' => self::$torrentPassword,
+            'session' => 'DownloadStation',
+            'format' => 'sid'
+        ]);
+        $response = json_decode(file_get_contents(self::$schema.'://'.self::$torrentAddress.'/webapi/auth.cgi?'.$query));
+        if ($response === null)
+            return FALSE;
         if ($response->success)
         {
             return $response->data->sid;
         }
         elseif ($response->error)
         {
-            if (self::$debug)
-                var_dump($response);
             return FALSE;
         }
     }
 
     private static function _logout()
     {
-        file_get_contents(self::$schema.'://'.self::$torrentAddress.'/webapi/auth.cgi?api=SYNO.API.Auth&version=1&method=logout&session=DownloadStation');
+        $query = http_build_query([
+            'api' => 'SYNO.API.Auth',
+            'version' => '1',
+            'method' => 'logout',
+            'session' => 'DownloadStation'
+        ]);
+        file_get_contents(self::$schema.'://'.self::$torrentAddress.'/webapi/auth.cgi?'.$query);
     }
 
     private static function _list_downloads($sid)
     {
-        return json_decode(file_get_contents(self::$schema.'://'.self::$torrentAddress.'/webapi/DownloadStation/task.cgi?api=SYNO.DownloadStation.Task&version=1&method=list&additional=detail&_sid='.$sid));
+        $query = http_build_query([
+            'api' => 'SYNO.DownloadStation.Task',
+            'version' => '1',
+            'method' => 'list',
+            'additional' => 'detail',
+            '_sid' => $sid
+        ]);
+        $result = json_decode(file_get_contents(self::$schema.'://'.self::$torrentAddress.'/webapi/DownloadStation/task.cgi?'.$query));
+        return $result;
     }
 
     private static function _download_already_exists($sid, $url)
@@ -85,6 +108,8 @@ class SynologyDS
         self::$torrentPassword = $torrentPassword;
         self::$debug = $debug;
 
+        $return = ['status' => FALSE, 'msg' => ''];
+
         $sid = SynologyDS::_login();
         if ($sid)
         {
@@ -94,9 +119,14 @@ class SynologyDS
                 {
                     if ($deleteDistribution)
                     {
-                        $response = file_get_contents(self::$schema.'://'.$torrentAddress.'/webapi/DownloadStation/task.cgi?api=SYNO.DownloadStation.Task&version=3&method=delete&id='.$hash.'&_sid='.$sid);
-                        if ($debug)
-                            var_dump($response);
+                        $query = http_build_query([
+                            'api' => 'SYNO.DownloadStation.Task',
+                            'version' => '3',
+                            'method' => 'delete',
+                            'id' => $hash,
+                            '_sid' => $sid
+                        ]);
+                        $response = file_get_contents(self::$schema.'://'.$torrentAddress.'/webapi/DownloadStation/task.cgi?'.$query);
                     }
                 }
 
@@ -132,9 +162,6 @@ class SynologyDS
                     ));
                     $response = curl_exec($ch);
                     curl_close($ch);
-                    if ($debug)
-                        var_dump($response);
-
                     if (preg_match('/\"code\":403/i', $response))
                     {
                         $return['status'] = FALSE;
@@ -149,7 +176,7 @@ class SynologyDS
                             Database::clearWarnings('SynologyDS');
 
                             $return['status'] = TRUE;
-                            $return['hash'] = $id;
+                            $return['hash'] = $hashNew;
                         }
                         else
                         {
@@ -167,7 +194,8 @@ class SynologyDS
             }
             catch (Exception $e)
             {
-                echo $e->getMessage().PHP_EOL;
+                $return['status'] = FALSE;
+                $return['msg'] = $e->getMessage();
             }
         }
         else

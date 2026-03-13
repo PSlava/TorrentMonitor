@@ -31,6 +31,11 @@ class qBittorrent
         $response=curl_exec($MainCurl);
     
         preg_match_all("/SID=(.*?);/", $response, $match);
+        if (!isset($match[1][0])) {
+            $return['status'] = FALSE;
+            $return['msg'] = 'auth_failed';
+            return $return;
+        }
         $cookie = "SID=".$match[1][0];
         curl_setopt($MainCurl, CURLOPT_COOKIE, $cookie);
         curl_setopt($MainCurl, CURLOPT_HEADER, false);
@@ -99,8 +104,13 @@ class qBittorrent
             curl_setopt($MainCurl, CURLOPT_URL, $torrentAddress."/api/v2/torrents/info");
             curl_setopt($MainCurl, CURLOPT_POSTFIELDS, http_build_query($data));
             $response = curl_exec($MainCurl);
-            $rdata = json_decode($response)[0];
-            $hashNew = $rdata->hash;
+            $rdata = json_decode($response, true);
+            if (!is_array($rdata) || empty($rdata) || !isset($rdata[0]['hash'])) {
+                $return['status'] = FALSE;
+                $return['msg'] = 'add_fail';
+                return $return;
+            }
+            $hashNew = $rdata[0]['hash'];
 
             #обновляем hash в базе
             Database::updateHash($id, $hashNew);

@@ -13,6 +13,8 @@ class TorrServer
         	extract($row);
         }
 
+        $return = ['status' => FALSE, 'msg' => ''];
+
     	try
     	{
             if ( ! empty($hash))
@@ -45,14 +47,14 @@ class TorrServer
                 }
             }
             
+            $name = '';
             $torrent = Database::getTorrent($id);
             if ($torrent)
                 $name = str_replace(' ', '.', $torrent[0]['name']);
-            else
-                $name = '';
 
             #добавляем торрент в torrent-клиент
-            $url = 'http://'.$torrentAddress.'/stream/fname?link='.$file.'&save&title='.$name.'&stat';
+            $params = http_build_query(['link' => $file, 'save' => '', 'title' => $name, 'stat' => '']);
+            $url = 'http://'.$torrentAddress.'/stream/fname?'.$params;
             $ch = curl_init();
             curl_setopt_array($ch, array(
                 CURLOPT_FOLLOWLOCATION => 1,
@@ -62,8 +64,6 @@ class TorrServer
                 CURLOPT_USERPWD => $torrentLogin.':'.$torrentPassword,
             ));
             $response = curl_exec($ch);
-            if ($debug)
-                var_dump($response);
             curl_close($ch);
             
             preg_match_all('/\"hash\":\"(.*)\"/U', $response, $res);
@@ -85,7 +85,8 @@ class TorrServer
         }
         catch (Exception $e)
         {
-            echo $e->getMessage().PHP_EOL;
+            $return['status'] = FALSE;
+            $return['msg'] = $e->getMessage();
         }
         
         return $return;
