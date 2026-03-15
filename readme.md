@@ -1,56 +1,30 @@
 # TorrentMonitor
-Приложение мониторит изменения на популярных торрент-трекерах рунета и автоматизирует закачку обновлений (сериалы, раздачи которые ведутся *путем добавления новых серий/новых версий*, перезалитые торрент-файлы и т.д.)
 
-### Страница проекта:
-http://tormon.ru
+Форк [ElizarovEugene/TorrentMonitor](https://github.com/ElizarovEugene/TorrentMonitor). Версия 3.0.0.
 
-### Список возможностей приложения:
-- Слежение за темами
-  - anidub.com
-  - animelayer.ru
-  - baibako.tv
-  - booktracker.org
-  - casstudio.tv
-  - hamsterstudio.org
-  - kinozal.me
-  - lostfilm.tv
-  - newstudio.tv
-  - nnmclub.to
-  - pornolab.net
-  - riperam.org
-  - rustorka.com
-  - rutor.info
-  - rutracker.org
-  - tfile.cc
-- Слежение за релизерами
-  - booktracker.org
-  - nnm-club.ru
-  - pornolab.net
-  - rutracker.org
-  - tfile.me
-- Поиск новых серий (SD/HD 720/HD 1080 версии на выбор)
-  - baibako.tv 
-  - hamsterstudio.org
-  - lostfilm.tv (+ собственное заркало)
-  - newstudio.tv
-- Работа через proxy (SOCKS5/HTTP)
-- Управление торрент-клиентами (добавление/удаление раздач и файлов)
-  - Transmission (через XML-RPC)
-  - Deluge (через deluge-console)
-  - qBittorrent
-- Сервисы уведомлений:
-  - E-mail
-  - Prowl
-  - Pushbullet
-  - Pushover
-  - Pushall
-  - Telegram 
+Приложение следит за обновлениями на торрент-трекерах рунета и автоматически скачивает новые серии и перезалитые раздачи через торрент-клиент.
+
+### Поддерживаемые трекеры
+
+Слежение за темами:
+anidub.com, animelayer.ru, baibako.tv, booktracker.org, casstudio.tv, hamsterstudio.org, kinozal.me, lostfilm.tv, newstudio.tv, nnmclub.to, pornolab.net, riperam.org, rustorka.com, rutor.info, rutracker.org, tfile.cc
+
+Слежение за релизерами:
+booktracker.org, nnm-club.ru, pornolab.net, rutracker.org, tfile.me
+
+Поиск новых серий (SD/HD 720/HD 1080):
+baibako.tv, hamsterstudio.org, lostfilm.tv (+ собственное зеркало), newstudio.tv
+
+### Возможности
+
+- Работа через прокси (SOCKS5/HTTP)
+- Управление торрент-клиентами (Transmission, qBittorrent, Deluge, Synology DownloadStation, TorrServer)
+- Уведомления: E-mail, Telegram, Pushbullet, Pushover, Pushall, Prowl
+- REST API для интеграции со сторонними приложениями
 - RSS-лента
-- Выполенение собственных скриптов после обновления раздачи
+- Запуск собственных скриптов после обновления раздачи
 
 ### Отличия форка
-
-Этот форк ([PSlava/TorrentMonitor](https://github.com/PSlava/TorrentMonitor)) основан на [ElizarovEugene/TorrentMonitor](https://github.com/ElizarovEugene/TorrentMonitor) и содержит следующие доработки:
 
 **Безопасность**
 - Пароли надёжно шифруются (bcrypt) вместо хранения в открытом виде
@@ -65,7 +39,6 @@ http://tormon.ru
 
 **Быстродействие**
 - Значительно сокращено количество запросов к базе данных за счёт кеширования
-- Проверка обновлений приложения кешируется, а не запрашивается каждый раз
 
 **Интерфейс**
 - Панель состояния системы: видно, что работает, что нет, какие загрузки идут
@@ -80,7 +53,7 @@ http://tormon.ru
 - Сбой на одном трекере не ломает проверку остальных
 - Автоматические миграции базы данных при обновлении
 - Очередь повторных попыток при временных ошибках
-- MySQL: переход на современные движок (InnoDB) и кодировку (utf8mb4)
+- MySQL: переход на современный движок (InnoDB) и кодировку (utf8mb4)
 
 ### Docker Hub
 
@@ -133,7 +106,7 @@ environment:
 4. Откройте приложение в браузере
 5. Добавьте в cron периодический запуск `php engine.php` (раз в 30 минут)
 
-### Скриншоты:
+### Скриншоты
  ![Screenshot0](https://habrastorage.org/webt/yy/xq/2g/yyxq2gn8o5-b68zr-m_acdv78w8.png "Screenshot0")
  ![Screenshot1](https://habrastorage.org/webt/do/fl/cd/doflcdnaxhg4elpis4jyg30tzik.png "Screenshot1")
  ![Screenshot2](https://habrastorage.org/webt/ad/m5/tk/adm5tktyrelde8fur565aprrpia.png "Screenshot2")
@@ -141,5 +114,3 @@ environment:
  ![Screenshot4](https://habrastorage.org/webt/qs/i7/y5/qsi7y53vb8qnl0y0ifcrxbcvv78.png "Screenshot4")
  ![Screenshot5](https://habrastorage.org/webt/nz/n9/zd/nzn9zdlnhje6blm7dsbk7nnzxnk.png "Screenshot5")
  ![Screenshot6](https://habrastorage.org/webt/ta/wl/pz/tawlpzlptcv1frusl8lv_tyyc-u.png "Screenshot6")
-
-
