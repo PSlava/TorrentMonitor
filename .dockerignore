@@ -1,0 +1,10 @@
+.git
+.gitignore
+.dockerignore
+CLAUDE.md
+docs/
+data/
+torrents/
+laststart.*
+config.php
+config.xml

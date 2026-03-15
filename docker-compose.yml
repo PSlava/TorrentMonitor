@@ -1,0 +1,16 @@
+services:
+  torrentmonitor:
+    build: .
+    container_name: torrentmonitor
+    ports:
+      - "8080:80"
+    volumes:
+      - tm-data:/var/www/html/data
+      - tm-torrents:/var/www/html/torrents
+    environment:
+      - DB_TYPE=sqlite
+    restart: unless-stopped
+
+volumes:
+  tm-data:
+  tm-torrents:

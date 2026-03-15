@@ -82,15 +82,45 @@ http://tormon.ru
 - Очередь повторных попыток при временных ошибках
 - MySQL: переход на современные движок (InnoDB) и кодировку (utf8mb4)
 
-### Требования для установки:
-* Веб-сервер (Apache, nginx, lighttpd)
-* PHP (5.2 или выше) с поддержкой cURL и PDO
-* MySQL, PostgreSQL, SQLite
+### Установка через Docker (рекомендуется)
 
-### Technical Details
-* Minimum PHP Version: 7.4.0
-* Alpine Linux Support: 3.15+ (includes PHP 7.4.33)
-* Полная совместимость с PHP 7.4+ и PHP 8+
+Самый простой способ запустить TorrentMonitor:
+
+```bash
+git clone https://github.com/PSlava/TorrentMonitor.git
+cd TorrentMonitor
+docker compose up -d
+```
+
+Интерфейс будет доступен по адресу http://localhost:8080
+
+По умолчанию используется SQLite, данные хранятся в Docker-томах. Для MySQL или PostgreSQL укажите переменные окружения:
+
+```yaml
+environment:
+  - DB_TYPE=mysql
+  - DB_HOST=db
+  - DB_PORT=3306
+  - DB_NAME=torrentmonitor
+  - DB_USER=torrentmonitor
+  - DB_PASS=torrentmonitor
+```
+
+Проверка трекеров запускается автоматически каждые 30 минут.
+
+### Установка вручную
+
+Что нужно:
+* Веб-сервер (Apache, nginx, lighttpd)
+* PHP 7.4 или новее с расширениями cURL и PDO
+* Одна из баз данных: MySQL, PostgreSQL или SQLite
+
+Порядок действий:
+1. Скопируйте файлы проекта в каталог веб-сервера
+2. Скопируйте `config.php.example` в `config.php` и укажите настройки подключения к БД
+3. Создайте базу данных по схеме из `db_schema/` (для SQLite база создастся автоматически)
+4. Откройте приложение в браузере
+5. Добавьте в cron периодический запуск `php engine.php` (раз в 30 минут)
 
 ### Скриншоты:
  ![Screenshot0](https://habrastorage.org/webt/yy/xq/2g/yyxq2gn8o5-b68zr-m_acdv78w8.png "Screenshot0")
