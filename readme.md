@@ -92,9 +92,6 @@ http://tormon.ru
 * Alpine Linux Support: 3.15+ (includes PHP 7.4.33)
 * Полная совместимость с PHP 7.4+ и PHP 8+
 
-### Docker hub:
-https://hub.docker.com/r/alfonder/torrentmonitor
-
 ### Скриншоты:
  ![Screenshot0](https://habrastorage.org/webt/yy/xq/2g/yyxq2gn8o5-b68zr-m_acdv78w8.png "Screenshot0")
  ![Screenshot1](https://habrastorage.org/webt/do/fl/cd/doflcdnaxhg4elpis4jyg30tzik.png "Screenshot1")
