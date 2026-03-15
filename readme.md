@@ -82,14 +82,25 @@ http://tormon.ru
 - Очередь повторных попыток при временных ошибках
 - MySQL: переход на современные движок (InnoDB) и кодировку (utf8mb4)
 
+### Docker Hub
+
+https://hub.docker.com/r/slashp/torrentmonitor
+
 ### Установка через Docker (рекомендуется)
 
 Самый простой способ запустить TorrentMonitor:
 
 ```bash
+docker pull slashp/torrentmonitor
+docker compose up -d
+```
+
+Или из исходников:
+
+```bash
 git clone https://github.com/PSlava/TorrentMonitor.git
 cd TorrentMonitor
-docker compose up -d
+docker compose up -d --build
 ```
 
 Интерфейс будет доступен по адресу http://localhost:8080

@@ -81,48 +81,10 @@ class Sys
     }
 
     //проверка обновлений системы
+    //Отключена: это форк, обновления с tormon.ru не применимы
     public static function checkUpdate()
     {
-        // Кеш проверки обновлений (1 час)
-        $dir = dirname(__FILE__);
-        $dir = str_replace('class', '', $dir);
-        $cacheFile = $dir.'data/update_check.json';
-
-        if (file_exists($cacheFile))
-        {
-            $cache = json_decode(file_get_contents($cacheFile), true);
-            if (is_array($cache) && isset($cache['time']) && (time() - $cache['time']) < 3600)
-                return $cache['result'];
-        }
-
-        //получаем страницу
-        $page = Sys::getUrlContent(
-            array(
-                'type'           => 'GET',
-                'returntransfer' => 1,
-                'url'            => 'https://xml.tormon.ru/version.xml',
-            )
-        );
-
-        //читаем xml
-        $xml = @simplexml_load_string($page, 'SimpleXMLElement', LIBXML_NONET | LIBXML_NOCDATA);
-        $version = json_decode(file_get_contents($dir.'version.txt'));
-
-        $result = 0;
-        if (false !== $xml)
-        {
-            if ($version->system < $xml->current_version)
-                $result = (string)$xml->current_version;
-            elseif ($version->database < $xml->current_version)
-                $result = "db-" . (string)$xml->current_version;
-        }
-
-        // Сохраняем кеш
-        if ( ! is_dir(dirname($cacheFile)))
-            @mkdir(dirname($cacheFile), 0750, true);
-        @file_put_contents($cacheFile, json_encode(['time' => time(), 'result' => $result]), LOCK_EX);
-
-        return $result;
+        return 0;
     }
 
     //обёртка для CURL, для более удобного использования
