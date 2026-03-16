@@ -19,6 +19,7 @@ class pornolab
         	)
         );
 
+		if ($result === false) return FALSE;
 		if (preg_match('/Вы зашли как: &nbsp;/', $result))
 			return TRUE;
 		else

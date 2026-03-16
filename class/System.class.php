@@ -157,7 +157,7 @@ class Sys
             if ( ! empty($ext_proxy))
             {
                 $url = parse_url($param['url']);
-                $tracker = preg_replace('/www\./', '', $url['host']);
+                $tracker = preg_replace('/www\./', '', $url['host'] ?? '');
                 if (isset($ext_proxy[$tracker]))
                 {
                     if ($ext_proxy[$tracker]['use'] == 'yes')
@@ -174,7 +174,7 @@ class Sys
                             $proxyType = $settingProxy[2]['val'];
                         }
                         if (Database::getSetting('debug'))
-                            echo 'Use proxy: '.$proxyAddress;
+                            error_log('Use proxy: '.$proxyAddress);
                     }
                     else
                         $proxy = FALSE;
@@ -199,7 +199,7 @@ class Sys
             {
                 $debug = Database::getSetting('debug');
                 if ($debug)
-                    echo 'cURL error: ' . curl_error($ch) . "\r\n";
+                    error_log('cURL error: ' . curl_error($ch));
                 curl_close($ch);
                 return false;
             }
@@ -225,7 +225,7 @@ class Sys
             )
         );
 
-        if ( ! empty($page) && preg_match('/HTTP\/[\d.]+ [23]\d{2}/', $page))
+        if ( ! empty($page) && is_string($page) && preg_match('/HTTP\/[\d.]+ [23]\d{2}/', $page))
             return true;
         else
             return false;
@@ -233,6 +233,8 @@ class Sys
 
     public static function parseHeader($tracker, $page)
     {
+        $name = null;
+        if ($page === false) return $name;
         preg_match('/<title>(.*)<\/title>/', $page, $array);
         if ( ! empty($array[1]))
         {
@@ -275,6 +277,7 @@ class Sys
     public static function getHeader($url)
     {
         $Purl = parse_url($url);
+        if (!$Purl || !isset($Purl['host'])) return 'Неизвестный';
         $tracker = $Purl['host'];
         $tracker = preg_replace('/www\./', '', $tracker);
 
@@ -341,7 +344,7 @@ class Sys
             );
         }
 
-        if ($tracker != 'animelayer.ru' && $tracker != 'booktracker.org' && $tracker != 'casstudio.tk' && $tracker != 'riperam.org' && $tracker != 'rustorka.com' && $tracker != 'rutor.is' && $tracker != 'tr.anidub.com')
+        if ($forumPage !== false && $tracker != 'animelayer.ru' && $tracker != 'booktracker.org' && $tracker != 'casstudio.tk' && $tracker != 'riperam.org' && $tracker != 'rustorka.com' && $tracker != 'rutor.is' && $tracker != 'tr.anidub.com')
             $forumPage = iconv('windows-1251', 'utf-8//IGNORE', $forumPage);
 
         if ($tracker == 'tr.anidub.com')

@@ -91,5 +91,66 @@ class TorrServer
         
         return $return;
     }
+
+    #получаем статус закачки из торрент-клиента
+    public static function getStatus($hash)
+    {
+        try
+        {
+            #получаем настройки из базы
+            $settings = Database::getAllSetting();
+            foreach ($settings as $row) { extract($row); }
+
+            #запрашиваем информацию о торренте
+            $data = json_encode(array('action' => 'get', 'hash' => $hash));
+            $request_headers = array('Content-Type: application/json');
+
+            $ch = curl_init();
+            curl_setopt_array($ch, array(
+                CURLOPT_POST           => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_URL            => 'http://'.$torrentAddress.'/torrents',
+                CURLOPT_USERAGENT      => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:51.0) Gecko/20100101 Firefox/51.0',
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_USERPWD        => $torrentLogin.':'.$torrentPassword,
+                CURLOPT_HTTPHEADER     => $request_headers,
+                CURLOPT_POSTFIELDS     => $data,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_TIMEOUT        => 30,
+            ));
+            $response = curl_exec($ch);
+            curl_close($ch);
+
+            if ($response === false)
+                return ['status' => 'unknown'];
+
+            $torrent = json_decode($response, true);
+            if (!is_array($torrent) || !isset($torrent['stat']))
+                return ['status' => 'unknown'];
+
+            #маппинг статусов TorrServer: 0=unknown, 1=added, 2=getting_metadata, 3=preloading, 4=downloading, 5=done
+            $statMap = [
+                0 => 'unknown',
+                1 => 'queued',
+                2 => 'checking',
+                3 => 'downloading',
+                4 => 'downloading',
+                5 => 'seeding',
+            ];
+
+            $stat = intval($torrent['stat']);
+            $status = isset($statMap[$stat]) ? $statMap[$stat] : 'unknown';
+
+            #TorrServer не предоставляет детальный прогресс и скорость в этом API
+            $progress = ($stat == 5) ? 100.0 : 0.0;
+            $speed = '0 KB/s';
+
+            return ['status' => $status, 'progress' => $progress, 'speed' => $speed];
+        }
+        catch (Exception $e)
+        {
+            return ['status' => 'unknown'];
+        }
+    }
 }
 ?>

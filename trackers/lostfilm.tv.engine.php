@@ -22,6 +22,7 @@ class lostfilm
 			)
 		);
 
+		if ($result === false) return FALSE;
 		if (preg_match('/<a href=\"\/my\" title=\"Перейти в личный кабинет\">/', $result))
 			return TRUE;
 		else
@@ -192,7 +193,7 @@ class lostfilm
 			'type' => 'GET', 'returntransfer' => 1,
 			'url' => 'https://www.lostfilm.today/rss.xml',
 		]);
-		if (empty($page)) return [];
+		if ($page === false || empty($page)) return [];
 		$page = preg_replace('/\&/', '&amp;', $page);
 		$page = preg_replace('/\<\!\[CDATA\[/', '', $page);
 		$page = preg_replace('/\]\]/', '', $page);
@@ -202,15 +203,26 @@ class lostfilm
 		foreach ($xml->channel->item as $item)
 		{
 			$title = (string)$item->title;
+			$name = null;
 			// Формат: "Название (English Name). Описание (S01E01)"
-			// Берём текст до первой точки с пробелом или до (S##E##)
 			if (preg_match('/^(.+?)\s*\((.+?)\)\.\s/', $title, $m))
-				$names[$m[2]] = true;
+				$name = $m[2];
 			elseif (preg_match('/^(.+?)\s+\(S\d{2}E\d{2}\)/', $title, $m))
-				$names[$m[1]] = true;
+				$name = $m[1];
+			if ($name !== null)
+			{
+				$ep = null;
+				if (preg_match('/S(\d{2})E(\d{2})/i', $title, $em))
+					$ep = 'S'.$em[1].'E'.$em[2];
+				if ( ! isset($names[$name]) || ($ep && strcmp($ep, $names[$name]) > 0))
+					$names[$name] = $ep;
+			}
 			if (count($names) >= $limit) break;
 		}
-		return array_keys($names);
+		$result = [];
+		foreach ($names as $n => $ep)
+			$result[] = ['name' => $n, 'episode' => $ep];
+		return $result;
 	}
 
 	//основная функция
@@ -248,7 +260,7 @@ class lostfilm
 			        	)
 			        );
 
-					if ( ! empty(lostfilm::$page))
+					if (lostfilm::$page !== false && ! empty(lostfilm::$page))
 					{
     					lostfilm::$page = preg_replace('/\&/', '&amp;', lostfilm::$page);
 						lostfilm::$page = preg_replace('/\<\!\[CDATA\[/', '', lostfilm::$page);
@@ -337,6 +349,7 @@ class lostfilm
 								)
 							);
 							
+							if ($page === false) continue;
 							preg_match('<a href=\"(.*)\">', $page, $matches);
 							if (isset($matches[1]))
 								$link = 'https://www.lostfilm.today'.$matches[1];
@@ -370,6 +383,7 @@ class lostfilm
                                 $amp = 'MP4';
                             }
 
+                            if ($page === false) continue;
                             if (preg_match_all('/<div class=\"inner-box--label\">\n'.$str.'(\t\t\t|\s{12})<\/div>\n\s*<div class=\"inner-box--link main\"><a href=\"(https:\/\/(n.)?tracktor\.(in|site)\/td\.php\?s=.*)\">[\s\S]*'.$quality.'<\/a><\/div>/U', $page, $matches))
                             {
     							$torrent = Sys::getUrlContent(

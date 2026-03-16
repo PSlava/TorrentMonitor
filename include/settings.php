@@ -283,7 +283,7 @@ if (file_exists($config))
                     <div class="col --2:lg mb-1">Торрент-клиент:</div>
                     <div class="col --5:lg mb-2">
                         <select x-model="options.torrentClient">
-                            <template x-for='client in ["Deluge","Transmission","qBittorrent","TorrServer","SynologyDS"]'>
+                            <template x-for='client in ["Deluge","Transmission","qBittorrent","TorrServer","SynologyDS","rTorrent","aria2"]'>
                                 <option x-text="client" :selected="options.torrentClient == client"></option>
                             </template>
                         </select>

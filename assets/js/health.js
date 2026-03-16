@@ -15,7 +15,7 @@ function saveRecentPath(path) {
     var paths = getRecentPaths().filter(function(p) { return p !== path; });
     paths.unshift(path);
     if (paths.length > 10) paths = paths.slice(0, 10);
-    localStorage.setItem('recentPaths', JSON.stringify(paths));
+    try { localStorage.setItem('recentPaths', JSON.stringify(paths)); } catch(e) {}
 }
 
 function filteredPaths(q) {
@@ -52,7 +52,7 @@ function pathKeydown(e, model, setter) {
 
 function pathScrollTo() {
     var el = document.querySelector('.path-dropdown__item.--highlighted');
-    if (el) el.scrollIntoView({block: 'nearest'});
+    if (el) try { el.scrollIntoView({block: 'nearest'}); } catch(e) { el.scrollIntoView(false); }
 }
 
 // Состояние системы с фоновой проверкой

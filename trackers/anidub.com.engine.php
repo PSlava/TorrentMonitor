@@ -18,6 +18,7 @@ class anidub
             )
         );
 
+        if ($result === false) return FALSE;
         if (preg_match('/Добро пожаловать <a href=\"https:\/\/tr\.anidub\.com\/user\/.*\/\" target=\"_blank\">/', $result))
             return TRUE;
         else

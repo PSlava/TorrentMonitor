@@ -51,6 +51,9 @@
 .token-item__meta{font-size:.75rem;color:var(--c-grey)}
 .token-item__value{font-family:monospace;font-size:.75rem;color:var(--c-grey);word-break:break-all}
 
+/* Колонка эпизода в основном списке */
+.tm-item__episode{font-size:.75em;font-weight:600;color:var(--c-grey);white-space:nowrap}
+
 /* Кастомный дропдаун списка сериалов */
 .series-label-row{display:flex;align-items:center;justify-content:space-between}
 .series-name-wrap{position:relative}
@@ -65,3 +68,7 @@
 .path-dropdown{position:absolute;top:100%;left:0;right:0;z-index:100;max-height:180px;overflow-y:auto;background:var(--c-bg);border:1px solid var(--c-input-bd);border-radius:6px;box-shadow:0 4px 16px rgba(0,0,0,.15);margin-top:2px}
 .path-dropdown__item{padding:8px 12px;font-size:.875rem;color:var(--c-text);cursor:pointer;transition:background .1s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .path-dropdown__item:hover,.path-dropdown__item.--highlighted{background:var(--c-primary);color:#fff}
+
+/* Выравнивание столбцов основного списка */
+.tm-item__col-episode{min-width:3.5em;text-align:center}
+.tm-item__col-quality{min-width:4.5em;text-align:center}

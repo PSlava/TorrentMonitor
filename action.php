@@ -64,6 +64,7 @@ if (isset($_POST['action']))
 	//Добавляем тему для мониторинга
 	if ($_POST['action'] == 'torrent_add')
 	{
+		$return = ['error' => TRUE, 'msg' => 'Неверная ссылка.'];
 		if ($url = parse_url($_POST['url']))
 		{
 			$tracker = $url['host'];
@@ -91,18 +92,18 @@ if (isset($_POST['action']))
                 }
                 elseif ($tracker == 'casstudio.tk')
     			{
-    				$query = explode('t=', $url['query']);
-    				$threme = $query[1];
+    				if (!isset($url['query'])) { $threme = ''; }
+    				else { $query = explode('t=', $url['query']); $threme = $query[1] ?? ''; }
     			}
     			elseif ($tracker != 'rutor.is')
     			{
-    				$query = explode('=', $url['query']);
-    				$threme = $query[1];
+    				if (!isset($url['query'])) { $threme = ''; }
+    				else { $query = explode('=', $url['query']); $threme = $query[1] ?? ''; }
     			}
     			else
     			{
-    				preg_match('/\d{4,8}/', $url['path'], $array);
-    				$threme = $array[0];
+    				preg_match('/\d{4,8}/', $url['path'] ?? '', $array);
+    				$threme = $array[0] ?? '';
     			}
 
     			if (is_array(Database::getCredentials($tracker)))
@@ -129,7 +130,7 @@ if (isset($_POST['action']))
         							else
         								$name = Sys::getHeader($_POST['url']);
 
-        							$query = Database::setThreme($tracker, $name, $_POST['path'], $threme, Sys::strBoolToInt($_POST['update_header']));
+        							$query = Database::setThreme($tracker, $name, $_POST['path'] ?? '', $threme, Sys::strBoolToInt($_POST['update_header'] ?? 0));
         							if ($query === TRUE)
                                     {
             							$return['error'] = FALSE;
@@ -232,7 +233,8 @@ if (isset($_POST['action']))
 	//Обновляем отслеживаемый item
 	if ($_POST['action'] == 'update')
 	{
-	    $tracker = $_POST['tracker'];
+	    $return = ['error' => TRUE, 'msg' => 'Неверная ссылка.'];
+	    $tracker = $_POST['tracker'] ?? '';
 	    if ($tracker == 'lostfilm.tv' || $tracker == 'lostfilm-mirror'  || $tracker == 'newstudio.tv' || $tracker == 'baibako.tv')
         {
             $engineFile = $dir.'/trackers/'.$tracker.'.engine.php';
@@ -265,18 +267,18 @@ if (isset($_POST['action']))
                 }
                 elseif ($tracker == 'casstudio.tk')
     			{
-    				$query = explode('=', $url['query']);
-    				$threme = $query[1];
+    				if (!isset($url['query'])) { $threme = ''; }
+    				else { $query = explode('=', $url['query']); $threme = $query[1] ?? ''; }
     			}
     			elseif ($tracker != 'rutor.is')
     			{
-    				$query = explode('=', $url['query']);
-    				$threme = $query[1];
+    				if (!isset($url['query'])) { $threme = ''; }
+    				else { $query = explode('=', $url['query']); $threme = $query[1] ?? ''; }
     			}
     			else
     			{
-    				preg_match('/\d{4,8}/', $url['path'], $array);
-    				$threme = $array[0];
+    				preg_match('/\d{4,8}/', $url['path'] ?? '', $array);
+    				$threme = $array[0] ?? '';
     			}
 
     			if (is_array(Database::getCredentials($tracker)))
@@ -525,6 +527,11 @@ if (isset($_POST['action']))
     //Обновляем настройки торрент-клиенты
     if ($_POST['action'] == 'update_torrent')
     {
+        $allowedClients = ['Deluge', 'Transmission', 'qBittorrent', 'TorrServer', 'SynologyDS', 'rTorrent', 'aria2'];
+        if (!in_array($_POST['torrentClient'], $allowedClients)) {
+            echo json_encode(['error' => TRUE, 'msg' => 'Неизвестный торрент-клиент.']);
+            exit;
+        }
         Database::updateSettings('useTorrent', Sys::strBoolToInt($_POST['useTorrent']));
         Database::updateSettings('torrentClient', $_POST['torrentClient']);
         Database::updateSettings('torrentAddress', $_POST['torrentAddress']);
@@ -549,11 +556,14 @@ if (isset($_POST['action']))
 			{
 				Database::updateDownloadThreme($id);
 			}
-            $return['error'] = FALSE;
-            $return['msg'] = count($arr).' тем помечено для закачки.';
-            echo json_encode($return);
+			Database::updateDownloadThremeNew();
+            echo json_encode(['error' => FALSE, 'msg' => count($arr).' тем помечено для закачки.']);
 		}
-		Database::updateDownloadThremeNew();
+		else
+		{
+			echo json_encode(['error' => TRUE, 'msg' => 'Не выбрано ни одной темы.']);
+		}
+		exit;
 	}
 
     //Помечаем новость как прочитанную
@@ -575,14 +585,16 @@ if (isset($_POST['action']))
 	//Выполняем обновление системы
 	if ($_POST['action'] == 'system_update')
 	{
+		ob_start();
 		Update::runUpdate();
-		return TRUE;
+		$output = ob_get_clean();
+		echo json_encode(['error' => FALSE, 'msg' => strip_tags($output) ?: 'Обновление завершено.']);
+		exit;
 	}
 
 	//Выход из системы
 	if ($_POST['action'] == 'logout')
 	{
-		session_start();
 		$_SESSION = [];
 		if (ini_get('session.use_cookies')) {
 			$params = session_get_cookie_params();
@@ -704,7 +716,6 @@ if (isset($_GET['action']))
 	//Сортировка вывода торрентов
 	if ($_GET['action'] == 'order')
 	{
-		session_start();
         $by  = !empty($_GET['by']) ? $_GET['by'] : 'name';
         $dir = !empty($_GET['dir']) ? $_GET['dir'] : 'asc';
 
@@ -751,7 +762,50 @@ if (isset($_GET['action']))
     // action.php?action=temp_clear
     if ($_GET['action'] == 'temp_clear') {
         if (Database::clearTemp())
-            echo 'Таблица очищена';
+            echo json_encode(['error' => FALSE, 'msg' => 'Таблица очищена']);
+        else
+            echo json_encode(['error' => TRUE, 'msg' => 'Ошибка очистки таблицы']);
+    }
+
+    // Пакетный запрос статусов всех торрентов (одна авторизация)
+    if ($_GET['action'] == 'torrent_client_statuses') {
+        $useTorrent = Database::getSetting('useTorrent');
+        $torrentClient = Database::getSetting('torrentClient');
+        $allowedClients = ['Deluge', 'Transmission', 'qBittorrent', 'TorrServer', 'SynologyDS', 'rTorrent', 'aria2'];
+
+        if (!$useTorrent || empty($torrentClient) || !in_array($torrentClient, $allowedClients)) {
+            echo json_encode([]);
+        } else {
+            $hashes = Database::getAllHashes();
+            if (empty($hashes)) {
+                echo json_encode([]);
+            } elseif (method_exists($torrentClient, 'getStatusBatch')) {
+                $result = call_user_func($torrentClient.'::getStatusBatch', $hashes);
+                echo json_encode($result);
+            } else {
+                #фолбек: поштучный запрос (для клиентов без getStatusBatch)
+                $result = [];
+                foreach ($hashes as $hash) {
+                    $result[$hash] = call_user_func($torrentClient.'::getStatus', $hash);
+                }
+                echo json_encode($result);
+            }
+        }
+    }
+
+    // Статус торрента в клиенте
+    if ($_GET['action'] == 'torrent_client_status') {
+        $hash = $_GET['hash'] ?? '';
+        $useTorrent = Database::getSetting('useTorrent');
+        $torrentClient = Database::getSetting('torrentClient');
+        $allowedClients = ['Deluge', 'Transmission', 'qBittorrent', 'TorrServer', 'SynologyDS', 'rTorrent', 'aria2'];
+
+        if (empty($hash) || !$useTorrent || empty($torrentClient) || !in_array($torrentClient, $allowedClients)) {
+            echo json_encode(['status' => 'unknown']);
+        } else {
+            $result = call_user_func($torrentClient.'::getStatus', $hash);
+            echo json_encode($result);
+        }
     }
 }
 ?>

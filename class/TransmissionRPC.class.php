@@ -452,7 +452,7 @@ class TransmissionRPC
       }
       // Might be an array, check index for digits, if so, an array should be returned
       if ( ctype_digit( (string) $index ) ) { $return_as_array = true; }
-      if ( empty( $value ) ) unset( $array[$index] );
+      if ( empty( $value ) && $value !== 0 && $value !== 0.0 && $value !== '0' && $value !== false ) unset( $array[$index] );
     }
     // Return array cast to object
     return $return_as_array ? $array : (object) $array;

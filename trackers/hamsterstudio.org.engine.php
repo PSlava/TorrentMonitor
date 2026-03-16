@@ -23,12 +23,13 @@ class hamsterstudio
 			)
 		);
 
+		if ($result === false) return FALSE;
 		if (preg_match('/<a href=\"logout\.php\">Выход<\/a>/U', $result))
 			return TRUE;
 		else
-			return FALSE;		  
+			return FALSE;
 	}
-	
+
 	//функция проверки введёного URL`а
 	public static function checkRule($data)
 	{
@@ -206,10 +207,20 @@ class hamsterstudio
 		{
 			$title = (string)$item->title;
 			if (preg_match("/^'(.+?)'/", $title, $m))
-				$names[$m[1]] = true;
+			{
+				$name = $m[1];
+				$ep = null;
+				if (preg_match('/s(\d{2})\.?e(\d{2})/i', (string)$item->link, $em))
+					$ep = 'S'.$em[1].'E'.$em[2];
+				if ( ! isset($names[$name]) || ($ep && strcmp($ep, $names[$name]) > 0))
+					$names[$name] = $ep;
+			}
 			if (count($names) >= $limit) break;
 		}
-		return array_keys($names);
+		$result = [];
+		foreach ($names as $n => $ep)
+			$result[] = ['name' => $n, 'episode' => $ep];
+		return $result;
 	}
 
 	//основная функция
@@ -250,6 +261,7 @@ class hamsterstudio
 			        	)
 			        );
 
+					if ($page === false) $page = '';
                     $page = str_replace('<?xml version="1.0" encoding="windows-1251" ?>','<?xml version="1.0" encoding="utf-8"?>', $page);
 					if ( ! empty($page))
 					{

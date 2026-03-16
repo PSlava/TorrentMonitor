@@ -34,11 +34,11 @@ $torrents_list = Database::getTorrentsList($order, $orderDir);
         <button class="btn btn--icon" x-show="filterValue != ''" @click="filterValue = ''; go()"><svg><use href="assets/img/sprite.svg#close" /></svg></button>
     </div>
     <div class="top-bar__sort">
-        <button class="btn<?= $order == 'name' ? ' --active' : '' ?>" @click="setSort('name', '<?= $orderDir == 'asc' ? 'desc': 'asc' ?>')">
+        <button class="btn<?= $order == 'name' ? ' --active' : '' ?>" onclick="_tmSetSort('name', '<?= $orderDir == 'asc' ? 'desc': 'asc' ?>')">
             По имени
             <svg class="<?= $orderDir == 'desc' ? 'flip-y' : '' ?>" <?= $order == 'date' ? 'hidden' : '' ?>><use href="assets/img/sprite.svg#arrow" /></svg>
         </button>
-        <button class="btn<?= ($order == 'date') ? ' --active' : '' ?>" @click="setSort('date', '<?= $orderDir == 'asc' ? 'desc': 'asc' ?>')">
+        <button class="btn<?= ($order == 'date') ? ' --active' : '' ?>" onclick="_tmSetSort('date', '<?= $orderDir == 'asc' ? 'desc': 'asc' ?>')">
             По дате
             <svg class="<?= $orderDir == 'desc' ? 'flip-y' : '' ?>" <?= $order == 'name' ? 'hidden' : '' ?>><use href="assets/img/sprite.svg#arrow" /></svg>
         </button>
@@ -51,7 +51,7 @@ $torrents_list = Database::getTorrentsList($order, $orderDir);
     {
         extract($row);
         $link = Url::create($tracker, $name, $torrent_id, $hd);
-        $has_info = (!empty($path) or ($type == 'RSS' && $ep) or $error or $closed) ? true : false;
+        $has_info = (!empty($path) or ($type == 'RSS' && $ep) or $error or $closed or !empty($script)) ? true : false;
     ?>
 
 
@@ -75,11 +75,18 @@ $torrents_list = Database::getTorrentsList($order, $orderDir);
         </div>
 
         <div x-cloak x-show="showInfo" x-transition>
+            <div class="tm-item__meta" title="Трекер"><?= htmlspecialchars($tracker, ENT_QUOTES, 'UTF-8') ?></div>
+            <?php if (!empty($hash) && Database::getSetting('useTorrent')) { ?>
+                <div class="tm-item__meta tm-item__client-status" data-cs-hash="<?= htmlspecialchars($hash, ENT_QUOTES, 'UTF-8') ?>">…</div>
+            <?php } ?>
             <?php if ($type == 'RSS' && $ep) { ?>
-                <div class="tm-item__meta" title="Последняя скачаная серия"><svg><use href="assets/img/sprite.svg#ep" /></svg><?= $ep ?></div>
+                <div class="tm-item__meta" title="Последняя скачаная серия"><svg><use href="assets/img/sprite.svg#ep" /></svg><?= htmlspecialchars($ep, ENT_QUOTES, 'UTF-8') ?></div>
             <?php } ?>
             <?php if (! empty($path)) { ?>
-                <div class="tm-item__meta" title="Путь сохранения"><svg><use href="assets/img/sprite.svg#save-to" /></svg><?= $path ?></div>
+                <div class="tm-item__meta" title="Путь сохранения"><svg><use href="assets/img/sprite.svg#save-to" /></svg><?= htmlspecialchars($path, ENT_QUOTES, 'UTF-8') ?></div>
+            <?php } ?>
+            <?php if (! empty($script)) { ?>
+                <div class="tm-item__meta" title="Скрипт после обновления"><?= htmlspecialchars($script, ENT_QUOTES, 'UTF-8') ?></div>
             <?php } ?>
             <?php if ($error) { ?>
                 <div class="tm-item__meta c-danger"><svg><use href="assets/img/sprite.svg#errors-has" /></svg>Есть ошибки</div>
@@ -91,11 +98,17 @@ $torrents_list = Database::getTorrentsList($order, $orderDir);
 
     </div>
 
-    <?php if ($link['quality']) { ?>
-    <div class="col --auto">
-        <div class="tm-item__quality"><?= $link['quality'] ?></div>
+    <div class="col --auto tm-item__col-episode">
+        <?php if ($type == 'RSS' && $ep) { ?>
+            <div class="tm-item__episode" title="Последняя серия"><?= htmlspecialchars($ep, ENT_QUOTES, 'UTF-8') ?></div>
+        <?php } ?>
     </div>
-    <?php } ?>
+
+    <div class="col --auto tm-item__col-quality">
+        <?php if ($link['quality']) { ?>
+            <div class="tm-item__quality"><?= $link['quality'] ?></div>
+        <?php } ?>
+    </div>
 
     <div class="col --12 d-block d-none:xl tm-item__spacer"></div>
     <div class="col --6 --1:xl tm-item__date">
@@ -124,11 +137,18 @@ $torrents_list = Database::getTorrentsList($order, $orderDir);
                 <svg><use href="assets/img/sprite.svg#info" /></svg>
 
                 <div class="tm-item__popup">
+                    <div class="tm-item__meta" title="Трекер"><?= htmlspecialchars($tracker, ENT_QUOTES, 'UTF-8') ?></div>
+                    <?php if (!empty($hash) && Database::getSetting('useTorrent')) { ?>
+                        <div class="tm-item__meta tm-item__client-status" data-cs-hash="<?= htmlspecialchars($hash, ENT_QUOTES, 'UTF-8') ?>">…</div>
+                    <?php } ?>
                     <?php if ($type == 'RSS' && $ep) { ?>
-                        <div class="tm-item__meta" title="Последняя скачаная серия"><svg><use href="assets/img/sprite.svg#ep" /></svg><?= $ep ?></div>
+                        <div class="tm-item__meta" title="Последняя скачаная серия"><svg><use href="assets/img/sprite.svg#ep" /></svg><?= htmlspecialchars($ep, ENT_QUOTES, 'UTF-8') ?></div>
                     <?php } ?>
                     <?php if (! empty($path)) { ?>
-                        <div class="tm-item__meta" title="Путь сохранения"><svg><use href="assets/img/sprite.svg#save-to" /></svg><?= $path ?></div>
+                        <div class="tm-item__meta" title="Путь сохранения"><svg><use href="assets/img/sprite.svg#save-to" /></svg><?= htmlspecialchars($path, ENT_QUOTES, 'UTF-8') ?></div>
+                    <?php } ?>
+                    <?php if (! empty($script)) { ?>
+                        <div class="tm-item__meta" title="Скрипт после обновления"><?= htmlspecialchars($script, ENT_QUOTES, 'UTF-8') ?></div>
                     <?php } ?>
                     <?php if ($error) { ?>
                         <div class="tm-item__meta c-danger"><svg><use href="assets/img/sprite.svg#errors-has" /></svg>Есть ошибки</div>

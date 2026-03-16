@@ -19,6 +19,7 @@ class booktracker
         	)
         );
 
+		if ($result === false) return FALSE;
 		if (preg_match('/login\.php\?logout=true/U', $result))
 			return TRUE;
 		else

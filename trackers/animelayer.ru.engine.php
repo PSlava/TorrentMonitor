@@ -20,6 +20,7 @@ class animelayer
 			)
 		);
 
+		if ($result === false) return FALSE;
 		if (preg_match('/<span class=\"iblock vtop pd10 username\">.*<\/span>/U', $result))
 			return TRUE;
 		else

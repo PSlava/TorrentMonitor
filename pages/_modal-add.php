@@ -139,11 +139,11 @@ foreach ($_seriesTrackerMap as $tr => $cls) {
                                 @keydown.escape="seriesDropdownOpen = false"
                                 autocomplete="off">
                             <div class="series-dropdown" x-show="seriesDropdownOpen && seriesList.length > 0 && filteredSeries().length > 0" x-cloak>
-                                <template x-for="(name, idx) in filteredSeries()" :key="name">
+                                <template x-for="(item, idx) in filteredSeries()" :key="item.name">
                                     <div class="series-dropdown__item"
                                         :class="idx === seriesHighlight && '--highlighted'"
-                                        x-text="name"
-                                        @mousedown.prevent="series.name = name; seriesDropdownOpen = false; seriesHighlight = -1"
+                                        x-text="item.name"
+                                        @mousedown.prevent="series.name = item.name; seriesDropdownOpen = false; seriesHighlight = -1"
                                         @mouseenter="seriesHighlight = idx"></div>
                                 </template>
                             </div>

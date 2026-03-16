@@ -69,12 +69,17 @@ if (is_array($torrents))
 }
 
 $filtered = [];
-foreach ($series as $name)
+foreach ($series as $item)
 {
+    // Поддержка и старого формата (строка) и нового ({name, episode})
+    $name = is_array($item) ? $item['name'] : $item;
+    $episode = is_array($item) ? ($item['episode'] ?? null) : null;
     if ( ! isset($existing[strtolower($name)]))
-        $filtered[] = $name;
+        $filtered[] = ['name' => $name, 'episode' => $episode];
 }
 
-sort($filtered, SORT_STRING | SORT_FLAG_CASE);
+usort($filtered, function($a, $b) {
+    return strcasecmp($a['name'], $b['name']);
+});
 
 echo json_encode(['error' => false, 'series' => $filtered], JSON_UNESCAPED_UNICODE);

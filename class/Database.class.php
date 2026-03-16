@@ -114,6 +114,18 @@ class Database
         return null;
     }
 
+    public static function getAllHashes()
+    {
+        $stmt = self::newStatement("SELECT `hash` FROM `torrent` WHERE `hash` IS NOT NULL AND `hash` != ''");
+        $hashes = [];
+        if ($stmt->execute()) {
+            foreach ($stmt as $row) {
+                $hashes[] = $row['hash'];
+            }
+        }
+        return $hashes;
+    }
+
     public static function getAllSetting()
     {
         $stmt = self::newStatement("SELECT * FROM `settings`");

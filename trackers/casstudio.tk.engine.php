@@ -18,6 +18,7 @@ class casstudio
         	)
         );
 
+		if ($result === false) return FALSE;
 		if (preg_match('/\.\/ucp\.php\?mode=logout/', $result))
 			return TRUE;
 		else

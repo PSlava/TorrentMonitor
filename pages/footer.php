@@ -11,7 +11,7 @@ $.ajaxSetup({
     }
 });
 </script>
-<script src="assets/js/scripts.min.js"></script>
+<script src="assets/js/scripts.min.js?v=<?= filemtime(dirname(__DIR__).'/assets/js/scripts.min.js') ?>"></script>
 <script src="assets/js/health.js"></script>
 </body>
 </html>

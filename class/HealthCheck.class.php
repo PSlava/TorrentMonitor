@@ -146,17 +146,17 @@ class HealthCheck
             fclose($conn);
             return [
                 'id'     => 'torrent_client',
-                'title'  => 'Торрент-клиент (' . htmlspecialchars($client) . ')',
+                'title'  => 'Торрент-клиент (' . htmlspecialchars($client ?? '') . ')',
                 'status' => 'ok',
-                'detail' => htmlspecialchars($address)
+                'detail' => htmlspecialchars($address ?? '')
             ];
         }
 
         return [
             'id'     => 'torrent_client',
-            'title'  => 'Торрент-клиент (' . htmlspecialchars($client) . ')',
+            'title'  => 'Торрент-клиент (' . htmlspecialchars($client ?? '') . ')',
             'status' => 'error',
-            'detail' => 'Недоступен: ' . htmlspecialchars($address)
+            'detail' => 'Недоступен: ' . htmlspecialchars($address ?? '')
         ];
     }
 

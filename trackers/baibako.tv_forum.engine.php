@@ -19,12 +19,13 @@ class baibako_f
 			)
 		);
 
+		if ($result === false) return FALSE;
 		if (preg_match('/<a href=\"logout\.php\">Выход<\/a>/U', $result))
 			return TRUE;
 		else
-			return FALSE;		  
+			return FALSE;
 	}
-	
+
 	//функция проверки введёного URL`а
 	public static function checkRule($data)
 	{

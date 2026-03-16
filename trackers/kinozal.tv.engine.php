@@ -19,10 +19,11 @@ class kinozaltv
         	)
         );
 
+		if ($result === false) return FALSE;
 		if (preg_match('/<a href=\'\/userdetails\.php\?id=\d*\'>.*<\/a>/U', $result))
 			return TRUE;
 		else
-			return FALSE;		  
+			return FALSE;
 	}
 
 	//функция проверки введёного URL`а
@@ -212,7 +213,11 @@ class kinozaltv
                     		'referer'        => 'http://kinozal.tv/details.php?id='.$torrent_id,
                     	)
                     );
-					if (preg_match('/<a href=\'\/pay_mode\.php\#tcounter\' class=sbab>/', $torrent))
+					if ($torrent === false)
+					{
+						Errors::setWarnings($tracker, 'torrent_file_fail', $id);
+					}
+					elseif (preg_match('/<a href=\'\/pay_mode\.php\#tcounter\' class=sbab>/', $torrent))
 					{
         				//устанавливаем варнинг
         				if (kinozaltv::$warning == NULL)

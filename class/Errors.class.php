@@ -70,7 +70,7 @@ class Errors
         $debug = Database::getSetting('debug');
     	Database::setWarnings($date, $tracker, $warning, $id);
     	if ($debug)
-    	    echo '<br>'."\r\n".$warning.'<br>'."\r\n";
+    	    error_log('[TM] ' . $tracker . ': ' . $warning);
 		if ($id != NULL)
 			Database::setErrorToThreme($id, 1);
     	$countErrors = Database::getWarningsCount($tracker);

@@ -19,6 +19,7 @@ class rutracker
         	)
         );
         
+		if ($result === false) return FALSE;
 		if (preg_match('/profile\.php\?mode=viewprofile/', $result))
 			return TRUE;
 		else

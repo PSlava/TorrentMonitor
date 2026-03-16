@@ -23,10 +23,11 @@ class newstudio
 			)
 		);
 
+		if ($result === false) return FALSE;
 		if (preg_match('/login\.php\?logout=1/', $result))
 			return TRUE;
 		else
-			return FALSE;		  
+			return FALSE;
 	}
 
 	public static function checkRule($data)
@@ -78,6 +79,7 @@ class newstudio
 			)
 		);
 		
+		if ($result === false) return FALSE;
 		if (preg_match('/download\.php\?id=(\d{2,6})/', $result, $matches))
 			return $matches[1];
 		else
@@ -233,10 +235,20 @@ class newstudio
 		{
 			$title = (string)$item->title;
 			if (preg_match("/^'(.+?)'/", $title, $m))
-				$names[$m[1]] = true;
+			{
+				$name = $m[1];
+				$ep = null;
+				if (preg_match('/Сезон (\d{1,2}), Серия (\d{1,2})/', $title, $em))
+					$ep = 'S'.str_pad($em[1], 2, '0', STR_PAD_LEFT).'E'.str_pad($em[2], 2, '0', STR_PAD_LEFT);
+				if ( ! isset($names[$name]) || ($ep && strcmp($ep, $names[$name]) > 0))
+					$names[$name] = $ep;
+			}
 			if (count($names) >= $limit) break;
 		}
-		return array_keys($names);
+		$result = [];
+		foreach ($names as $n => $ep)
+			$result[] = ['name' => $n, 'episode' => $ep];
+		return $result;
 	}
 
 	//основная функция

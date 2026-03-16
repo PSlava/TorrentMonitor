@@ -87,16 +87,20 @@ class lostfilmmirror
 			// Убираем [Русское название] в начале
 			$title = preg_replace('/^\[.*?\]\s*/', '', $title);
 			// Формат: Name.Of.Show.2026.S01E01.quality.ext
-			if (preg_match('/^(.+?)\.S\d{2}\.?E\d{2}/i', $title, $m))
+			if (preg_match('/^(.+?)\.(S\d{2}\.?E\d{2})/i', $title, $m))
 			{
 				$name = str_replace('.', ' ', $m[1]);
-				// Убираем год выпуска в конце (например "Young Sherlock 2026" → "Young Sherlock")
 				$name = preg_replace('/\s+\d{4}$/', '', $name);
-				$names[$name] = true;
+				$ep = strtoupper(str_replace('.', '', $m[2]));
+				if ( ! isset($names[$name]) || strcmp($ep, $names[$name]) > 0)
+					$names[$name] = $ep;
 			}
 			if (count($names) >= $limit) break;
 		}
-		return array_keys($names);
+		$result = [];
+		foreach ($names as $n => $ep)
+			$result[] = ['name' => $n, 'episode' => $ep];
+		return $result;
 	}
 
 	//основная функция
