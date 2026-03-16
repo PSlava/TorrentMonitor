@@ -4,6 +4,7 @@ include_once $dir."config.php";
 
 if ( ! Sys::checkAuth())
     die(header('Location: ../'));
+if (session_id() !== '') session_write_close();
 ?>
 
 <div class="top-bar mb-2">
@@ -61,7 +62,7 @@ if ($trackers != NULL) {
                         ?>
                         <div class="row tm-item">
                             <div class="col --auto">
-                                <div class="tracker-icon" style="background-image: url(img/<?= $error['where'] ?>.ico)" title="<?= $error['where'] ?>"></div>
+                                <div class="tracker-icon" <?php if (file_exists($dir.'img/'.basename($error['where']).'.ico')) { ?>style="background-image: url(img/<?= htmlspecialchars($error['where'], ENT_QUOTES, 'UTF-8') ?>.ico)"<?php } ?> title="<?= htmlspecialchars($error['where'], ENT_QUOTES, 'UTF-8') ?>"></div>
                             </div>
                             <div class="col">
                                 <?= Errors::getWarning($error['reason']) ?>

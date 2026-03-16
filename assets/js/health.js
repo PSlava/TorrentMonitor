@@ -55,79 +55,7 @@ function pathScrollTo() {
     if (el) try { el.scrollIntoView({block: 'nearest'}); } catch(e) { el.scrollIntoView(false); }
 }
 
-// Состояние системы с фоновой проверкой
-function healthRunner() {
-    return {
-        running: false,
-        phase: '',
-        checks: [],
-        pollTimer: null,
-        autoStart: function() {
-            var self = this;
-            fetch('include/health_status.php')
-                .then(function(r) { return r.json(); })
-                .then(function(resp) {
-                    if (resp.running) {
-                        self.running = true;
-                        self.applyData(resp.data);
-                        self.startPolling();
-                    } else if (resp.data && resp.data.status === 'done') {
-                        self.applyData(resp.data);
-                    } else {
-                        self.startHealth();
-                    }
-                })
-                .catch(function() {
-                    self.startHealth();
-                });
-        },
-        startHealth: function() {
-            var self = this;
-            this.checks = [];
-            this.running = true;
-            this.phase = 'Запуск проверки...';
-            fetch('include/health_run.php')
-                .then(function(r) { return r.json(); })
-                .then(function(data) {
-                    if (data.error) {
-                        self.running = false;
-                        notyf.error(data.msg);
-                    } else {
-                        self.startPolling();
-                    }
-                })
-                .catch(function() {
-                    self.running = false;
-                    notyf.error('Ошибка запуска проверки');
-                });
-        },
-        startPolling: function() {
-            if (this.pollTimer) return;
-            var self = this;
-            this.pollTimer = setInterval(function() {
-                fetch('include/health_status.php')
-                    .then(function(r) { return r.json(); })
-                    .then(function(resp) {
-                        self.applyData(resp.data);
-                        if (!resp.running) {
-                            self.running = false;
-                            clearInterval(self.pollTimer);
-                            self.pollTimer = null;
-                        }
-                    })
-                    .catch(function() {});
-            }, 1000);
-        },
-        applyData: function(data) {
-            if (!data) return;
-            this.phase = data.phase || '';
-            this.checks = data.checks || [];
-        },
-        countByStatus: function(status) {
-            return this.checks.filter(function(c) { return c.status === status; }).length;
-        }
-    };
-}
+// healthRunner больше не нужен — проверка выполняется синхронно на PHP
 
 // SSE-клиент для реал-тайм обновлений
 function initSSE() {
@@ -140,19 +68,34 @@ function initSSE() {
         reconnectAttempts = 0;
     };
 
+    function refreshTable() {
+        var tmEl = document.querySelector('[x-data^="tm"]');
+        if (tmEl && window.Alpine) {
+            var tm = Alpine.$data(tmEl);
+            if (tm.pageCurrent === 'show_table') tm.showPage('show_table');
+            fetch('action.php?action=counts').then(function(r){return r.json()}).then(function(d){
+                tm.countErrors = d.errors;
+                tm.countNews = d.news;
+            }).catch(function(){});
+        }
+    }
+
     source.addEventListener('torrent.updated', function(e) {
         var data = JSON.parse(e.data);
         notyf.success('Обновление: ' + (data.data.name || 'торрент'));
+        refreshTable();
     });
 
     source.addEventListener('torrent.added', function(e) {
         var data = JSON.parse(e.data);
         notyf.success('Добавлен: ' + (data.data.name || 'торрент'));
+        refreshTable();
     });
 
     source.addEventListener('download.done', function(e) {
         var data = JSON.parse(e.data);
         notyf.success('Загружен: ' + (data.data.name || 'торрент'));
+        refreshTable();
     });
 
     source.addEventListener('download.error', function(e) {
@@ -173,6 +116,7 @@ function initSSE() {
         var data = JSON.parse(e.data);
         var dur = data.data && data.data.duration ? ' (' + Math.round(data.data.duration) + ' сек)' : '';
         notyf.success('Синхронизация завершена' + dur);
+        refreshTable();
     });
 
     source.onerror = function() {

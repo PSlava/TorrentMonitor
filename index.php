@@ -5,6 +5,8 @@ if (PHP_VERSION_ID < 80000 && function_exists('libxml_disable_entity_loader')) {
     libxml_disable_entity_loader(false);
 }
 
+header('Cache-Control: no-store, no-cache, must-revalidate');
+
 $dir = dirname(__FILE__)."/";
 include_once $dir."config.php";
 

@@ -270,6 +270,8 @@ class Sys
             else
                 $name = $array[1];
         }
+        if ($name !== null)
+            $name = html_entity_decode($name, ENT_QUOTES, 'UTF-8');
         return $name;
     }
 

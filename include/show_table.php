@@ -4,18 +4,19 @@ include_once $dir.'config.php';
 
 if ( ! Sys::checkAuth())
     die(header('Location: ../'));
+if (session_id() !== '') session_write_close();
 
 $date_today = date('d-m-Y');
 $order = 'name';
 $orderDir = 'asc';
-if (isset($_COOKIE['order']) && isset($_COOKIE['orderDir']))
-{
-    if (in_array($_COOKIE['order'], ['name', 'date'])) {
-        $order = $_COOKIE['order'];
-    }
-    if (in_array($_COOKIE['orderDir'], ['asc', 'desc'])) {
-        $orderDir = $_COOKIE['orderDir'];
-    }
+// GET-параметры (приоритет) или cookie (фоллбэк)
+$rawOrder = isset($_GET['order']) ? $_GET['order'] : (isset($_COOKIE['order']) ? $_COOKIE['order'] : 'name');
+$rawDir   = isset($_GET['dir'])   ? $_GET['dir']   : (isset($_COOKIE['orderDir']) ? $_COOKIE['orderDir'] : 'asc');
+if (in_array($rawOrder, ['name', 'date'])) {
+    $order = $rawOrder;
+}
+if (in_array($rawDir, ['asc', 'desc'])) {
+    $orderDir = $rawDir;
 }
 $torrents_list = Database::getTorrentsList($order, $orderDir);
 ?>
@@ -65,7 +66,7 @@ $torrents_list = Database::getTorrentsList($order, $orderDir);
     >
 
     <div class="col --auto">
-        <div class="tracker-icon" style="background-image: url(img/<?= htmlspecialchars($tracker, ENT_QUOTES, 'UTF-8') ?>.ico)" title="<?= htmlspecialchars($tracker, ENT_QUOTES, 'UTF-8') ?>"></div>
+        <div class="tracker-icon" <?php if (file_exists($dir.'img/'.basename($tracker).'.ico')) { ?>style="background-image: url(img/<?= htmlspecialchars($tracker, ENT_QUOTES, 'UTF-8') ?>.ico)"<?php } ?> title="<?= htmlspecialchars($tracker, ENT_QUOTES, 'UTF-8') ?>"></div>
     </div>
 
     <div class="col">
@@ -165,6 +166,26 @@ $torrents_list = Database::getTorrentsList($order, $orderDir);
         <?php } else { ?>
             <button @click="modalEditTheme(<?= $id ?>)" class="btn tm-item__icon tm-item__icon--edit"><svg><use href="assets/img/sprite.svg#edit" /></svg></button>
         <?php } ?>
+
+        <?php
+            $is_empty = (empty($hash) && empty($ep) && ($timestamp == '0000-00-00 00:00:00' || $timestamp == NULL || $timestamp == '2000-01-01 00:00:00' || $timestamp == '1970-01-01 00:00:00'));
+        ?>
+        <div class="confirm__wrap" title="Сбросить и перезакачать">
+            <button class="btn tm-item__icon tm-item__icon--reset<?= $is_empty ? ' --disabled' : '' ?>" <?= $is_empty ? 'disabled' : '@click="showReset = true"' ?>><svg viewBox="0 0 24 24"><path fill="currentColor" d="M17.65 6.35A7.96 7.96 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></button>
+            <?php if (!$is_empty) { ?>
+            <div class="confirm confirm--warning"
+                x-cloak
+                x-show="showReset"
+                @click.away="showReset = false"
+                >
+                <div class="confirm__title">Сбросить и перезакачать?</div>
+                <div class="confirm__actions">
+                    <button class="btn btn--secondary" @click="resetItem(<?= $id ?>)">ОК</button>
+                </div>
+                <button class="btn-unset confirm__icon" @click.prevent="showReset = false" title="Отмена"><svg><use href="assets/img/sprite.svg#close" /></svg></button>
+            </div>
+            <?php } ?>
+        </div>
 
         <div class="confirm__wrap" title="Удалить тему">
             <button class="btn tm-item__icon tm-item__icon--delete" @click="showDelete = true"><svg><use href="assets/img/sprite.svg#trash" /></svg></button>

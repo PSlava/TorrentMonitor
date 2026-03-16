@@ -3,7 +3,7 @@ $dir = dirname(__FILE__)."/../";
 include_once $dir."config.php";
 if ( ! Sys::checkAuth())
     die(header('Location: ../'));
-
+if (session_id() !== '') session_write_close();
 
 $user_id = !empty($_GET['id']) ? $_GET['id'] : false ;
 $themes = Database::getThremesFromBuffer($user_id);
@@ -20,7 +20,7 @@ if (is_array($themes) && count($themes) > 0) {
         >
 
         <div class="col --auto">
-            <div class="tracker-icon" style="background-image: url(img/<?= $item['tracker'] ?>.ico)" title="<?= $item['tracker'] ?>"></div>
+            <div class="tracker-icon" <?php if (file_exists($dir.'img/'.basename($item['tracker']).'.ico')) { ?>style="background-image: url(img/<?= htmlspecialchars($item['tracker'], ENT_QUOTES, 'UTF-8') ?>.ico)"<?php } ?> title="<?= htmlspecialchars($item['tracker'], ENT_QUOTES, 'UTF-8') ?>"></div>
         </div>
         <div class="col">
             <div class="tm-item__section">

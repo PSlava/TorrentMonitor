@@ -3,6 +3,7 @@ $dir = dirname(__FILE__).'/../';
 include_once $dir."config.php";
 if ( ! Sys::checkAuth())
     die(header('Location: ../'));
+if (session_id() !== '') session_write_close();
 ?>
 <div class="top-bar mb-2">
     <div class="top-bar__title"><svg><use href="assets/img/sprite.svg#play" /></svg> Синхронизация</div>

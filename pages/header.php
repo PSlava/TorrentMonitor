@@ -9,7 +9,7 @@
     <link href="https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700&amp;subset=cyrillic" rel="stylesheet">
 
     <link rel="stylesheet" href="assets/css/style.min.css">
-    <link rel="stylesheet" href="assets/css/health.css">
+    <link rel="stylesheet" href="assets/css/health.css?v=<?= filemtime(dirname(__DIR__).'/assets/css/health.css') ?>">
     <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
     <!--[if lt IE 9]><script src="js/html5shiv.min.js"></script><![endif]-->
 

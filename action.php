@@ -58,6 +58,10 @@ if (isset($_POST['action']))
 		}
 	}
 
+	// Закрываем сессию после CSRF-проверки
+	if (session_id() !== '') session_write_close();
+	header('Content-Type: application/json; charset=utf-8');
+
 	// Миграции БД (один вызов для всех action)
 	Migration::run();
 
@@ -400,6 +404,15 @@ if (isset($_POST['action']))
 		echo json_encode($return);
 	}
 
+	//Сбрасываем время обновления (повторная закачка при следующем запуске)
+	if ($_POST['action'] == 'reset_item')
+	{
+		$id = (int)$_POST['id'];
+		Database::resetItem($id);
+		echo json_encode(['error' => FALSE, 'msg' => 'Сброшено. При следующем запуске будет перезакачано.']);
+		exit;
+	}
+
 	//Удаляем мониторинг
 	if ($_POST['action'] == 'del')
 	{
@@ -711,6 +724,9 @@ if (isset($_GET['action']))
 {
 	if ( ! Sys::checkAuth())
 		exit();
+	if (session_id() !== '') session_write_close();
+	header('Cache-Control: no-store, no-cache, must-revalidate');
+	header('Content-Type: application/json; charset=utf-8');
 	Migration::run();
 
 	//Сортировка вывода торрентов
@@ -806,6 +822,16 @@ if (isset($_GET['action']))
             $result = call_user_func($torrentClient.'::getStatus', $hash);
             echo json_encode($result);
         }
+    }
+
+    // Счётчики ошибок и новостей (для обновления боковой панели)
+    if ($_GET['action'] == 'counts') {
+        $errors = Database::getWarningsCountSimple();
+        $news = Database::getNewsCount();
+        echo json_encode([
+            'errors' => !empty($errors) ? (int)$errors['count'] : 0,
+            'news'   => !empty($news) ? (int)$news['count'] : 0
+        ]);
     }
 }
 ?>

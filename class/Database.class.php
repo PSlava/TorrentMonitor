@@ -808,6 +808,13 @@ class Database
             return FALSE;
     }
 
+    public static function resetItem($id)
+    {
+        $stmt = self::newStatement("UPDATE `torrent` SET `timestamp` = '2000-01-01 00:00:00', `hash` = '', `ep` = '' WHERE `id` = :id");
+        $stmt->bindParam(':id', $id);
+        return $stmt->execute();
+    }
+
     public static function deletItem($id)
     {
         $stmt = self::newStatement("DELETE FROM `torrent` WHERE `id` = :id");

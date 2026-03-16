@@ -65,9 +65,6 @@ class HealthCheck
         }
     }
 
-    public static function checkLastRunPublic() { return self::checkLastRun(); }
-    public static function checkTorrentClientPublic() { return self::checkTorrentClient(); }
-    public static function checkTrackerCookiesPublic() { return self::checkTrackerCookies(); }
 
     // Проверка последнего запуска
     private static function checkLastRun()
@@ -94,7 +91,6 @@ class HealthCheck
         if ($dt)
         {
             $diff = time() - $dt->getTimestamp();
-            $hours = round($diff / 3600, 1);
 
             $status = 'ok';
             if ($diff > 7200)
@@ -103,10 +99,11 @@ class HealthCheck
                 $status = 'error';
 
             return [
-                'id'     => 'last_run',
-                'title'  => 'Последний запуск',
-                'status' => $status,
-                'detail' => $content . ' (' . $hours . ' ч. назад)'
+                'id'       => 'last_run',
+                'title'    => 'Последний запуск',
+                'status'   => $status,
+                'detail'   => $content,
+                'last_run' => $dt->format('Y-m-d H:i:s')
             ];
         }
 
@@ -118,7 +115,7 @@ class HealthCheck
         ];
     }
 
-    // Проверка подключения к торрент-клиенту
+    // Проверка подключения к торрент-клиенту (реальный API-запрос)
     private static function checkTorrentClient()
     {
         $useTorrent = Database::getSetting('useTorrent');
@@ -132,21 +129,19 @@ class HealthCheck
             ];
         }
 
-        $client = Database::getSetting('torrentClient');
+        $client  = Database::getSetting('torrentClient');
         $address = Database::getSetting('torrentAddress');
+        $login   = Database::getSetting('torrentLogin');
+        $pass    = Database::getSetting('torrentPassword');
+        $title   = 'Торрент-клиент (' . htmlspecialchars($client ?? '') . ')';
 
-        // Извлекаем host:port, убирая протокол если есть
-        $parsed = self::parseAddress($address);
-        $host = $parsed['host'];
-        $port = $parsed['port'];
+        $ok = self::pingTorrentClient($client, $address, $login, $pass);
 
-        $conn = @fsockopen($host, $port, $errno, $errstr, 5);
-        if ($conn)
+        if ($ok)
         {
-            fclose($conn);
             return [
                 'id'     => 'torrent_client',
-                'title'  => 'Торрент-клиент (' . htmlspecialchars($client ?? '') . ')',
+                'title'  => $title,
                 'status' => 'ok',
                 'detail' => htmlspecialchars($address ?? '')
             ];
@@ -154,10 +149,153 @@ class HealthCheck
 
         return [
             'id'     => 'torrent_client',
-            'title'  => 'Торрент-клиент (' . htmlspecialchars($client ?? '') . ')',
+            'title'  => $title,
             'status' => 'error',
             'detail' => 'Недоступен: ' . htmlspecialchars($address ?? '')
         ];
+    }
+
+    // Реальная проверка доступности торрент-клиента через API
+    private static function pingTorrentClient($client, $address, $login, $pass)
+    {
+        if (empty($address))
+            return false;
+
+        // 1. Проверка порта (быстрый фейл для всех клиентов)
+        $parsed = self::parseAddress($address);
+        $conn = @fsockopen($parsed['host'], $parsed['port'], $errno, $errstr, 5);
+        if ( ! $conn)
+            return false;
+        fclose($conn);
+
+        // 2. Проверка API (порт открыт, но работает ли клиент?)
+        // Нормализуем адрес
+        if (strpos($address, 'http') !== 0)
+            $address = 'http://' . $address;
+        $address = rtrim($address, '/');
+
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT        => 5,
+            CURLOPT_CONNECTTIMEOUT => 5,
+            CURLOPT_FOLLOWLOCATION => true,
+        ]);
+
+        $ok = false;
+
+        try {
+            switch ($client)
+            {
+                case 'Transmission':
+                    $ok = self::pingTransmission($ch, $address, $login, $pass);
+                    break;
+                case 'qBittorrent':
+                    $ok = self::pingQBittorrent($ch, $address);
+                    break;
+                case 'Deluge':
+                    $ok = self::pingDeluge($ch, $address);
+                    break;
+                case 'TorrServer':
+                    $ok = self::pingTorrServer($ch, $address);
+                    break;
+                case 'SynologyDS':
+                    $ok = self::pingSynology($ch, $address);
+                    break;
+                default:
+                    // Неизвестный клиент — порт уже проверен выше
+                    $ok = true;
+                    break;
+            }
+        } catch (Exception $e) {
+            $ok = false;
+        }
+
+        curl_close($ch);
+        return $ok;
+    }
+
+    private static function pingTransmission($ch, $address, $login, $pass)
+    {
+        // Transmission RPC — сначала GET для получения X-Transmission-Session-Id (409)
+        $rpcUrl = $address;
+        if (strpos($rpcUrl, '/transmission') === false)
+            $rpcUrl .= '/transmission/rpc';
+
+        curl_setopt($ch, CURLOPT_URL, $rpcUrl);
+        curl_setopt($ch, CURLOPT_HEADER, true);
+        if ( ! empty($login))
+            curl_setopt($ch, CURLOPT_USERPWD, $login . ':' . $pass);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        // 409 = нужен session-id (нормальный ответ Transmission RPC)
+        // 200 = успешный ответ
+        // 401 = авторизация нужна (клиент работает, но пароль неверный — всё равно доступен)
+        return in_array($httpCode, [200, 401, 409]);
+    }
+
+    private static function pingQBittorrent($ch, $address)
+    {
+        // qBittorrent — проверяем версию API
+        curl_setopt($ch, CURLOPT_URL, $address . '/api/v2/app/version');
+        curl_setopt($ch, CURLOPT_HEADER, false);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        // 200 = API отвечает, 403 = нужна авторизация (клиент работает)
+        return in_array($httpCode, [200, 403]);
+    }
+
+    private static function pingDeluge($ch, $address)
+    {
+        // Deluge Web UI — JSON-RPC
+        curl_setopt($ch, CURLOPT_URL, $address . '/json');
+        curl_setopt($ch, CURLOPT_HEADER, false);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ['Content-Type: application/json']);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+            'method' => 'web.get_host_status',
+            'params' => [],
+            'id'     => 1
+        ]));
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        return $httpCode === 200 && $response !== false;
+    }
+
+    private static function pingTorrServer($ch, $address)
+    {
+        // TorrServer — echo endpoint
+        curl_setopt($ch, CURLOPT_URL, $address . '/echo');
+        curl_setopt($ch, CURLOPT_HEADER, false);
+        curl_setopt($ch, CURLOPT_POST, false);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        return $httpCode === 200;
+    }
+
+    private static function pingSynology($ch, $address)
+    {
+        // Synology DownloadStation — SYNO.API.Info
+        curl_setopt($ch, CURLOPT_URL, $address . '/webapi/query.cgi?api=SYNO.API.Info&version=1&method=query');
+        curl_setopt($ch, CURLOPT_HEADER, false);
+        curl_setopt($ch, CURLOPT_POST, false);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+        if ($httpCode !== 200 || $response === false)
+            return false;
+
+        $data = json_decode($response, true);
+        return is_array($data) && isset($data['success']);
     }
 
     // Парсинг адреса host:port (с учётом возможного протокола)
