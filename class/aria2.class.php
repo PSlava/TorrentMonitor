@@ -77,29 +77,140 @@ class aria2
             }
         }
 
-        #ищем среди ожидающих (до 1000 записей)
-        $result = self::rpcRequest($url, $secret, 'aria2.tellWaiting', [0, 1000, ['gid', 'infoHash']]);
-        if ( ! isset($result['error']) && isset($result['result']))
+        #ищем среди ожидающих (постранично)
+        $offset = 0;
+        $pageSize = 1000;
+        while (true)
         {
+            $result = self::rpcRequest($url, $secret, 'aria2.tellWaiting', [$offset, $pageSize, ['gid', 'infoHash']]);
+            if (isset($result['error']) || !isset($result['result']) || empty($result['result']))
+                break;
             foreach ($result['result'] as $item)
             {
                 if (isset($item['infoHash']) && strtolower($item['infoHash']) === $hashLower)
                     return $item['gid'];
             }
+            if (count($result['result']) < $pageSize)
+                break;
+            $offset += $pageSize;
         }
 
-        #ищем среди остановленных (до 1000 записей)
-        $result = self::rpcRequest($url, $secret, 'aria2.tellStopped', [0, 1000, ['gid', 'infoHash']]);
-        if ( ! isset($result['error']) && isset($result['result']))
+        #ищем среди остановленных (постранично)
+        $offset = 0;
+        while (true)
         {
+            $result = self::rpcRequest($url, $secret, 'aria2.tellStopped', [$offset, $pageSize, ['gid', 'infoHash']]);
+            if (isset($result['error']) || !isset($result['result']) || empty($result['result']))
+                break;
             foreach ($result['result'] as $item)
             {
                 if (isset($item['infoHash']) && strtolower($item['infoHash']) === $hashLower)
                     return $item['gid'];
             }
+            if (count($result['result']) < $pageSize)
+                break;
+            $offset += $pageSize;
         }
 
         return null;
+    }
+
+    #форматирование статуса торрента в единый формат
+    private static function formatStatus($torrent)
+    {
+        $stateMap = [
+            'active'   => 'downloading',
+            'waiting'  => 'queued',
+            'paused'   => 'paused',
+            'error'    => 'error',
+            'complete' => 'seeding',
+            'removed'  => 'stopped',
+        ];
+
+        $state = isset($torrent['status']) ? $torrent['status'] : '';
+        $completed = intval($torrent['completedLength']);
+        $total = intval($torrent['totalLength']);
+
+        if ($state === 'active' && $total > 0 && $completed >= $total)
+            $status = 'seeding';
+        elseif ($state === 'active')
+            $status = 'downloading';
+        else
+            $status = isset($stateMap[$state]) ? $stateMap[$state] : 'unknown';
+
+        $progress = ($total > 0) ? round($completed / $total * 100, 1) : 0;
+
+        $speedBytes = intval($torrent['downloadSpeed']);
+        $speed = ($speedBytes >= 1048576)
+            ? round($speedBytes / 1048576, 1) . ' MB/s'
+            : round($speedBytes / 1024, 1) . ' KB/s';
+
+        return ['status' => $status, 'progress' => $progress, 'speed' => $speed];
+    }
+
+    #пакетный запрос статусов (собираем все списки за 3 запроса вместо N*4)
+    public static function getStatusBatch($hashes)
+    {
+        try
+        {
+            $settings = Database::getAllSetting();
+            foreach ($settings as $row) { extract($row); }
+
+            $url    = self::buildUrl($torrentAddress);
+            $secret = $torrentPassword;
+            $fields = ['gid', 'infoHash', 'status', 'completedLength', 'totalLength', 'downloadSpeed'];
+
+            $hashSet = array_flip(array_map('strtolower', $hashes));
+            $allItems = [];
+
+            #активные
+            $result = self::rpcRequest($url, $secret, 'aria2.tellActive', [$fields]);
+            if (!isset($result['error']) && isset($result['result']))
+                $allItems = array_merge($allItems, $result['result']);
+
+            #ожидающие (постранично)
+            $offset = 0;
+            $pageSize = 1000;
+            while (true)
+            {
+                $result = self::rpcRequest($url, $secret, 'aria2.tellWaiting', [$offset, $pageSize, $fields]);
+                if (isset($result['error']) || !isset($result['result']) || empty($result['result']))
+                    break;
+                $allItems = array_merge($allItems, $result['result']);
+                if (count($result['result']) < $pageSize)
+                    break;
+                $offset += $pageSize;
+            }
+
+            #остановленные (постранично)
+            $offset = 0;
+            while (true)
+            {
+                $result = self::rpcRequest($url, $secret, 'aria2.tellStopped', [$offset, $pageSize, $fields]);
+                if (isset($result['error']) || !isset($result['result']) || empty($result['result']))
+                    break;
+                $allItems = array_merge($allItems, $result['result']);
+                if (count($result['result']) < $pageSize)
+                    break;
+                $offset += $pageSize;
+            }
+
+            #фильтруем по нужным хешам
+            $statuses = [];
+            foreach ($allItems as $item)
+            {
+                if (!isset($item['infoHash']))
+                    continue;
+                $ih = strtolower($item['infoHash']);
+                if (isset($hashSet[$ih]))
+                    $statuses[$item['infoHash']] = self::formatStatus($item);
+            }
+            return $statuses;
+        }
+        catch (Exception $e)
+        {
+            return [];
+        }
     }
 
     #добавляем новую закачку в torrent-клиент, обновляем hash в базе
@@ -222,47 +333,7 @@ class aria2
             if (isset($result['error']) || !isset($result['result']))
                 return ['status' => 'unknown'];
 
-            $torrent = $result['result'];
-
-            #маппинг статусов aria2
-            $stateMap = [
-                'active'   => 'downloading',
-                'waiting'  => 'queued',
-                'paused'   => 'paused',
-                'error'    => 'error',
-                'complete' => 'seeding',
-                'removed'  => 'stopped',
-            ];
-
-            $state = isset($torrent['status']) ? $torrent['status'] : '';
-
-            #active может быть раздачей если уже скачано полностью
-            if ($state === 'active')
-            {
-                $completed = intval($torrent['completedLength']);
-                $total = intval($torrent['totalLength']);
-                if ($total > 0 && $completed >= $total)
-                    $status = 'seeding';
-                else
-                    $status = 'downloading';
-            }
-            else
-            {
-                $status = isset($stateMap[$state]) ? $stateMap[$state] : 'unknown';
-            }
-
-            #прогресс
-            $completed = intval($torrent['completedLength']);
-            $total = intval($torrent['totalLength']);
-            $progress = ($total > 0) ? round($completed / $total * 100, 1) : 0;
-
-            #скорость загрузки
-            $speedBytes = intval($torrent['downloadSpeed']);
-            $speed = ($speedBytes >= 1048576)
-                ? round($speedBytes / 1048576, 1) . ' MB/s'
-                : round($speedBytes / 1024, 1) . ' KB/s';
-
-            return ['status' => $status, 'progress' => $progress, 'speed' => $speed];
+            return self::formatStatus($result['result']);
         }
         catch (Exception $e)
         {

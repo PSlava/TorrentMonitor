@@ -106,17 +106,27 @@ class rTorrent
         return $address;
     }
 
+    #экранирование строки для XML (5 предопределённых XML-сущностей)
+    private static function xmlEscape($str)
+    {
+        return str_replace(
+            array('&',     '<',    '>',    '"',      "'"),
+            array('&amp;', '&lt;', '&gt;', '&quot;', '&apos;'),
+            $str
+        );
+    }
+
     #выполняем XML-RPC запрос к rTorrent
     private static function xmlRpcCall($url, $login, $password, $method, $params = array())
     {
         #формируем XML-тело запроса
         $xml = '<?xml version="1.0"?>' . "\n";
         $xml .= '<methodCall>' . "\n";
-        $xml .= '  <methodName>' . htmlspecialchars($method) . '</methodName>' . "\n";
+        $xml .= '  <methodName>' . self::xmlEscape($method) . '</methodName>' . "\n";
         $xml .= '  <params>' . "\n";
         foreach ($params as $param)
         {
-            $xml .= '    <param><value><string>' . htmlspecialchars($param) . '</string></value></param>' . "\n";
+            $xml .= '    <param><value><string>' . self::xmlEscape($param) . '</string></value></param>' . "\n";
         }
         $xml .= '  </params>' . "\n";
         $xml .= '</methodCall>';
@@ -203,6 +213,95 @@ class rTorrent
         return (string) $valueNode;
     }
 
+    #форматирование статуса торрента в единый формат
+    private static function formatStatus($state, $complete, $bytesDone, $sizeBytes, $downRate)
+    {
+        if ($state == 0)
+            $status = 'stopped';
+        elseif ($complete == 1)
+            $status = 'seeding';
+        else
+            $status = 'downloading';
+
+        $progress = ($sizeBytes > 0) ? round($bytesDone / $sizeBytes * 100, 1) : 0;
+
+        $speedBytes = intval($downRate);
+        $speed = ($speedBytes >= 1048576)
+            ? round($speedBytes / 1048576, 1) . ' MB/s'
+            : round($speedBytes / 1024, 1) . ' KB/s';
+
+        return ['status' => $status, 'progress' => $progress, 'speed' => $speed];
+    }
+
+    #пакетный запрос статусов (один multicall вместо N*5 запросов)
+    public static function getStatusBatch($hashes)
+    {
+        try
+        {
+            $settings = Database::getAllSetting();
+            foreach ($settings as $row) { extract($row); }
+
+            $rpcUrl = self::buildRpcUrl($torrentAddress);
+
+            #запрашиваем d.multicall2 — все торренты за один запрос
+            $xml = '<?xml version="1.0"?>' . "\n";
+            $xml .= '<methodCall>' . "\n";
+            $xml .= '  <methodName>d.multicall2</methodName>' . "\n";
+            $xml .= '  <params>' . "\n";
+            $xml .= '    <param><value><string></string></value></param>' . "\n";
+            $xml .= '    <param><value><string>main</string></value></param>' . "\n";
+            $xml .= '    <param><value><string>d.hash=</string></value></param>' . "\n";
+            $xml .= '    <param><value><string>d.state=</string></value></param>' . "\n";
+            $xml .= '    <param><value><string>d.complete=</string></value></param>' . "\n";
+            $xml .= '    <param><value><string>d.bytes_done=</string></value></param>' . "\n";
+            $xml .= '    <param><value><string>d.size_bytes=</string></value></param>' . "\n";
+            $xml .= '    <param><value><string>d.down.rate=</string></value></param>' . "\n";
+            $xml .= '  </params>' . "\n";
+            $xml .= '</methodCall>';
+
+            $ch = curl_init();
+            curl_setopt_array($ch, array(
+                CURLOPT_URL            => $rpcUrl,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_POST           => true,
+                CURLOPT_POSTFIELDS     => $xml,
+                CURLOPT_HTTPHEADER     => array('Content-Type: text/xml', 'Content-Length: ' . strlen($xml)),
+                CURLOPT_TIMEOUT        => 30,
+                CURLOPT_CONNECTTIMEOUT => 10,
+            ));
+            if ( ! empty($torrentLogin))
+            {
+                curl_setopt($ch, CURLOPT_USERPWD, $torrentLogin . ':' . $torrentPassword);
+                curl_setopt($ch, CURLOPT_HTTPAUTH, CURLAUTH_BASIC);
+            }
+            $response = curl_exec($ch);
+            curl_close($ch);
+
+            if ($response === false)
+                return [];
+
+            $result = self::parseXmlRpcResponse($response);
+            if (!is_array($result))
+                return [];
+
+            $hashSet = array_flip($hashes);
+            $statuses = [];
+            foreach ($result as $row)
+            {
+                if (!is_array($row) || count($row) < 6)
+                    continue;
+                $h = $row[0];
+                if (isset($hashSet[$h]))
+                    $statuses[$h] = self::formatStatus($row[1], $row[2], $row[3], $row[4], $row[5]);
+            }
+            return $statuses;
+        }
+        catch (Exception $e)
+        {
+            return [];
+        }
+    }
+
     #получаем статус закачки из торрент-клиента
     public static function getStatus($hash)
     {
@@ -224,24 +323,7 @@ class rTorrent
             if ($state === false || $complete === false)
                 return ['status' => 'unknown'];
 
-            #определяем статус: d.state 0=stopped, 1=started; d.complete 0=downloading, 1=complete
-            if ($state == 0)
-                $status = 'stopped';
-            elseif ($complete == 1)
-                $status = 'seeding';
-            else
-                $status = 'downloading';
-
-            #прогресс
-            $progress = ($sizeBytes > 0) ? round($bytesDone / $sizeBytes * 100, 1) : 0;
-
-            #скорость загрузки
-            $speedBytes = intval($downRate);
-            $speed = ($speedBytes >= 1048576)
-                ? round($speedBytes / 1048576, 1) . ' MB/s'
-                : round($speedBytes / 1024, 1) . ' KB/s';
-
-            return ['status' => $status, 'progress' => $progress, 'speed' => $speed];
+            return self::formatStatus($state, $complete, $bytesDone, $sizeBytes, $downRate);
         }
         catch (Exception $e)
         {

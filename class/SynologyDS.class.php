@@ -210,100 +210,138 @@ class SynologyDS
         return $return;
     }
 
+    #инициализация статических свойств из настроек БД
+    private static function initSettings()
+    {
+        $settings = Database::getAllSetting();
+        foreach ($settings as $row) { extract($row); }
+
+        $pieces = explode(':', $torrentAddress);
+        if (isset($pieces[1]) && $pieces[1] == 5001)
+            self::$schema = 'https';
+        else
+            self::$schema = 'http';
+
+        self::$torrentAddress = $torrentAddress;
+        self::$torrentLogin = $torrentLogin;
+        self::$torrentPassword = $torrentPassword;
+    }
+
+    #запрос списка задач с transfer-данными, возврат массива задач или null
+    private static function fetchTasks($sid)
+    {
+        $query = http_build_query([
+            'api' => 'SYNO.DownloadStation.Task',
+            'version' => '1',
+            'method' => 'list',
+            'additional' => 'detail,transfer',
+            '_sid' => $sid
+        ]);
+        $ch = curl_init();
+        curl_setopt_array($ch, [
+            CURLOPT_URL            => self::$schema.'://'.self::$torrentAddress.'/webapi/DownloadStation/task.cgi?'.$query,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_CONNECTTIMEOUT => 10,
+            CURLOPT_TIMEOUT        => 30,
+        ]);
+        $raw = curl_exec($ch);
+        curl_close($ch);
+        $response = ($raw !== false) ? json_decode($raw, true) : null;
+
+        if (!$response || !$response['success'] || empty($response['data']['tasks']))
+            return null;
+
+        return $response['data']['tasks'];
+    }
+
+    #форматирование статуса задачи в единый формат
+    private static function formatTaskStatus($torrent)
+    {
+        $stateMap = [
+            'downloading'         => 'downloading',
+            'paused'              => 'paused',
+            'finished'            => 'seeding',
+            'seeding'             => 'seeding',
+            'error'               => 'error',
+            'waiting'             => 'queued',
+            'finishing'           => 'downloading',
+            'hash_checking'       => 'checking',
+            'filehosting_waiting' => 'queued',
+        ];
+
+        $state = isset($torrent['status']) ? $torrent['status'] : '';
+        $status = isset($stateMap[$state]) ? $stateMap[$state] : 'unknown';
+
+        $size = intval($torrent['size']);
+        $downloaded = isset($torrent['additional']['transfer']['size_downloaded'])
+            ? intval($torrent['additional']['transfer']['size_downloaded']) : 0;
+        $progress = ($size > 0) ? round($downloaded / $size * 100, 1) : 0;
+
+        $speedBytes = isset($torrent['additional']['transfer']['speed_download'])
+            ? intval($torrent['additional']['transfer']['speed_download']) : 0;
+        $speed = ($speedBytes >= 1048576)
+            ? round($speedBytes / 1048576, 1) . ' MB/s'
+            : round($speedBytes / 1024, 1) . ' KB/s';
+
+        return ['status' => $status, 'progress' => $progress, 'speed' => $speed];
+    }
+
+    #пакетный запрос статусов всех торрентов (одна авторизация, один запрос списка)
+    public static function getStatusBatch($hashes)
+    {
+        try
+        {
+            self::initSettings();
+
+            $sid = self::_login();
+            if (!$sid)
+                return [];
+
+            $tasks = self::fetchTasks($sid);
+            self::_logout();
+
+            if ($tasks === null)
+                return [];
+
+            $hashSet = array_flip($hashes);
+            $statuses = [];
+            foreach ($tasks as $task)
+            {
+                if (isset($hashSet[$task['id']]))
+                    $statuses[$task['id']] = self::formatTaskStatus($task);
+            }
+            return $statuses;
+        }
+        catch (Exception $e)
+        {
+            return [];
+        }
+    }
+
     #получаем статус закачки из торрент-клиента
     public static function getStatus($hash)
     {
         try
         {
-            #получаем настройки из базы
-            $settings = Database::getAllSetting();
-            foreach ($settings as $row) { extract($row); }
-
-            #определяем схему по порту
-            $pieces = explode(':', $torrentAddress);
-            if ($pieces[1] == 5000)
-                self::$schema = 'http';
-            elseif ($pieces[1] == 5001)
-                self::$schema = 'https';
-            else
-                self::$schema = 'http';
-
-            self::$torrentAddress = $torrentAddress;
-            self::$torrentLogin = $torrentLogin;
-            self::$torrentPassword = $torrentPassword;
+            self::initSettings();
 
             $sid = self::_login();
             if (!$sid)
                 return ['status' => 'unknown'];
 
-            #запрашиваем список задач с дополнительной информацией о прогрессе
-            $query = http_build_query([
-                'api' => 'SYNO.DownloadStation.Task',
-                'version' => '1',
-                'method' => 'list',
-                'additional' => 'detail,transfer',
-                '_sid' => $sid
-            ]);
-            $ch = curl_init();
-            curl_setopt_array($ch, [
-                CURLOPT_URL            => self::$schema.'://'.self::$torrentAddress.'/webapi/DownloadStation/task.cgi?'.$query,
-                CURLOPT_RETURNTRANSFER => true,
-                CURLOPT_CONNECTTIMEOUT => 10,
-                CURLOPT_TIMEOUT        => 30,
-            ]);
-            $raw = curl_exec($ch);
-            curl_close($ch);
-            $response = ($raw !== false) ? json_decode($raw, true) : null;
-
+            $tasks = self::fetchTasks($sid);
             self::_logout();
 
-            if (!$response || !$response['success'] || empty($response['data']['tasks']))
+            if ($tasks === null)
                 return ['status' => 'unknown'];
 
-            #ищем задачу по id
-            $torrent = null;
-            foreach ($response['data']['tasks'] as $task)
+            foreach ($tasks as $task)
             {
                 if ($task['id'] === $hash)
-                {
-                    $torrent = $task;
-                    break;
-                }
+                    return self::formatTaskStatus($task);
             }
 
-            if ($torrent === null)
-                return ['status' => 'unknown'];
-
-            #маппинг статусов Synology DownloadStation
-            $stateMap = [
-                'downloading'      => 'downloading',
-                'paused'           => 'paused',
-                'finished'         => 'seeding',
-                'seeding'          => 'seeding',
-                'error'            => 'error',
-                'waiting'          => 'queued',
-                'finishing'        => 'downloading',
-                'hash_checking'    => 'checking',
-                'filehosting_waiting' => 'queued',
-            ];
-
-            $state = isset($torrent['status']) ? $torrent['status'] : '';
-            $status = isset($stateMap[$state]) ? $stateMap[$state] : 'unknown';
-
-            #прогресс
-            $size = intval($torrent['size']);
-            $downloaded = isset($torrent['additional']['transfer']['size_downloaded'])
-                ? intval($torrent['additional']['transfer']['size_downloaded']) : 0;
-            $progress = ($size > 0) ? round($downloaded / $size * 100, 1) : 0;
-
-            #скорость загрузки
-            $speedBytes = isset($torrent['additional']['transfer']['speed_download'])
-                ? intval($torrent['additional']['transfer']['speed_download']) : 0;
-            $speed = ($speedBytes >= 1048576)
-                ? round($speedBytes / 1048576, 1) . ' MB/s'
-                : round($speedBytes / 1024, 1) . ' KB/s';
-
-            return ['status' => $status, 'progress' => $progress, 'speed' => $speed];
+            return ['status' => 'unknown'];
         }
         catch (Exception $e)
         {

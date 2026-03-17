@@ -202,14 +202,10 @@ class Deluge
                 self::jsonRpc($ch, 'web.connect', array($hostId), 3);
             }
 
-            #один запрос на все торренты: web.update_ui возвращает все
-            $filter = array();
-            foreach ($hashes as $hash) {
-                $filter[] = $hash;
-            }
+            #один запрос на все торренты: web.update_ui принимает (keys, filter_dict)
             $result = self::jsonRpc($ch, 'web.update_ui', array(
                 array('state', 'progress', 'download_payload_rate', 'hash'),
-                $filter
+                (object)array()
             ), 4);
 
             curl_close($ch);
@@ -255,6 +251,8 @@ class Deluge
                 CURLOPT_HTTPHEADER     => array('Content-Type: application/json'),
                 CURLOPT_COOKIEJAR      => $cookieFile,
                 CURLOPT_COOKIEFILE     => $cookieFile,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_TIMEOUT        => 30,
             ));
 
             #авторизация
