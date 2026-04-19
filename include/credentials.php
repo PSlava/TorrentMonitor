@@ -29,7 +29,7 @@ $trackers = Database::getTrackersList();
 <div x-show="tracker != ''">
     <div x-show="!tracker.necessarily">Учётные данные не требуются.</div>
     <div x-show="tracker.necessarily">
-        <form @submit.prevent="updateTracker($el)" action="action.php">
+        <form @submit.prevent="updateTracker()" action="action.php">
             <input type="hidden" name="id" x-model="tracker.id">
             <label class="row">
                 <div class="col --2:lg mb-1">Логин:</div>

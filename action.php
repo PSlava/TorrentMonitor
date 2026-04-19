@@ -2,6 +2,7 @@
 $dir = dirname(__FILE__).'/';
 include_once $dir.'config.php';
 
+
 if (isset($_POST['action']))
 {
 	//Проверяем пароль
@@ -40,7 +41,11 @@ if (isset($_POST['action']))
 	}
 
     if ( ! Sys::checkAuth())
-        exit();
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(array('error' => TRUE, 'msg' => 'Сессия истекла. Обновите страницу.'));
+        exit;
+    }
 
 	// CSRF-токен: генерация
 	if (session_id() == '')
@@ -53,7 +58,8 @@ if (isset($_POST['action']))
 	{
 		if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token']))
 		{
-			echo json_encode(array('response' => 'error', 'message' => 'CSRF token invalid'));
+			header('Content-Type: application/json; charset=utf-8');
+			echo json_encode(array('error' => TRUE, 'msg' => 'Сессия истекла. Обновите страницу.'));
 			exit;
 		}
 	}
@@ -113,16 +119,9 @@ if (isset($_POST['action']))
     			if (is_array(Database::getCredentials($tracker)))
     			{
     				$engineFile = $dir.'/trackers/'.$tracker.'.engine.php';
-    				if (file_exists($engineFile))
+    				$functionClass = Sys::resolveTrackerClass($engineFile, $tracker);
+    				if ($functionClass !== null)
     				{
-    					$functionEngine = include_once $engineFile;
-    					$class = explode('.', $tracker);
-    					$class = $class[0];
-    					$functionClass = str_replace('-', '', $class);
-
-						if ($tracker == 'baibako.tv_forum')
-    					    $functionClass = 'baibako_f';
-
                         if ( ! empty($threme))
                         {
         					if (call_user_func(array($functionClass, 'checkRule'), $threme))
@@ -195,10 +194,6 @@ if (isset($_POST['action']))
 			$engineFile = $dir.'/trackers/'.$tracker.'.engine.php';
 			if (file_exists($engineFile))
 			{
-				$functionEngine = include_once $engineFile;
-				$class = explode('.', $tracker);
-				$class = $class[0];
-				$class = str_replace('-', '', $class);
 				if (Database::checkSerialExist($tracker, $_POST['name'], $_POST['hd']))
 				{
 					$query = Database::setSerial($tracker, $_POST['name'], $_POST['path'], $_POST['hd']);
@@ -241,11 +236,6 @@ if (isset($_POST['action']))
 	    $tracker = $_POST['tracker'] ?? '';
 	    if ($tracker == 'lostfilm.tv' || $tracker == 'lostfilm-mirror'  || $tracker == 'newstudio.tv' || $tracker == 'baibako.tv')
         {
-            $engineFile = $dir.'/trackers/'.$tracker.'.engine.php';
-            $functionEngine = include_once $engineFile;
-			$class = explode('.', $tracker);
-			$class = $class[0];
-			$class = str_replace('-', '', $class);
 			Database::updateSerial($_POST['id'], $_POST['name'], $_POST['path'], $_POST['hd'], Sys::strBoolToInt($_POST['reset']), $_POST['script'], Sys::strBoolToInt($_POST['pause']));
 			$return['error'] = FALSE;
             $return['msg'] = 'Сериал обновлён.';
@@ -288,16 +278,9 @@ if (isset($_POST['action']))
     			if (is_array(Database::getCredentials($tracker)))
     			{
     				$engineFile = $dir.'/trackers/'.$tracker.'.engine.php';
-    				if (file_exists($engineFile))
+    				$functionClass = Sys::resolveTrackerClass($engineFile, $tracker);
+    				if ($functionClass !== null)
     				{
-    					$functionEngine = include_once $engineFile;
-    					$class = explode('.', $tracker);
-    					$class = $class[0];
-    					$functionClass = str_replace('-', '', $class);
-
-						if ($tracker == 'baibako.tv_forum')
-    					    $functionClass = 'baibako_f';
-
                         if ( ! empty($threme))
                         {
         					if (call_user_func(array($functionClass, 'checkRule'), $threme))
@@ -312,9 +295,9 @@ if (isset($_POST['action']))
                                 $return['msg'] = 'Не верный ID темы.';
                             }
                         }
-                    }
-                }
+    				}
             }
+        }
         }
         echo json_encode($return);
 	}

@@ -2,6 +2,7 @@
 
 class animelayer
 {
+	public static $trackerId = 'animelayer.ru';
 	protected static $sess_cookie;
 	protected static $execution;
 	protected static $warning;

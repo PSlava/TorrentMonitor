@@ -76,17 +76,9 @@ if (Sys::checkCurl())
 		if (Database::checkTrackersCredentialsExist($tracker))
 		{
 			$engineFile = $dir.'trackers/'.$tracker.'.engine.php';
-			if (file_exists($engineFile))
+			$functionClass = Sys::resolveTrackerClass($engineFile, $tracker);
+			if ($functionClass !== null)
 			{
-				
-				$functionEngine = include_once $engineFile;
-				$class = explode('.', $tracker);
-				$class = $class[0];
-				$functionClass = str_replace('-', '', $class);
-				
-				if ($tracker == 'baibako.tv_forum')
-				    $functionClass = 'baibako_f';
-
                 writeProgress($progressFile, ['status' => 'running', 'phase' => 'torrents', 'current' => $i + 1, 'total' => $count, 'name' => $torrentsList[$i]['name'], 'tracker' => $tracker]);
                 echo getTimestamp();
 				echo $torrentsList[$i]['name'].' на трекере '.$tracker.$NL;
@@ -139,7 +131,6 @@ if (Sys::checkCurl())
 				    }
 				}
 				$functionClass = NULL;
-				$functionEngine = NULL;
 			}
 			else
 				Errors::setWarnings('system', 'missing_files');				
@@ -168,13 +159,9 @@ if (Sys::checkCurl())
     		if (Database::checkTrackersCredentialsExist($tracker))
     		{
     			$serchFile = $dir.'trackers/'.$tracker.'.search.php';
-    			if (file_exists($serchFile))
+    			$functionClass = Sys::resolveTrackerClass($serchFile, $tracker, 'mainSearch');
+    			if ($functionClass !== null)
     			{
-    				$functionEngine = include_once $serchFile;
-    				$class = explode('.', $tracker);
-    				$class = $class[0];
-    				$class = str_replace('-', '', $class);
-    				$functionClass = $class.'Search';
                     writeProgress($progressFile, ['status' => 'running', 'phase' => 'users', 'current' => $i + 1, 'total' => $count, 'name' => $usersList[$i]['name'], 'tracker' => $tracker]);
     				echo getTimestamp();
                     echo 'Пользователь '.$usersList[$i]['name'].' на трекере '.$tracker.$NL;
@@ -217,7 +204,6 @@ if (Sys::checkCurl())
     				}
     
     				$functionClass = NULL;
-    				$functionEngine = NULL;
     			}
     			else
     				Errors::setWarnings('system', 'missing_files');

@@ -1,6 +1,7 @@
 <?php
 class kinozaltv
 {
+	public static $trackerId = 'kinozal.tv';
 	protected static $sess_cookie;
 	protected static $execution;
 	protected static $warning;
@@ -12,7 +13,7 @@ class kinozaltv
         	array(
         		'type'           => 'GET',
         		'returntransfer' => 1,
-        		'url'            => 'http://kinozal.tv',
+        		'url'            => 'https://kinozal.tv',
         		'cookie'         => $sess_cookie,
         		'sendHeader'     => array('Host' => 'kinozal.tv', 'Content-length' => strlen($sess_cookie)),
         		'convert'        => array('windows-1251', 'utf-8//IGNORE'),
@@ -116,7 +117,7 @@ class kinozaltv
             		'type'           => 'POST',
             		'header'         => 1,
             		'returntransfer' => 1,
-            		'url'            => 'http://kinozal.tv/takelogin.php',
+            		'url'            => 'https://kinozal.tv/takelogin.php',
             		'postfields'     => 'username='.$login.'&password='.$password.'&returnto=',
             		'convert'        => array('windows-1251', 'utf-8//IGNORE'),
             	)
@@ -207,10 +208,10 @@ class kinozaltv
                     	array(
                     		'type'           => 'GET',
                     		'returntransfer' => 1,
-                    		'url'            => 'http://kinozal.tv/download.php?id='.$torrent_id,
+                    		'url'            => 'https://kinozal.tv/download.php?id='.$torrent_id,
                     		'cookie'         => kinozaltv::$sess_cookie,
                     		'sendHeader'     => array('Host' => 'kinozal.tv', 'Content-length' => strlen(kinozaltv::$sess_cookie)),
-                    		'referer'        => 'http://kinozal.tv/details.php?id='.$torrent_id,
+                    		'referer'        => 'https://kinozal.tv/details.php?id='.$torrent_id,
                     	)
                     );
 					if ($torrent === false)
@@ -299,7 +300,7 @@ class kinozaltv
             		'type'           => 'GET',
             		'header'         => 0,
             		'returntransfer' => 1,
-            		'url'            => 'http://kinozal.tv/details.php?id='.$torrent_id,
+            		'url'            => 'https://kinozal.tv/details.php?id='.$torrent_id,
             		'cookie'         => kinozaltv::$sess_cookie,
             		'sendHeader'     => array('Host' => 'kinozal.tv', 'Content-length' => strlen(kinozaltv::$sess_cookie)),
             		'convert'        => array('windows-1251', 'utf-8//IGNORE'),

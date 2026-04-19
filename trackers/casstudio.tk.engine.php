@@ -1,6 +1,7 @@
 <?php
 class casstudio
 {
+	public static $trackerId = 'casstudio.tk';
 	protected static $sess_cookie;
 	protected static $execution;
 	protected static $warning;

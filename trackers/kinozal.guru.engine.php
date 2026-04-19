@@ -1,6 +1,7 @@
 <?php
 class kinozal
 {
+	public static $trackerId = 'kinozal.guru';
 	protected static $sess_cookie;
 	protected static $execution;
 	protected static $warning;

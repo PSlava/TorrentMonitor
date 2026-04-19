@@ -1,6 +1,7 @@
 <?php
 class tfile
 {
+	public static $trackerId = 'tfile.cc';
 	protected static $execution;
 	protected static $warning;
 
