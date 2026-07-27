@@ -107,30 +107,8 @@ class Sys
     //проверка обновлений системы
     public static function checkUpdate()
     {
-        //получаем страницу
-        $page = Sys::getUrlContent(
-            array(
-                'type'           => 'GET',
-                'returntransfer' => 1,
-                'url'            => 'https://xml.tormon.ru/version.xml',
-            )
-        );
-
-        //читаем xml
-        $xml = @simplexml_load_string($page);
-        $dir = dirname(__FILE__);
-        $dir = str_replace('class', '', $dir);
-        $version = json_decode(file_get_contents($dir.'version.txt'));
-
-        if (false !== $xml)
-        {
-            if ($version->system < $xml->current_version)
-                return TRUE;
-            elseif ($version->database < $xml->current_version)
-                return TRUE;
-            else
-                return FALSE;
-        }
+        // Проверка обновлений с xml.tormon.ru отключена — форк имеет собственную нумерацию версий
+        return 0;
     }
 
     //формируем curl-опции прокси для заданного url (общие настройки + потрекерный ext_proxy)

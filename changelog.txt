@@ -1,3 +1,21 @@
+28.07.2026 - 3.1.0:
+- Форк на базе v3.0 апстрима: сохранены bcrypt, CSRF, XSS-фиксы, curl_multi, JSON-RPC Deluge, категории qBittorrent
+- Собственные модули форка: REST API (api.php + Bearer-токены), SSE, EventBus, миграции БД, вебхуки с HMAC-SHA256, TaskQueue с экспоненциальным backoff
+- UI вебхуков в настройках: добавление/удаление/включение через Alpine-компонент webhooksManager
+- Автодополнение путей скачивания в модалках (localStorage, история 10 путей)
+- Batch-статусы торрент-клиентов: getStatusBatch в qBittorrent, Transmission, TorrServer, Deluge, SynologyDS + фоновая подгрузка через _csFill
+- Поддержка торрент-клиентов: aria2, rTorrent, SynologyDS, TorrServer
+- session_write_close после checkAuth — параллельные AJAX-запросы больше не блокируются
+- Резолвер классов трекеров через $trackerId (Sys::resolveTrackerClass) — удалены 6 ручных маппингов
+- In-memory кеш настроек в Database (settingsCache) — устраняет сотни запросов к БД
+- MySQL: MyISAM → InnoDB, utf8 → utf8mb4
+- Alpine v3 фиксы модалок: прямой URL "action.php" вместо $el.action + .fail-обработчики
+- Auth-ошибка возвращает JSON {error, msg} вместо голого exit
+- Возврат '' по умолчанию в dateStringToNum (animelayer, casstudio, kinozal.*)
+- Кроссбраузерность: автоопределение системной тёмной темы, Safari private mode fallback, ES5-совместимость JS
+- Docker-образ slashp/torrentmonitor (SQLite по умолчанию, автозапуск engine каждые 30 минут)
+- Проверка обновлений с xml.tormon.ru отключена (форк имеет собственную нумерацию)
+
 10.07.2026 - 3.0:
 - Рефакторинг безопасности: bcrypt-авторизация с плавной миграцией с MD5, CSRF-защита для всех POST-действий
 - Защита от XSS в именах тем/раздач и данных трекеров, устранение обхода авторизации на GET-запросах
