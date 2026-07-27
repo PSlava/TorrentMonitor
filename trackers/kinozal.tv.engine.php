@@ -1,6 +1,7 @@
 <?php
 class kinozaltv
 {
+    public static $trackerId = "kinozal.tv";
 	protected static $sess_cookie;
 	protected static $exucution;
 	protected static $warning;
@@ -65,6 +66,7 @@ class kinozaltv
 
 			return $dateTime;
 	    }
+		return '';
 	}
 
 	//функция преобразования даты

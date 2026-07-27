@@ -65,34 +65,12 @@ if (Sys::checkCurl())
 		if (isset($credentialSet[$tracker]))
 		{
 			$engineFile = $dir.'trackers/'.$tracker.'.engine.php';
-			if (file_exists($engineFile))
+			$functionClass = Sys::resolveTrackerClass($engineFile, $tracker);
+			if ($functionClass !== null)
 			{
 			    try
 			    {
 				    Database::clearWarnings($tracker);
-
-				    $functionEngine = include_once $engineFile;
-				    $class = explode('.', $tracker);
-				    $class = $class[0];
-				    $functionClass = str_replace('-', '', $class);
-
-				    if ($tracker == 'tracker.0day.kiev.ua')
-				        $functionClass = 'kiev';
-
-                    if ($tracker == 'tv.mekc.info')
-				        $functionClass = 'mekc';
-
-				    if ($tracker == 'baibako.tv_forum')
-				        $functionClass = 'baibako_f';
-
-				    if ($tracker == 'kinozal.guru')
-				        $functionClass = 'kinozalguru';
-
-				    if ($tracker == 'kinozal.me')
-				        $functionClass = 'kinozalme';
-
-				    if ($tracker == 'kinozal.tv')
-				        $functionClass = 'kinozaltv';
 
                     echo getTimestamp();
 				    echo $torrentsList[$i]['name'].' на трекере '.$tracker.$NL;
@@ -133,7 +111,6 @@ if (Sys::checkCurl())
 				finally
 				{
 				    $functionClass = NULL;
-				    $functionEngine = NULL;
 				}
 			}
 			else
@@ -211,17 +188,13 @@ if (Sys::checkCurl())
     		if (Database::checkTrackersCredentialsExist($tracker))
     		{
     			$serchFile = $dir.'trackers/'.$tracker.'.search.php';
-    			if (file_exists($serchFile))
+    			$functionClass = Sys::resolveTrackerClass($serchFile, $tracker, 'mainSearch');
+    			if ($functionClass !== null)
     			{
     				try
     				{
     				    Database::clearWarnings($tracker);
 
-    				    $functionEngine = include_once $serchFile;
-    				    $class = explode('.', $tracker);
-    				    $class = $class[0];
-    				    $class = str_replace('-', '', $class);
-    				    $functionClass = $class.'Search';
     				    echo getTimestamp();
                         echo 'Пользователь '.$usersList[$i]['name'].' на трекере '.$tracker.$NL;
                         $time_start = microtime(true);
@@ -241,7 +214,6 @@ if (Sys::checkCurl())
     				}
     
     				$functionClass = NULL;
-    				$functionEngine = NULL;
     			}
     			else
     				Errors::setWarnings($tracker, 'missing_files');

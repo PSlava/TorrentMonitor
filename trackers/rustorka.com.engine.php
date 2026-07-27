@@ -1,6 +1,7 @@
 <?php
 class rustorka
 {
+    public static $trackerId = "rustorka.com";
 	protected static $sess_cookie;
 	protected static $exucution;
 	protected static $warning;

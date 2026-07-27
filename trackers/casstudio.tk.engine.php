@@ -1,6 +1,7 @@
 <?php
 class casstudio
 {
+    public static $trackerId = "casstudio.tk";
 	protected static $sess_cookie;
 	protected static $exucution;
 	protected static $warning;
@@ -62,6 +63,7 @@ class casstudio
 
 			return $dateTime;
 	    }
+		return '';
 	}
 
 	//функция преобразования даты

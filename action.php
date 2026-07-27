@@ -63,7 +63,11 @@ if (isset($_POST['action']))
 	}
 
     if ( ! Sys::checkAuth())
-        exit();
+    {
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode(array('error' => TRUE, 'msg' => 'Сессия истекла. Обновите страницу.'));
+        exit;
+    }
 
 	if (session_id() !== '') session_write_close();
 	Migration::run();
@@ -115,31 +119,9 @@ if (isset($_POST['action']))
     			if (is_array(Database::getCredentials($tracker)))
     			{
     				$engineFile = $dir.'/trackers/'.$tracker.'.engine.php';
-    				if (file_exists($engineFile))
+    				$functionClass = Sys::resolveTrackerClass($engineFile, $tracker);
+    				if ($functionClass !== null)
     				{
-    					$functionEngine = include_once $engineFile;
-    					$class = explode('.', $tracker);
-    					$class = $class[0];
-    					$functionClass = str_replace('-', '', $class);
-
-    					if ($tracker == 'tracker.0day.kiev.ua')
-    					    $functionClass = 'kiev';
-
-                        if ($tracker == 'tv.mekc.info')
-    					    $functionClass = 'mekc';
-
-						if ($tracker == 'baibako.tv_forum')
-    					    $functionClass = 'baibako_f';
-
-					    if ($tracker == 'kinozal.guru')
-					        $functionClass = 'kinozalguru';
-
-					    if ($tracker == 'kinozal.me')
-					        $functionClass = 'kinozalme';
-
-					    if ($tracker == 'kinozal.tv')
-					        $functionClass = 'kinozaltv';
-
                         if ( ! empty($threme))
                         {
         					if (call_user_func(array($functionClass, 'checkRule'), $threme))
@@ -212,10 +194,6 @@ if (isset($_POST['action']))
 			$engineFile = $dir.'/trackers/'.$tracker.'.engine.php';
 			if (file_exists($engineFile))
 			{
-				$functionEngine = include_once $engineFile;
-				$class = explode('.', $tracker);
-				$class = $class[0];
-				$class = str_replace('-', '', $class);
 				if (Database::checkSerialExist($tracker, $_POST['name'], $_POST['hd']))
 				{
 					$query = Database::setSerial($tracker, $_POST['name'], $_POST['path'], $_POST['hd'], $_POST['category'] ?? '');
@@ -257,11 +235,6 @@ if (isset($_POST['action']))
 	    $tracker = $_POST['tracker'];
 	    if ($tracker == 'lostfilm.tv' || $tracker == 'lostfilm-mirror'  || $tracker == 'newstudio.tv' || $tracker == 'baibako.tv')
         {
-            $engineFile = $dir.'/trackers/'.$tracker.'.engine.php';
-            $functionEngine = include_once $engineFile;
-			$class = explode('.', $tracker);
-			$class = $class[0];
-			$class = str_replace('-', '', $class);
 			Database::updateSerial($_POST['id'], $_POST['name'], $_POST['path'], $_POST['hd'], Sys::strBoolToInt($_POST['reset']), $_POST['script'], Sys::strBoolToInt($_POST['pause']));
 			$return['error'] = FALSE;
             $return['msg'] = 'Сериал обновлён.';
@@ -304,31 +277,9 @@ if (isset($_POST['action']))
     			if (is_array(Database::getCredentials($tracker)))
     			{
     				$engineFile = $dir.'/trackers/'.$tracker.'.engine.php';
-    				if (file_exists($engineFile))
+    				$functionClass = Sys::resolveTrackerClass($engineFile, $tracker);
+    				if ($functionClass !== null)
     				{
-    					$functionEngine = include_once $engineFile;
-    					$class = explode('.', $tracker);
-    					$class = $class[0];
-    					$functionClass = str_replace('-', '', $class);
-
-    					if ($tracker == 'tracker.0day.kiev.ua')
-    					    $functionClass = 'kiev';
-
-                        if ($tracker == 'tv.mekc.info')
-    					    $functionClass = 'mekc';
-
-						if ($tracker == 'baibako.tv_forum')
-    					    $functionClass = 'baibako_f';
-
-					    if ($tracker == 'kinozal.guru')
-					        $functionClass = 'kinozalguru';
-
-					    if ($tracker == 'kinozal.me')
-					        $functionClass = 'kinozalme';
-
-					    if ($tracker == 'kinozal.tv')
-					        $functionClass = 'kinozaltv';
-
                         if ( ! empty($threme))
                         {
         					if (call_user_func(array($functionClass, 'checkRule'), $threme))

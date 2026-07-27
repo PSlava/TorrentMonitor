@@ -1,6 +1,7 @@
 <?php
 class nnmclub
 {
+    public static $trackerId = "nnmclub.to";
 	protected static $sess_cookie;
 	protected static $exucution;
 	protected static $warning;

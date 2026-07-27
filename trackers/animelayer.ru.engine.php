@@ -2,6 +2,7 @@
 
 class animelayer
 {
+    public static $trackerId = "animelayer.ru";
 	protected static $sess_cookie;
 	protected static $exucution;
 	protected static $warning;
@@ -58,6 +59,7 @@ class animelayer
 		    return date('Y').'-'.$month.'-'.$pieces[0].' '.$hour.':'.$pieces2[1].':00';
 		else if (count($pieces) == 5)
 		    return $pieces[2].'-'.$month.'-'.$pieces[0].' '.$hour.':'.$pieces2[1].':00';
+		return '';
 	}
 
 	//функция преобразования даты в строку

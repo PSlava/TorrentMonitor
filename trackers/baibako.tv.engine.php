@@ -1,6 +1,7 @@
 <?php
 class baibako
 {
+    public static $trackerId = "baibako.tv";
     protected static $sess_cookie;
 	protected static $exucution;
 	protected static $warning;

@@ -1,6 +1,7 @@
 <?php
 class newstudio
 {
+    public static $trackerId = "newstudio.tv";
 	protected static $sess_cookie;
 	protected static $exucution;
 	protected static $warning;

@@ -1,6 +1,7 @@
 <?php
 class lostfilmmirror
 {
+    public static $trackerId = "lostfilm-mirror";
 	protected static $exucution;
 	protected static $warning;
 

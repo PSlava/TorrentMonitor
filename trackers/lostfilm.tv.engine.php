@@ -1,6 +1,7 @@
 <?php
 class lostfilm
 {
+    public static $trackerId = "lostfilm.tv";
 	protected static $sess_cookie;
 	protected static $exucution;
 	protected static $warning;

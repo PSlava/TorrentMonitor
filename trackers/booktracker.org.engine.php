@@ -1,6 +1,7 @@
 <?php
 class booktracker
 {
+    public static $trackerId = "booktracker.org";
 	protected static $sess_cookie;
 	protected static $exucution;
 	protected static $warning;

@@ -1,6 +1,7 @@
 <?php
 class rutor
 {
+    public static $trackerId = "rutor.is";
 	protected static $exucution;
 	protected static $warning;
 

@@ -1,6 +1,7 @@
 <?php
 class anidub
 {
+    public static $trackerId = "anidub.com";
     protected static $sess_cookie;
     protected static $exucution;
     protected static $warning;

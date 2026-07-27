@@ -1,6 +1,7 @@
 <?php
 class hamsterstudio
 {
+    public static $trackerId = "hamsterstudio.org";
     protected static $sess_cookie;
 	protected static $exucution;
 	protected static $warning;

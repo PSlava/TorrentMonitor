@@ -453,22 +453,15 @@ class Sys
         {
             $dir = str_replace('class', '', dirname(__FILE__));
             $engineFile = $dir.'trackers/'.$tracker.'.engine.php';
-            if (file_exists($engineFile))
+            $functionClass = self::resolveTrackerClass($engineFile, $tracker);
+            if ($functionClass !== null)
             {
                 Database::clearWarnings('system');
-
-                $functionEngine = include_once $engineFile;
-                $class = explode('.', $tracker);
-                $class = $class[0];
-                $functionClass = str_replace('-', '', $class);
-
-                if ($tracker == 'kinozal.guru')
-                    $functionClass = 'kinozalguru';
             }
 
             $cookie = Database::getCookie($tracker);
             $exucution = FALSE;
-            if (call_user_func($functionClass.'::checkCookie', $cookie))
+            if ($functionClass !== null && call_user_func($functionClass.'::checkCookie', $cookie))
             {
                 $sess_cookie = $cookie;
                 //запускам процесс выполнения
@@ -797,6 +790,48 @@ class Sys
         }
         if ( ! $auth)
             return TRUE;
+    }
+
+    /**
+     * Загружает движок трекера и возвращает имя класса.
+     * Ищет класс по статическому свойству $trackerId (стабильный идентификатор).
+     * Не зависит от имени класса — только от $trackerId.
+     *
+     * @param string $engineFile путь к файлу движка
+     * @param string $trackerId идентификатор трекера (например, 'kinozal.tv')
+     * @param string|null $requiredMethod если указан, класс должен иметь этот метод (для search)
+     * @return string|null имя класса или null
+     */
+    public static function resolveTrackerClass($engineFile, $trackerId, $requiredMethod = null)
+    {
+        if ( ! file_exists($engineFile))
+            return null;
+
+        $before = get_declared_classes();
+        include_once $engineFile;
+        $newClasses = array_diff(get_declared_classes(), $before);
+
+        // Класс только что загружен — проверяем trackerId в новых классах
+        foreach ($newClasses as $cls)
+        {
+            if (property_exists($cls, 'trackerId') && $cls::$trackerId === $trackerId)
+            {
+                if ($requiredMethod === null || method_exists($cls, $requiredMethod))
+                    return $cls;
+            }
+        }
+
+        // Файл уже был загружен ранее — ищем среди всех классов
+        foreach (get_declared_classes() as $cls)
+        {
+            if (property_exists($cls, 'trackerId') && $cls::$trackerId === $trackerId)
+            {
+                if ($requiredMethod === null || method_exists($cls, $requiredMethod))
+                    return $cls;
+            }
+        }
+
+        return null;
     }
 }
 ?>

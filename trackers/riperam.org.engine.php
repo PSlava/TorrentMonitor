@@ -1,6 +1,7 @@
 <?php
 class riperam
 {
+    public static $trackerId = "riperam.org";
 	protected static $sess_cookie;
 	protected static $exucution;
 	protected static $warning;

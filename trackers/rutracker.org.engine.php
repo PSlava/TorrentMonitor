@@ -1,6 +1,7 @@
 <?php
 class rutracker
 {
+    public static $trackerId = "rutracker.org";
 	protected static $sess_cookie;
 	protected static $exucution;
 	protected static $warning;
