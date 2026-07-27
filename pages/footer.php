@@ -13,6 +13,7 @@
         }
     })
 </script>
+<datalist id="path-history-list"></datalist>
 <script src="assets/js/scripts.min.js"></script>
 </body>
 </html>

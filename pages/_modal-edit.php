@@ -31,7 +31,7 @@
                 <label class="row">
                     <div class="col --12 mb-1">Директория для скачивания:</div>
                     <div class="col --12 mb-2">
-                        <input type="text" name="path" x-model="editData.path">
+                        <input type="text" name="path" x-model="editData.path" list="path-history-list">
                         <div class="form-help">Например: /var/lib/transmission/downloads или C:/downloads/</div>
                     </div>
                 </label>
@@ -133,7 +133,7 @@
                 <label class="row">
                     <div class="col --12 mb-1">Директория для скачивания:</div>
                     <div class="col --12 mb-2">
-                        <input type="text" name="path" x-model="editData.path">
+                        <input type="text" name="path" x-model="editData.path" list="path-history-list">
                         <div class="form-help">Например: /var/lib/transmission/downloads или C:/downloads</div>
                     </div>
                 </label>
