@@ -124,5 +124,121 @@ class TorrServer
         Database::clearWarnings('TorrServer');
         return array('status' => TRUE);
     }
+
+    #форматирование статуса торрента в единый формат
+    private static function formatTorrentStatus($torrent)
+    {
+        #TorrServer statuses: 0=TorrentAdded, 1=GettingInfo, 2=Preload, 3=Working, 4=Closed, 5=InDB
+        $statMap = [
+            0 => 'queued',
+            1 => 'checking',
+            2 => 'downloading',
+            3 => 'downloading',
+            4 => 'stopped',
+            5 => 'stopped',
+        ];
+
+        $stat = intval($torrent['stat']);
+        $status = isset($statMap[$stat]) ? $statMap[$stat] : 'unknown';
+        $progress = ($stat >= 4) ? 100.0 : 0.0;
+        $speed = '0 KB/s';
+
+        return ['status' => $status, 'progress' => $progress, 'speed' => $speed];
+    }
+
+    #пакетный запрос статусов всех торрентов (один запрос списка)
+    public static function getStatusBatch($hashes)
+    {
+        try
+        {
+            $settings = Database::getAllSetting();
+            foreach ($settings as $row) { extract($row); }
+            if (!preg_match('~^https?://~i', $torrentAddress))
+                $torrentAddress = 'http://'.$torrentAddress;
+
+            $data = json_encode(array('action' => 'list'));
+            $request_headers = array('Content-Type: application/json');
+
+            $ch = curl_init();
+            curl_setopt_array($ch, array(
+                CURLOPT_POST           => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_URL            => $torrentAddress.'/torrents',
+                CURLOPT_USERAGENT      => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:51.0) Gecko/20100101 Firefox/51.0',
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_USERPWD        => $torrentLogin.':'.$torrentPassword,
+                CURLOPT_HTTPHEADER     => $request_headers,
+                CURLOPT_POSTFIELDS     => $data,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_TIMEOUT        => 30,
+            ));
+            $response = curl_exec($ch);
+            curl_close($ch);
+
+            if ($response === false)
+                return [];
+
+            $torrents = json_decode($response, true);
+            if (!is_array($torrents))
+                return [];
+
+            $hashSet = array_flip($hashes);
+            $statuses = [];
+            foreach ($torrents as $torrent)
+            {
+                if (isset($torrent['hash']) && isset($hashSet[$torrent['hash']]))
+                    $statuses[$torrent['hash']] = self::formatTorrentStatus($torrent);
+            }
+            return $statuses;
+        }
+        catch (Exception $e)
+        {
+            return [];
+        }
+    }
+
+    #получаем статус закачки из торрент-клиента
+    public static function getStatus($hash)
+    {
+        try
+        {
+            $settings = Database::getAllSetting();
+            foreach ($settings as $row) { extract($row); }
+            if (!preg_match('~^https?://~i', $torrentAddress))
+                $torrentAddress = 'http://'.$torrentAddress;
+
+            $data = json_encode(array('action' => 'get', 'hash' => $hash));
+            $request_headers = array('Content-Type: application/json');
+
+            $ch = curl_init();
+            curl_setopt_array($ch, array(
+                CURLOPT_POST           => true,
+                CURLOPT_FOLLOWLOCATION => true,
+                CURLOPT_URL            => $torrentAddress.'/torrents',
+                CURLOPT_USERAGENT      => 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.12; rv:51.0) Gecko/20100101 Firefox/51.0',
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_USERPWD        => $torrentLogin.':'.$torrentPassword,
+                CURLOPT_HTTPHEADER     => $request_headers,
+                CURLOPT_POSTFIELDS     => $data,
+                CURLOPT_CONNECTTIMEOUT => 10,
+                CURLOPT_TIMEOUT        => 30,
+            ));
+            $response = curl_exec($ch);
+            curl_close($ch);
+
+            if ($response === false)
+                return ['status' => 'unknown'];
+
+            $torrent = json_decode($response, true);
+            if (!is_array($torrent) || !isset($torrent['stat']))
+                return ['status' => 'unknown'];
+
+            return self::formatTorrentStatus($torrent);
+        }
+        catch (Exception $e)
+        {
+            return ['status' => 'unknown'];
+        }
+    }
 }
 ?>

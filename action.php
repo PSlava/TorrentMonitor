@@ -697,5 +697,46 @@ if (isset($_GET['action']))
         if (Database::clearTemp())
             echo 'Таблица очищена';
     }
+
+    // Пакетный запрос статусов всех торрентов (одна авторизация)
+    if ($_GET['action'] == 'torrent_client_statuses') {
+        $useTorrent = Database::getSetting('useTorrent');
+        $torrentClient = Database::getSetting('torrentClient');
+        $allowedClients = ['Deluge', 'Transmission', 'qBittorrent', 'TorrServer', 'SynologyDS', 'rTorrent', 'aria2'];
+
+        if (!$useTorrent || empty($torrentClient) || !in_array($torrentClient, $allowedClients)) {
+            echo json_encode([]);
+        } else {
+            $hashes = Database::getAllHashes();
+            if (empty($hashes)) {
+                echo json_encode([]);
+            } elseif (method_exists($torrentClient, 'getStatusBatch')) {
+                $result = call_user_func($torrentClient.'::getStatusBatch', $hashes);
+                echo json_encode($result);
+            } else {
+                # фолбек: поштучный запрос (для клиентов без getStatusBatch)
+                $result = [];
+                foreach ($hashes as $hash) {
+                    $result[$hash] = call_user_func($torrentClient.'::getStatus', $hash);
+                }
+                echo json_encode($result);
+            }
+        }
+    }
+
+    // Статус торрента в клиенте
+    if ($_GET['action'] == 'torrent_client_status') {
+        $hash = $_GET['hash'] ?? '';
+        $useTorrent = Database::getSetting('useTorrent');
+        $torrentClient = Database::getSetting('torrentClient');
+        $allowedClients = ['Deluge', 'Transmission', 'qBittorrent', 'TorrServer', 'SynologyDS', 'rTorrent', 'aria2'];
+
+        if (empty($hash) || !$useTorrent || empty($torrentClient) || !in_array($torrentClient, $allowedClients)) {
+            echo json_encode(['status' => 'unknown']);
+        } else {
+            $result = call_user_func($torrentClient.'::getStatus', $hash);
+            echo json_encode($result);
+        }
+    }
 }
 ?>

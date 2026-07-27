@@ -22,6 +22,7 @@ if (isset($_COOKIE['order']) && isset($_COOKIE['orderDir']))
     }
 }
 $torrents_list = Database::getTorrentsList($order, $orderDir);
+$useTorrent = Database::getSetting('useTorrent');
 ?>
 <?php if (empty($torrents_list)) { ?>
     <div class="torrents-fs --empty"><div>Нет тем для мониторинга</div></div>
@@ -55,7 +56,7 @@ $torrents_list = Database::getTorrentsList($order, $orderDir);
     {
         extract($row);
         $link = Url::create($tracker, $name, $torrent_id, $hd);
-        $has_info = (!empty($path) or ($type == 'RSS' && $ep) or $error or $closed) ? true : false;
+        $has_info = (!empty($path) or ($type == 'RSS' && $ep) or $error or $closed or (!empty($hash) && $useTorrent)) ? true : false;
     ?>
 
 
@@ -79,6 +80,10 @@ $torrents_list = Database::getTorrentsList($order, $orderDir);
         </div>
 
         <div x-cloak x-show="showInfo" x-transition>
+            <div class="tm-item__meta" title="Трекер"><?= htmlspecialchars($tracker, ENT_QUOTES) ?></div>
+            <?php if (!empty($hash) && $useTorrent) { ?>
+                <div class="tm-item__meta tm-item__client-status" data-cs-hash="<?= htmlspecialchars($hash, ENT_QUOTES) ?>">…</div>
+            <?php } ?>
             <?php if ($type == 'RSS' && $ep) { ?>
                 <div class="tm-item__meta" title="Последняя скачаная серия"><svg><use href="assets/img/sprite.svg#ep" /></svg><?= htmlspecialchars($ep, ENT_QUOTES) ?></div>
             <?php } ?>
@@ -128,6 +133,10 @@ $torrents_list = Database::getTorrentsList($order, $orderDir);
                 <svg><use href="assets/img/sprite.svg#info" /></svg>
 
                 <div class="tm-item__popup">
+                    <div class="tm-item__meta" title="Трекер"><?= htmlspecialchars($tracker, ENT_QUOTES) ?></div>
+                    <?php if (!empty($hash) && $useTorrent) { ?>
+                        <div class="tm-item__meta tm-item__client-status" data-cs-hash="<?= htmlspecialchars($hash, ENT_QUOTES) ?>">…</div>
+                    <?php } ?>
                     <?php if ($type == 'RSS' && $ep) { ?>
                         <div class="tm-item__meta" title="Последняя скачаная серия"><svg><use href="assets/img/sprite.svg#ep" /></svg><?= htmlspecialchars($ep, ENT_QUOTES) ?></div>
                     <?php } ?>
