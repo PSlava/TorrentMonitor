@@ -65,6 +65,8 @@ if (isset($_POST['action']))
     if ( ! Sys::checkAuth())
         exit();
 
+	Migration::run();
+
 	//Добавляем тему для мониторинга
 	if ($_POST['action'] == 'torrent_add')
 	{
@@ -656,6 +658,8 @@ if (isset($_GET['action']))
 {
     if ( ! Sys::checkAuth())
         exit();
+
+	Migration::run();
 
 	//Сортировка вывода торрентов
 	if ($_GET['action'] == 'order')

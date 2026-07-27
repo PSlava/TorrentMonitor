@@ -18,7 +18,10 @@ if (empty($_SESSION['csrf_token']))
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 
 if (Sys::checkAuth())
+{
+    Migration::run();
     require_once "pages/main.php";
+}
 else
     require_once "pages/auth.php";
 ?>

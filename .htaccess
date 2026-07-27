@@ -1,0 +1,3 @@
+# Совместимость URL-контракта v3 REST API: /api/... → api.php/...
+RewriteEngine On
+RewriteRule ^api/(.*)$ api.php/$1 [L,QSA]
