@@ -4,9 +4,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         cron \
         libcurl4-openssl-dev \
         libxml2-dev \
+        libonig-dev \
+        libpq-dev \
+        libsqlite3-dev \
     && docker-php-ext-install \
         curl \
+        mbstring \
         pdo_mysql \
+        pdo_pgsql \
+        pdo_sqlite \
         simplexml \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
