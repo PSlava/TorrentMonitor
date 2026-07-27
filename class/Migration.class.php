@@ -287,6 +287,7 @@ class Migration
         {
             $stmt = Database::newStatement("INSERT INTO `settings` (`key`, `val`) VALUES ('proxyAuth', '')");
             $stmt->execute();
+            Database::invalidateSettingsCache();
         }
     }
 }

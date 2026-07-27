@@ -8,6 +8,7 @@ class Database
     private $dbh;
     private $dbType;
     private static $instance;
+    private static $settingsCache = null;
 
     private function __construct()
     {
@@ -118,20 +119,36 @@ class Database
 
     public static function getSetting($param)
     {
-        $stmt = self::newStatement("SELECT `val` FROM `settings` WHERE `key` = :param");
-        $stmt->bindParam(':param', $param);
-        if ($stmt->execute())
+        // Bulk-загрузка всех настроек в кеш при первом вызове —
+        // устраняет сотни повторных запросов за один HTTP-цикл.
+        // В кеше хранятся сырые значения из БД; расшифровка выполняется при отдаче.
+        if (self::$settingsCache === null)
         {
-            foreach ($stmt as $row)
+            self::$settingsCache = array();
+            // ORDER BY id — сохраняем порядок для getProxy(), где System.class.php полагается на [0]=proxy, [1]=proxyAddress, [2]=proxyType
+            $stmt = self::newStatement("SELECT `key`, `val` FROM `settings` ORDER BY `id`");
+            if ($stmt->execute())
             {
-                if ($param == 'torrentPassword')
-                {
-                    self::reencryptIfLegacy('settings', 'key', $param, array('val' => $row['val']));
-                    return Crypto::decrypt($row['val']);
-                }
-                return $row['val'];
+                foreach ($stmt as $row)
+                    self::$settingsCache[$row['key']] = $row['val'];
             }
         }
+        if ( ! array_key_exists($param, self::$settingsCache))
+            return null;
+
+        $val = self::$settingsCache[$param];
+        if ($param == 'torrentPassword')
+        {
+            self::reencryptIfLegacy('settings', 'key', $param, array('val' => $val));
+            return Crypto::decrypt($val);
+        }
+        return $val;
+    }
+
+    // Сброс кеша настроек — вызывается после прямых INSERT/UPDATE мимо updateSettings
+    public static function invalidateSettingsCache()
+    {
+        self::$settingsCache = null;
     }
 
     public static function getAllSetting()
@@ -225,7 +242,11 @@ class Database
         $stmt->bindParam(':setting', $setting);
         $stmt->bindParam(':val', $val);
         if ($stmt->execute())
+        {
+            if (self::$settingsCache !== null)
+                self::$settingsCache[$setting] = $val;
             return TRUE;
+        }
         else
             return $stmt->errorInfo();
     }
@@ -247,24 +268,19 @@ class Database
         $stmt = self::newStatement("UPDATE `settings` SET `val` = :val WHERE `key` = 'sentUpdateNotification'");
         $stmt->bindParam(':val', $param);
         if ($stmt->execute())
+        {
+            if (self::$settingsCache !== null)
+                self::$settingsCache['sentUpdateNotification'] = $param;
             return TRUE;
+        }
         else
             return $stmt->errorInfo();
     }
 
     public static function getUpdateNotification()
     {
-        $stmt = self::newStatement("SELECT `val` FROM `settings` WHERE `key` = 'sentUpdateNotification'");
-        if ($stmt->execute())
-        {
-            foreach ($stmt as $row)
-            {
-                if ($row['val'] == 1)
-                    return TRUE;
-                else
-                    return FALSE;
-            }
-        }
+        $val = self::getSetting('sentUpdateNotification');
+        return ($val == 1);
     }
 
     public static function getCredentials($tracker)
@@ -333,7 +349,11 @@ class Database
         $stmt = self::newStatement("UPDATE `settings` SET `val` = :password WHERE `key` = 'password'");
         $stmt->bindParam(':password', $password);
         if ($stmt->execute())
+        {
+            if (self::$settingsCache !== null)
+                self::$settingsCache['password'] = $password;
             return TRUE;
+        }
         else
             return FALSE;
     }
@@ -1340,25 +1360,23 @@ class Database
 
     public static function getProxy()
     {
-        static $cache = null;
-        if ($cache !== null)
-            return $cache;
+        // Читаем из общего кеша настроек — при первом вызове инициализируем через getSetting()
+        if (self::$settingsCache === null)
+            self::getSetting('proxy');
 
-        $stmt = self::newStatement("SELECT `key`, `val` FROM `settings` WHERE `key` LIKE 'proxy%' ORDER BY `id`");
-        if ($stmt->execute())
+        $resultArray = array();
+        $i = 0;
+        foreach (self::$settingsCache as $key => $val)
         {
-            $i=0;
-            foreach ($stmt as $row)
+            if (strpos($key, 'proxy') === 0)
             {
-                $resultArray[$i]['key'] = $row['key'];
-                $resultArray[$i]['val'] = $row['val'];
+                $resultArray[$i]['key'] = $key;
+                $resultArray[$i]['val'] = $val;
                 $i++;
             }
-            if ( ! empty($resultArray))
-                return $cache = $resultArray;
         }
-        else
-            return $stmt->errorInfo();
+        if ( ! empty($resultArray))
+            return $resultArray;
     }
     
     public static function clearTemp()
