@@ -8,6 +8,7 @@ include_once $dir."class/Url.class.php";
 
 if ( ! Sys::checkAuth())
     die(header('Location: ../'));
+if (session_id() !== '') session_write_close();
 ?>
 
 <div class="top-bar mb-2">

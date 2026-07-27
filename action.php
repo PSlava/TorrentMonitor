@@ -65,6 +65,7 @@ if (isset($_POST['action']))
     if ( ! Sys::checkAuth())
         exit();
 
+	if (session_id() !== '') session_write_close();
 	Migration::run();
 
 	//Добавляем тему для мониторинга
@@ -659,6 +660,7 @@ if (isset($_GET['action']))
     if ( ! Sys::checkAuth())
         exit();
 
+	if (session_id() !== '') session_write_close();
 	Migration::run();
 
 	//Сортировка вывода торрентов

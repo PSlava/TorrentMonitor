@@ -21,6 +21,7 @@ catch (Throwable $e)
 
 if ( ! $authed)
     die(header('Location: ../'));
+if (session_id() !== '') session_write_close();
 
 $credentials = array();
 $checkResults = array();

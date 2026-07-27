@@ -7,6 +7,7 @@ include_once $dir."class/Url.class.php";
 
 if ( ! Sys::checkAuth())
     die(header('Location: ../'));
+if (session_id() !== '') session_write_close();
 
 $date_today = date('d-m-Y');
 $order = 'name';

@@ -7,6 +7,7 @@ include_once $dir."class/Update.class.php";
 
 if ( ! Sys::checkAuth())
   die(header('Location: ../'));
+if (session_id() !== '') session_write_close();
 
-Update::main();  
+Update::main();
 ?>
