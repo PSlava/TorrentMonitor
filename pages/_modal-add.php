@@ -17,7 +17,7 @@ $_tmCategories    = Database::getDistinctCategories();
             <button class="modal__close" @click="closeModalAdd()"><svg><use href="assets/img/sprite.svg#close" /></svg></button>
         </div>
 
-        <form x-show="type == 'theme'" @submit.prevent="addTheme('torrent_add', $el)" action="action.php">
+        <form x-show="type == 'theme'" @submit.prevent="addTheme('torrent_add')" action="action.php">
 
             <div class="modal__body">
                 <label class="row">
@@ -75,7 +75,7 @@ $_tmCategories    = Database::getDistinctCategories();
         </form>
 
 
-        <form x-show="type == 'series'" @submit.prevent="addSeries('serial_add', $el)" action="action.php">
+        <form x-show="type == 'series'" @submit.prevent="addSeries('serial_add')" action="action.php">
 
             <div class="modal__body">
                 <label class="row">
@@ -154,7 +154,7 @@ $_tmCategories    = Database::getDistinctCategories();
         </form>
 
 
-        <form x-show="type == 'user'" @submit.prevent="addUser('user_add', $el)" action="action.php">
+        <form x-show="type == 'user'" @submit.prevent="addUser('user_add')" action="action.php">
 
             <div class="modal__body">
                 <label class="row">

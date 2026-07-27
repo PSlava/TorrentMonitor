@@ -11,7 +11,7 @@
 
         <div x-show="editData.closed" class="form-error">Тема закрыта на форуме!</div>
 
-        <form @submit.prevent="updateItem($el, editData.id)" action="action.php">
+        <form @submit.prevent="updateItem()" action="action.php">
 
             <div class="modal__body">
                 <label class="row">
@@ -94,7 +94,7 @@
             <button class="modal__close" @click="closeModalEditSeries()"><svg><use href="assets/img/sprite.svg#close" /></svg></button>
         </div>
 
-        <form @submit.prevent="updateItem($el, editData.id)" action="action.php">
+        <form @submit.prevent="updateItem()" action="action.php">
 
             <div class="modal__body">
                 <label class="row">
