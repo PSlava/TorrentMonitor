@@ -1,0 +1,9 @@
+config.php
+laststart.*
+torrents/*
+!torrents/.gitkeep
+data/
+docs/
+CLAUDE.md
+deploy.sh
+.env

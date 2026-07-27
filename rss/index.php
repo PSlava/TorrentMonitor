@@ -1,5 +1,6 @@
 <?php
 $dir = dirname(__FILE__).'/../';
+include_once $dir.'autoload.php';
 include_once $dir.'class/Database.class.php';
 
 try

@@ -1,0 +1,20 @@
+# Нормализация переносов строк: в репозитории всегда LF,
+# в рабочей копии — нативные для ОС (на macOS/Linux — LF)
+* text=auto eol=lf
+*.php text eol=lf
+*.txt text eol=lf
+*.xml text eol=lf
+*.md text eol=lf
+*.sh text eol=lf
+*.sql text eol=lf
+*.js text eol=lf
+*.css text eol=lf
+*.json text eol=lf
+*.html text eol=lf
+
+# Бинарные файлы — не трогать
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.torrent binary
