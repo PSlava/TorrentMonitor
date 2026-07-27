@@ -705,21 +705,21 @@ if (isset($_GET['action']))
         $allowedClients = ['Deluge', 'Transmission', 'qBittorrent', 'TorrServer', 'SynologyDS', 'rTorrent', 'aria2'];
 
         if (!$useTorrent || empty($torrentClient) || !in_array($torrentClient, $allowedClients)) {
-            echo json_encode([]);
+            echo json_encode((object)[]);
         } else {
             $hashes = Database::getAllHashes();
             if (empty($hashes)) {
-                echo json_encode([]);
+                echo json_encode((object)[]);
             } elseif (method_exists($torrentClient, 'getStatusBatch')) {
                 $result = call_user_func($torrentClient.'::getStatusBatch', $hashes);
-                echo json_encode($result);
+                echo json_encode(empty($result) ? (object)[] : $result);
             } else {
                 # фолбек: поштучный запрос (для клиентов без getStatusBatch)
                 $result = [];
                 foreach ($hashes as $hash) {
                     $result[$hash] = call_user_func($torrentClient.'::getStatus', $hash);
                 }
-                echo json_encode($result);
+                echo json_encode(empty($result) ? (object)[] : $result);
             }
         }
     }
