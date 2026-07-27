@@ -25,6 +25,8 @@ foreach ($settings as $key => $row)
 $config = Config::read('ext_filename');
 if (file_exists($config))
     $csettings['settings'] = file_get_contents($config);
+
+$webhooks = class_exists('Webhook') ? Webhook::getAllSafe() : [];
 ?>
 
 <div x-data='settings(<?= json_encode($csettings, JSON_NUMERIC_CHECK) ?>)' class="settings row">
@@ -37,6 +39,7 @@ if (file_exists($config))
         <button :class="currentTab == 'torrent' && '--current'" @click="setTab('torrent')">Торрент-клиент</button>
         <button :class="currentTab == 'extended' && '--current'" @click="setTab('extended')">Расширенные</button>
         <button :class="currentTab == 'api' && '--current'" @click="setTab('api')">API</button>
+        <button :class="currentTab == 'webhooks' && '--current'" @click="setTab('webhooks')">Вебхуки</button>
     </nav>
 
     <div class="form-error mb-2" x-show="error.length > 0" x-text="error" x-transition.opacity></div>
@@ -432,6 +435,104 @@ if (file_exists($config))
                 </div>
             </div>
         </div>
+    </div>
+
+
+    <div x-show="currentTab == 'webhooks'" x-data="webhooksManager(<?= htmlspecialchars(json_encode($webhooks, JSON_UNESCAPED_UNICODE), ENT_QUOTES) ?>)">
+
+        <div class="row mb-2">
+            <div class="col --10:lg mb-2">
+                <div class="form-help">
+                    Вебхуки отправляют POST-запрос на указанный URL при наступлении событий. Тело — JSON <code>{event, data, time}</code>. Если задан секрет — добавляется заголовок <code>X-TM-Signature: sha256=HMAC</code>.<br>
+                    Поле <b>События</b>: <code>*</code> — все события, либо список через запятую (например: <code>torrent.added,download.done,warning</code>).
+                </div>
+            </div>
+        </div>
+
+        <template x-if="hooks.length > 0">
+            <div class="row mb-2">
+                <div class="col --10:lg mb-2">
+                    <table class="tm-webhooks" style="width:100%;border-collapse:collapse">
+                        <thead>
+                            <tr>
+                                <th style="text-align:left;padding:4px 8px">Название</th>
+                                <th style="text-align:left;padding:4px 8px">URL</th>
+                                <th style="text-align:left;padding:4px 8px">События</th>
+                                <th style="text-align:left;padding:4px 8px">Активен</th>
+                                <th style="padding:4px 8px"></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <template x-for="hook in hooks" :key="hook.id">
+                                <tr>
+                                    <td style="padding:4px 8px" x-text="hook.name"></td>
+                                    <td style="padding:4px 8px;word-break:break-all" x-text="hook.url"></td>
+                                    <td style="padding:4px 8px" x-text="hook.events"></td>
+                                    <td style="padding:4px 8px" @click="toggle(hook)">
+                                        <div class="toggler" :class="hook.active == 1 && '--done'" style="cursor:pointer"></div>
+                                    </td>
+                                    <td style="padding:4px 8px">
+                                        <button type="button" class="btn btn--secondary" @click="remove(hook)">Удалить</button>
+                                    </td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </template>
+
+        <template x-if="hooks.length === 0">
+            <div class="row mb-2">
+                <div class="col --10:lg mb-2">
+                    <div class="form-help">Вебхуки не настроены.</div>
+                </div>
+            </div>
+        </template>
+
+        <div class="form-separator mb-2"></div>
+
+        <form @submit.prevent="add($el)" action="action.php">
+            <div class="row mb-2">
+                <div class="col --10:lg mb-1"><b>Добавить вебхук</b></div>
+            </div>
+
+            <label class="row">
+                <div class="col --2:lg mb-1">Название:</div>
+                <div class="col --5:lg mb-2">
+                    <input type="text" x-model="form.name" required maxlength="100">
+                </div>
+            </label>
+
+            <label class="row">
+                <div class="col --2:lg mb-1">URL:</div>
+                <div class="col --5:lg mb-2">
+                    <input type="url" x-model="form.url" pattern="https?://.+" required maxlength="500" placeholder="https://example.com/hook">
+                </div>
+            </label>
+
+            <label class="row">
+                <div class="col --2:lg mb-1">События:</div>
+                <div class="col --5:lg mb-2">
+                    <input type="text" x-model="form.events" maxlength="500" placeholder="*">
+                    <div class="form-help">* или список через запятую</div>
+                </div>
+            </label>
+
+            <label class="row">
+                <div class="col --2:lg mb-1">Секрет:</div>
+                <div class="col --5:lg mb-2">
+                    <input type="text" x-model="form.secret" maxlength="64" placeholder="оставьте пустым — сгенерируется автоматически">
+                </div>
+            </label>
+
+            <div class="row mt-4">
+                <div class="col --2:lg"></div>
+                <div class="col">
+                    <button type="submit" class="btn btn--primary">Добавить</button>
+                </div>
+            </div>
+        </form>
     </div>
 
 

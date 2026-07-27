@@ -640,6 +640,82 @@ if (isset($_POST['action']))
         echo json_encode($return);
     }
 
+    //Добавить вебхук
+    if ($_POST['action'] == 'webhook_add')
+    {
+        $name   = trim((string)($_POST['name']   ?? ''));
+        $url    = trim((string)($_POST['url']    ?? ''));
+        $events = trim((string)($_POST['events'] ?? '*'));
+        $secret = trim((string)($_POST['secret'] ?? ''));
+
+        if ($name === '' || $url === '')
+        {
+            $return['error'] = TRUE;
+            $return['msg']   = 'Название и URL обязательны.';
+        }
+        elseif ( ! preg_match('#^https?://#i', $url))
+        {
+            $return['error'] = TRUE;
+            $return['msg']   = 'URL должен начинаться с http:// или https://';
+        }
+        elseif (mb_strlen($name) > 100 || mb_strlen($url) > 500 || mb_strlen($events) > 500 || mb_strlen($secret) > 64)
+        {
+            $return['error'] = TRUE;
+            $return['msg']   = 'Превышена максимальная длина одного из полей.';
+        }
+        else
+        {
+            $id = Webhook::create($name, $url, $events === '' ? '*' : $events, $secret);
+            if ($id === false)
+            {
+                $return['error'] = TRUE;
+                $return['msg']   = 'Не удалось создать вебхук.';
+            }
+            else
+            {
+                $return['error'] = FALSE;
+                $return['msg']   = 'Вебхук создан.';
+                $return['id']    = is_int($id) ? $id : 0;
+            }
+        }
+        echo json_encode($return);
+    }
+
+    //Удалить вебхук
+    if ($_POST['action'] == 'webhook_delete')
+    {
+        $id = (int)($_POST['id'] ?? 0);
+        if ($id > 0 && Webhook::delete($id))
+        {
+            $return['error'] = FALSE;
+            $return['msg']   = 'Вебхук удалён.';
+        }
+        else
+        {
+            $return['error'] = TRUE;
+            $return['msg']   = 'Не удалось удалить вебхук.';
+        }
+        echo json_encode($return);
+    }
+
+    //Переключить активность вебхука
+    if ($_POST['action'] == 'webhook_toggle')
+    {
+        $id     = (int)($_POST['id']     ?? 0);
+        $active = (int)($_POST['active'] ?? 0) ? 1 : 0;
+        if ($id > 0 && Webhook::toggle($id, $active))
+        {
+            $return['error'] = FALSE;
+            $return['msg']   = $active ? 'Вебхук включён.' : 'Вебхук отключён.';
+        }
+        else
+        {
+            $return['error'] = TRUE;
+            $return['msg']   = 'Не удалось изменить состояние вебхука.';
+        }
+        echo json_encode($return);
+    }
+
 	//Очистка ошибок потрекерно
 	if ($_POST['action'] == 'clear_warnings')
 	{

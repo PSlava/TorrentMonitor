@@ -155,7 +155,11 @@ class Webhook
         if ($stmt->execute())
         {
             foreach ($stmt as $row)
+            {
+                $row['id']     = (int)$row['id'];
+                $row['active'] = (int)$row['active'];
                 $result[] = $row;
+            }
         }
         return $result;
     }
