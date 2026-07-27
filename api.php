@@ -172,13 +172,6 @@ Router::get('/news', function() {
     Router::json(['data' => $news ?: []]);
 });
 
-// Health Check
-Router::get('/health', function() {
-    apiAuth();
-    $checks = HealthCheck::runAll();
-    Router::json(['data' => $checks]);
-});
-
 // События (EventBus)
 Router::get('/events', function() {
     apiAuth();
@@ -264,27 +257,6 @@ Router::get('/tasks', function() {
     apiAuth();
     $tasks = TaskQueue::getAll();
     Router::json(['data' => $tasks]);
-});
-
-// Прогресс загрузок
-Router::get('/progress', function() {
-    apiAuth();
-    $settings = Database::getAllSetting();
-    $csettings = [];
-    if ($settings)
-    {
-        foreach ($settings as $row)
-            $csettings[key($row)] = $row[key($row)];
-    }
-
-    if (empty($csettings['useTorrent']) || empty($csettings['torrentClient']))
-    {
-        Router::json(['data' => [], 'error' => 'Торрент-клиент не настроен']);
-        return;
-    }
-
-    $progress = HealthCheck::getTorrentProgress($csettings);
-    Router::json(['data' => $progress]);
 });
 
 // Версия системы
