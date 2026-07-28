@@ -7,6 +7,10 @@ class Migration
         '003' => 'createWebhooks',
         '004' => 'createTaskQueue',
         '005' => 'addProxyAuth',
+        '006' => 'addTorrentCategory',
+        '007' => 'addMissingSettings',
+        '008' => 'widenSettingsVal',
+        '009' => 'convertMysqlToInnodb',
     ];
 
     private static $done = false;
@@ -288,6 +292,133 @@ class Migration
             $stmt = Database::newStatement("INSERT INTO `settings` (`key`, `val`) VALUES ('proxyAuth', '')");
             $stmt->execute();
             Database::invalidateSettingsCache();
+        }
+    }
+
+    // Миграция 006: Колонка torrent.category (добавлена в v3.0 апстрима, отсутствует в БД старых форков)
+    private static function addTorrentCategory()
+    {
+        $dbType = Database::getDbType();
+
+        if ($dbType == 'mysql')
+        {
+            $check = Database::newStatement(
+                "SELECT COUNT(*) AS c FROM INFORMATION_SCHEMA.COLUMNS
+                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'torrent' AND COLUMN_NAME = 'category'"
+            );
+            $check->execute();
+            $row = $check->fetch(PDO::FETCH_ASSOC);
+            if ((int)$row['c'] === 0)
+            {
+                $alter = Database::newStatement(
+                    "ALTER TABLE `torrent` ADD COLUMN `category` varchar(100) NOT NULL DEFAULT ''"
+                );
+                $alter->execute();
+            }
+        }
+        elseif ($dbType == 'pgsql')
+        {
+            $alter = Database::newStatement(
+                "ALTER TABLE \"torrent\" ADD COLUMN IF NOT EXISTS \"category\" VARCHAR(100) NOT NULL DEFAULT ''"
+            );
+            $alter->execute();
+        }
+        else
+        {
+            $check = Database::newStatement("PRAGMA table_info(`torrent`)");
+            $check->execute();
+            $exists = false;
+            foreach ($check as $col)
+            {
+                if (isset($col['name']) && $col['name'] === 'category')
+                {
+                    $exists = true;
+                    break;
+                }
+            }
+            if ( ! $exists)
+            {
+                $alter = Database::newStatement(
+                    "ALTER TABLE `torrent` ADD COLUMN `category` VARCHAR(100) NOT NULL DEFAULT ''"
+                );
+                $alter->execute();
+            }
+        }
+    }
+
+    // Миграция 007: Строки settings, добавленные в v3.0 (flaresolverrUrl, ApiKey, qbitCategory).
+    // updateSettings делает UPDATE — без строки сохранения молча теряются.
+    private static function addMissingSettings()
+    {
+        $rows = array('flaresolverrUrl', 'ApiKey', 'qbitCategory');
+        foreach ($rows as $key)
+        {
+            $val = Database::getSetting($key);
+            if ($val === null || $val === false)
+            {
+                $stmt = Database::newStatement("INSERT INTO `settings` (`key`, `val`) VALUES (:key, '')");
+                $stmt->bindParam(':key', $key);
+                $stmt->execute();
+            }
+        }
+        Database::invalidateSettingsCache();
+    }
+
+    // Миграция 008: settings.val VARCHAR(100) → VARCHAR(255). SQLite не проверяет длину.
+    private static function widenSettingsVal()
+    {
+        $dbType = Database::getDbType();
+
+        if ($dbType == 'mysql')
+        {
+            $alter = Database::newStatement(
+                "ALTER TABLE `settings` MODIFY COLUMN `val` VARCHAR(255) NOT NULL"
+            );
+            $alter->execute();
+        }
+        elseif ($dbType == 'pgsql')
+        {
+            $alter = Database::newStatement(
+                "ALTER TABLE \"settings\" ALTER COLUMN \"val\" TYPE VARCHAR(255)"
+            );
+            $alter->execute();
+        }
+        // SQLite: тип VARCHAR(N) не enforcement — данные пишутся без обрезки, миграция не нужна.
+    }
+
+    // Миграция 009 (MySQL): конвертация старых таблиц MyISAM+utf8 → InnoDB+utf8mb4.
+    // Даёт транзакции, row-level lock и полноценный 4-байтный UTF-8 (эмоджи).
+    private static function convertMysqlToInnodb()
+    {
+        if (Database::getDbType() != 'mysql') return;
+
+        $tables = array('buffer', 'credentials', 'news', 'notifications', 'settings', 'temp', 'torrent', 'warning', 'watch');
+        foreach ($tables as $table)
+        {
+            $check = Database::newStatement(
+                "SELECT ENGINE, TABLE_COLLATION FROM INFORMATION_SCHEMA.TABLES
+                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table"
+            );
+            $check->bindParam(':table', $table);
+            $check->execute();
+            $row = $check->fetch(PDO::FETCH_ASSOC);
+            if ( ! $row) continue;
+
+            $needsEngine = strtolower($row['ENGINE']) !== 'innodb';
+            $needsCharset = strpos((string)$row['TABLE_COLLATION'], 'utf8mb4') !== 0;
+
+            if ($needsEngine)
+            {
+                $alter = Database::newStatement("ALTER TABLE `$table` ENGINE=InnoDB");
+                $alter->execute();
+            }
+            if ($needsCharset)
+            {
+                $alter = Database::newStatement(
+                    "ALTER TABLE `$table` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+                );
+                $alter->execute();
+            }
         }
     }
 }
