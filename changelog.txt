@@ -1,4 +1,4 @@
-28.07.2026 - 3.1.0:
+28.07.2026 - 3.0-fork.1:
 - Форк на базе v3.0 апстрима: сохранены bcrypt, CSRF, XSS-фиксы, curl_multi, JSON-RPC Deluge, категории qBittorrent
 - Собственные модули форка: REST API (api.php + Bearer-токены), SSE, EventBus, миграции БД, вебхуки с HMAC-SHA256, TaskQueue с экспоненциальным backoff
 - UI вебхуков в настройках: добавление/удаление/включение через Alpine-компонент webhooksManager
@@ -8,7 +8,7 @@
 - session_write_close после checkAuth — параллельные AJAX-запросы больше не блокируются
 - Резолвер классов трекеров через $trackerId (Sys::resolveTrackerClass) — удалены 6 ручных маппингов
 - In-memory кеш настроек в Database (settingsCache) — устраняет сотни запросов к БД
-- MySQL: MyISAM → InnoDB, utf8 → utf8mb4
+- Миграции БД 006-009: torrent.category, недостающие строки settings (flaresolverrUrl/ApiKey/qbitCategory), settings.val VARCHAR 100→255, конвертация старых таблиц MyISAM+utf8 → InnoDB+utf8mb4
 - Alpine v3 фиксы модалок: прямой URL "action.php" вместо $el.action + .fail-обработчики
 - Auth-ошибка возвращает JSON {error, msg} вместо голого exit
 - Возврат '' по умолчанию в dateStringToNum (animelayer, casstudio, kinozal.*)

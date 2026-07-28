@@ -1,6 +1,6 @@
 # TorrentMonitor
 
-Форк [ElizarovEugene/TorrentMonitor](https://github.com/ElizarovEugene/TorrentMonitor). Версия 3.1.0 (основана на v3.0 апстрима).
+Форк [ElizarovEugene/TorrentMonitor](https://github.com/ElizarovEugene/TorrentMonitor). Версия 3.0-fork.1 (основана на v3.0 апстрима).
 
 Приложение следит за обновлениями на торрент-трекерах рунета и автоматически скачивает новые серии и перезалитые раздачи через торрент-клиент.
 
