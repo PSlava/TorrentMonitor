@@ -8,7 +8,7 @@
 - session_write_close после checkAuth — параллельные AJAX-запросы больше не блокируются
 - Резолвер классов трекеров через $trackerId (Sys::resolveTrackerClass) — удалены 6 ручных маппингов
 - In-memory кеш настроек в Database (settingsCache) — устраняет сотни запросов к БД
-- Миграции БД 006-009: torrent.category, недостающие строки settings (flaresolverrUrl/ApiKey/qbitCategory), settings.val VARCHAR 100→255, конвертация старых таблиц MyISAM+utf8 → InnoDB+utf8mb4
+- Миграции БД 006-010: torrent.category, недостающие строки settings (flaresolverrUrl/ApiKey/qbitCategory), settings.val VARCHAR 100→255, конвертация старых таблиц MyISAM+utf8 → InnoDB+utf8mb4, warning.t_id NOT NULL → NULL (предупреждения уровня трекера роняли engine.php ошибкой MySQL 1048)
 - Alpine v3 фиксы модалок: прямой URL "action.php" вместо $el.action + .fail-обработчики
 - Auth-ошибка возвращает JSON {error, msg} вместо голого exit
 - Возврат '' по умолчанию в dateStringToNum (animelayer, casstudio, kinozal.*)

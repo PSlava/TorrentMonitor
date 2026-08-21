@@ -37,6 +37,8 @@ class Errors
         Errors::write('api_no_credentials',  'API: нет учётных данных для трекера в TM.');
         Errors::write('api_already_tracked', 'API: тема уже отслеживается в TM.');
 
+        Errors::write('engine_error', 'Внутренняя ошибка при обработке трекера. Подробности — в выводе engine.php.');
+
     	Errors::write('404', 'Не удалось добавить в torrent-клиент, неверная ссылка на torrent-файл.');
     	Errors::write('log_passwd', 'Не удалось подключиться к torrent-клиенту, неправильный логин или пароль.');
     	Errors::write('connect_fail', 'Не удалось подключиться к torrent-клиенту. Клиент  недоступен по указанному адресу.');
@@ -59,7 +61,7 @@ class Errors
 	
     public static function read($name)
     {
-        return self::$errorsArray[$name];
+        return isset(self::$errorsArray[$name]) ? self::$errorsArray[$name] : $name;
     }
 
     public static function write($name, $value)
@@ -76,14 +78,22 @@ class Errors
     {
         $date = date('Y-m-d H:i:s');
         $debug = Database::getSetting('debug');
-    	Database::setWarnings($date, $tracker, $warning, $id);
-    	if ($debug)
-    	    echo '<br>'."\r\n".$tracker.': '.$warning.'<br>'."\r\n";
-		if ($id != NULL)
-			Database::setErrorToThreme($id, 1);
-    	$countErrors = Database::getWarningsCount($tracker);
-    	if ($countErrors[0]['count'] == 1)
-			Notification::sendNotification('warning', $date, $tracker, Errors::getWarning($warning), 0);
+        //логирование предупреждения не должно ронять прогон: ошибка БД здесь только сообщается
+        try
+        {
+    	    Database::setWarnings($date, $tracker, $warning, $id);
+    	    if ($debug)
+    	        echo '<br>'."\r\n".$tracker.': '.$warning.'<br>'."\r\n";
+		    if ($id != NULL)
+			    Database::setErrorToThreme($id, 1);
+    	    $countErrors = Database::getWarningsCount($tracker);
+    	    if ($countErrors[0]['count'] == 1)
+			    Notification::sendNotification('warning', $date, $tracker, Errors::getWarning($warning), 0);
+        }
+        catch (Throwable $e)
+        {
+            echo 'Не удалось записать предупреждение ('.$tracker.': '.$warning.'): '.$e->getMessage()."\r\n";
+        }
     }
 }
 ?>

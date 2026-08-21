@@ -11,6 +11,7 @@ class Migration
         '007' => 'addMissingSettings',
         '008' => 'widenSettingsVal',
         '009' => 'convertMysqlToInnodb',
+        '010' => 'warningTidNullable',
     ];
 
     private static $done = false;
@@ -418,6 +419,73 @@ class Migration
                     "ALTER TABLE `$table` CONVERT TO CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
                 );
                 $alter->execute();
+            }
+        }
+    }
+
+    // Миграция 010: warning.t_id NOT NULL → NULL.
+    // В старой схеме форка колонка объявлена NOT NULL, но Errors::setWarnings пишет
+    // NULL для всех предупреждений уровня трекера (не привязанных к конкретной теме) —
+    // MySQL валит такую вставку ошибкой 1048 и роняет прогон engine.php.
+    private static function warningTidNullable()
+    {
+        $dbType = Database::getDbType();
+
+        if ($dbType == 'mysql')
+        {
+            $check = Database::newStatement(
+                "SELECT IS_NULLABLE FROM INFORMATION_SCHEMA.COLUMNS
+                 WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'warning' AND COLUMN_NAME = 't_id'"
+            );
+            $check->execute();
+            $row = $check->fetch(PDO::FETCH_ASSOC);
+            if ($row && strtoupper($row['IS_NULLABLE']) === 'NO')
+            {
+                $alter = Database::newStatement(
+                    "ALTER TABLE `warning` MODIFY COLUMN `t_id` int(11) DEFAULT NULL"
+                );
+                $alter->execute();
+            }
+        }
+        elseif ($dbType == 'pgsql')
+        {
+            $alter = Database::newStatement("ALTER TABLE \"warning\" ALTER COLUMN \"t_id\" DROP NOT NULL");
+            $alter->execute();
+        }
+        else
+        {
+            // SQLite не умеет ALTER COLUMN — при NOT NULL пересоздаём таблицу с переносом данных
+            $check = Database::newStatement("PRAGMA table_info(`warning`)");
+            $check->execute();
+            $notNull = false;
+            foreach ($check as $col)
+            {
+                if (isset($col['name']) && $col['name'] === 't_id' && ! empty($col['notnull']))
+                {
+                    $notNull = true;
+                    break;
+                }
+            }
+            if ($notNull)
+            {
+                $sql = array(
+                    "CREATE TABLE `warning_new` (
+                        `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
+                        `time` datetime NOT NULL,
+                        `where` varchar(40) NOT NULL,
+                        `reason` varchar(200) NOT NULL,
+                        `t_id` INTEGER DEFAULT NULL
+                    )",
+                    "INSERT INTO `warning_new` (`id`, `time`, `where`, `reason`, `t_id`)
+                        SELECT `id`, `time`, `where`, `reason`, `t_id` FROM `warning`",
+                    "DROP TABLE `warning`",
+                    "ALTER TABLE `warning_new` RENAME TO `warning`",
+                );
+                foreach ($sql as $query)
+                {
+                    $stmt = Database::newStatement($query);
+                    $stmt->execute();
+                }
             }
         }
     }
