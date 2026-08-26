@@ -84,6 +84,25 @@ class CurlMultiFetcher
             }
             while ($running && $status == CURLM_OK);
 
+            //curl_multi сломался (не CURLM_OK) - завершённых дескрипторов больше не будет.
+            //без этого внешний цикл крутился бы вхолостую без таймаута
+            if ($status != CURLM_OK)
+            {
+                foreach ($chToKey as $deadKey)
+                {
+                    foreach ($this->aliases[$deadKey] as $id)
+                    {
+                        $results[$id] = array(
+                            'body'          => '',
+                            'http_code'     => 0,
+                            'error'         => curl_multi_strerror($status),
+                            'proxy_failure' => NULL,
+                        );
+                    }
+                }
+                break;
+            }
+
             // обрабатываем все завершившиеся дескрипторы
             while (($info = curl_multi_info_read($mh)) !== false)
             {
@@ -154,8 +173,23 @@ class CurlMultiFetcher
                 {
                     $nextKey = key($queue);
                     $nextCh  = array_shift($queue);
-                    curl_multi_add_handle($mh, $nextCh);
-                    $chToKey[(int)$nextCh] = $nextKey;
+                    //регистрируем в карте только реально принятый дескриптор, иначе
+                    //curl_multi_info_read() никогда его не вернёт и цикл не завершится
+                    if (curl_multi_add_handle($mh, $nextCh) === 0)
+                        $chToKey[(int)$nextCh] = $nextKey;
+                    else
+                    {
+                        foreach ($this->aliases[$nextKey] as $id)
+                        {
+                            $results[$id] = array(
+                                'body'          => '',
+                                'http_code'     => 0,
+                                'error'         => 'curl_multi_add_handle failed',
+                                'proxy_failure' => NULL,
+                            );
+                        }
+                        curl_close($nextCh);
+                    }
                 }
             }
         }
