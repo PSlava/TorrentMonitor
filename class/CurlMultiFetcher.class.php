@@ -46,6 +46,9 @@ class CurlMultiFetcher
         $this->requestMeta[$key] = array(
             'url'    => $url,
             'cookie' => isset($curlOptions[CURLOPT_COOKIE]) ? $curlOptions[CURLOPT_COOKIE] : '',
+            //часть запросов собирается без getProxyOptions (торрент-клиент в локальной сети) -
+            //их сбои нельзя приписывать прокси только потому, что он включён в настройках
+            'proxy'  => ! empty($curlOptions[CURLOPT_PROXY]),
         );
     }
 
@@ -107,7 +110,7 @@ class CurlMultiFetcher
                     'http_code'    => $httpCode,
                     'connect_code' => curl_getinfo($ch, CURLINFO_HTTP_CONNECTCODE),
                     'errno'        => $errno,
-                ));
+                ), $meta['proxy']);
                 if ($proxyFailure !== NULL)
                     $error = Errors::getWarning($proxyFailure).($error !== '' ? ' ('.$error.')' : '');
 

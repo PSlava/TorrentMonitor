@@ -8,6 +8,8 @@ class Sys
     private static $proxyFailureLogged = FALSE;
     //диагностические страницы (include/check.php) только распознают сбой, но не пишут его в БД
     public static $proxyFailureLogging = TRUE;
+    //старые предупреждения о прокси снимаются один раз за прогон, на первом успешном запросе
+    private static $proxyOkCleared = FALSE;
     //источник предупреждений о прокси; латиница - значение подставляется в путь иконки img/<where>.ico
     const PROXY_WARNING_SOURCE = 'Proxy';
 
@@ -190,11 +192,18 @@ class Sys
     //распознаём сбой прокси по диагностике curl
     //без этого запрос через нерабочий прокси возвращает пустую строку, и движок пишет невнятное cant_find_rss
     //$info: 'http_code' (CURLINFO_RESPONSE_CODE), 'connect_code' (CURLINFO_HTTP_CONNECTCODE), 'errno' (код curl)
-    public static function detectProxyFailure($url, array $info)
+    //$usedProxy: NULL - определить по настройкам (запрос шёл через getUrlContent, там прокси
+    //применяется всегда); TRUE/FALSE - явный признак для запросов, собранных вручную
+    public static function detectProxyFailure($url, array $info, $usedProxy = NULL)
     {
-        //прокси для этого url не используется - винить нечего
-        $proxyOptions = Sys::getProxyOptions($url);
-        if (empty($proxyOptions[CURLOPT_PROXY]))
+        if ($usedProxy === NULL)
+        {
+            $proxyOptions = Sys::getProxyOptions($url);
+            $usedProxy = ! empty($proxyOptions[CURLOPT_PROXY]);
+        }
+
+        //запрос шёл мимо прокси (например, к торрент-клиенту в локальной сети) - винить нечего
+        if ( ! $usedProxy)
             return NULL;
 
         $httpCode    = isset($info['http_code']) ? (int) $info['http_code'] : 0;
@@ -215,7 +224,17 @@ class Sys
         //прочие ошибки (например CURLE_RECV_ERROR при обрыве со стороны адресата) прокси не приписываем:
         //иначе недоступный трекер выглядел бы как сломанный прокси, и настоящая причина терялась бы
         if ($reason === NULL)
+        {
+            //удачный запрос через прокси снимает старые предупреждения: их некому чистить,
+            //clearWarnings вызывается движками только по именам трекеров, и разовый сбой
+            //иначе оставлял бы бейдж ошибки навсегда
+            if ( ! Sys::$proxyOkCleared && Sys::$proxyFailureLogging && $errno == 0 && $httpCode >= 200 && $httpCode < 400)
+            {
+                Sys::$proxyOkCleared = TRUE;
+                Database::clearWarnings(Sys::PROXY_WARNING_SOURCE);
+            }
             return NULL;
+        }
 
         if ( ! Sys::$proxyFailureLogged && Sys::$proxyFailureLogging)
         {
