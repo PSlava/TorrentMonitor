@@ -336,7 +336,10 @@ class Sys
                 // сохраняем исходный метод запроса — dl.php отдаёт файл только на POST,
                 // "тихий" фолбэк на GET уводит Byparr на неразрешаемый интерактивный челлендж
                 $fsMethod   = isset($param['type']) && $param['type'] == 'POST' ? 'POST' : 'GET';
+                //postfields бывает массивом (уведомления) - getViaFlareSolverr принимает строго строку
                 $fsPostData = isset($param['postfields']) ? $param['postfields'] : '';
+                if (is_array($fsPostData))
+                    $fsPostData = http_build_query($fsPostData);
                 $fsResult = Sys::getViaFlareSolverr($param['url'], $existingCookie, $fsMethod, $fsPostData);
                 if ($fsResult !== null)
                 {
