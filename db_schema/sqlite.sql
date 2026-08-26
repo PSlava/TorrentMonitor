@@ -68,6 +68,8 @@ INSERT INTO "notifications" VALUES(9,'Pushall','','notification');
 INSERT INTO "notifications" VALUES(10,'Pushall','','warning');
 INSERT INTO "notifications" VALUES(11,'Telegram','','notification');
 INSERT INTO "notifications" VALUES(12,'Telegram','','warning');
+INSERT INTO "notifications" VALUES(13,'Gotify','','notification');
+INSERT INTO "notifications" VALUES(14,'Gotify','','warning');
 
 CREATE TABLE `settings` (
   `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
@@ -91,7 +93,6 @@ INSERT INTO "settings" VALUES (16, 'deleteOldFiles', '0');
 INSERT INTO "settings" VALUES (19, 'serverAddress', '');
 INSERT INTO "settings" VALUES (20, 'deleteDistribution', '0');
 INSERT INTO "settings" VALUES (24, 'sendUpdate', '0');
-INSERT INTO "settings" VALUES (25, 'sendWarning', '0');
 INSERT INTO "settings" VALUES (29, 'debug', '0');
 INSERT INTO "settings" VALUES (30, 'rss', '1');
 INSERT INTO "settings" VALUES (31, 'debugFor', '');

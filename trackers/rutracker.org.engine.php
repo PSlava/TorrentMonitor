@@ -5,6 +5,8 @@ class rutracker
 	protected static $sess_cookie;
 	protected static $exucution;
 	protected static $warning;
+	protected static $cf_cookies = ''; // cookies от FlareSolverr после решения CF-challenge
+	protected static $cf_userAgent = ''; // UA браузера, решившего challenge — должен совпадать с cf_clearance
 
 	//проверяем cookie
 	public static function checkCookie($sess_cookie)
@@ -57,83 +59,65 @@ class rutracker
 	}
 
 	//функция получения кук
-	protected static function getCookie($tracker)
+	public static function getCookie($tracker)
 	{
-		//проверяем заполнены ли учётные данные
-		if (Database::checkTrackersCredentialsExist($tracker))
+		if ( ! Database::checkTrackersCredentialsExist($tracker))
 		{
-			//получаем учётные данные
-			$credentials = Database::getCredentials($tracker);
-			$login = iconv('utf-8', 'windows-1251', $credentials['login']);
-			$password = $credentials['password'];
-
-			//авторизовываемся на трекере
-			$page = Sys::getUrlContent(
-            	array(
-            		'type'           => 'POST',
-            		'header'         => 1,
-            		'returntransfer' => 1,
-            		'url'            => 'https://rutracker.org/forum/login.php',
-                        'sendHeader'     => array('Host' => 'rutracker.org', 'Content-length' => strlen($login.'&login_password='.$password.'&login=%C2%F5%EE%E4')),
-            		'postfields'     => 'login_username='.$login.'&login_password='.$password.'&login=%C2%F5%EE%E4',
-            		'convert'        => array('windows-1251', 'utf-8//IGNORE'),
-            	)
-            );
-
-			if ( ! empty($page))
-			{
-				//проверяем подходят ли учётные данные
-				if (preg_match('/profile\.php\?mode=register/', $page, $array))
-				{
-					//устанавливаем варнинг
-					Errors::setWarnings($tracker, 'credential_wrong');
-					//останавливаем процесс выполнения, т.к. не может работать без кук
-					rutracker::$exucution = FALSE;
-				}
-				//если подходят - получаем куки
-				elseif (preg_match('/bb_session=.+;/U', $page, $array))
-				{
-					rutracker::$sess_cookie = $array[0];
-					Database::setCookie($tracker, rutracker::$sess_cookie);
-					//запускам процесс выполнения, т.к. не может работать без кук
-					rutracker::$exucution = TRUE;
-				}
-				else
-				{
-					//устанавливаем варнинг
-					if (rutracker::$warning == NULL)
-					{
-						rutracker::$warning = TRUE;
-						Errors::setWarnings($tracker, 'cant_find_cookie');
-					}
-					//останавливаем процесс выполнения, т.к. не может работать без кук
-					rutracker::$exucution = FALSE;
-				}
-			}
-			//если вообще ничего не найдено
-			else
-			{
-				//устанавливаем варнинг
-				if (rutracker::$warning == NULL)
-				{
-					rutracker::$warning = TRUE;
-					Errors::setWarnings($tracker, 'cant_get_auth_page');
-				}
-				//останавливаем процесс выполнения, т.к. не может работать без кук
-				rutracker::$exucution = FALSE;
-			}
-		}
-		else
-		{
-			//устанавливаем варнинг
 			if (rutracker::$warning == NULL)
 			{
 				rutracker::$warning = TRUE;
 				Errors::setWarnings($tracker, 'credential_miss');
 			}
-			//останавливаем процесс выполнения, т.к. не может работать без кук
 			rutracker::$exucution = FALSE;
+			return;
 		}
+
+		$credentials    = Database::getCredentials($tracker);
+		$login          = iconv('utf-8', 'windows-1251', $credentials['login']);
+		$password       = $credentials['password'];
+		$rawPostFields  = 'login_username='.$login.'&login_password='.$password.'&login=%C2%F5%EE%E4';
+		$loginUrl       = 'https://rutracker.org/forum/login.php';
+
+		// Прямой POST (работает для установок без Cloudflare)
+		$page = Sys::getUrlContent(
+			array(
+				'type'           => 'POST',
+				'header'         => 1,
+				'returntransfer' => 1,
+				'url'            => $loginUrl,
+				'sendHeader'     => array('Host' => 'rutracker.org', 'Content-length' => strlen($rawPostFields)),
+				'postfields'     => $rawPostFields,
+				'convert'        => array('windows-1251', 'utf-8//IGNORE'),
+			)
+		);
+
+		if ( ! empty($page))
+		{
+			if (preg_match('/profile\.php\?mode=register/', $page))
+			{
+				if (rutracker::$warning == NULL) { rutracker::$warning = TRUE; Errors::setWarnings($tracker, 'credential_wrong'); }
+			}
+			// если CF заблокировал прямой POST и getUrlContent() сам решил его через Byparr —
+			// bb_session нужно искать в Sys::$lastCfCookies: тело ответа от Byparr не содержит
+			// заголовков Set-Cookie вообще, только структурированное поле cookies
+			elseif (preg_match('/\bbb_session=([^;\r\n\s]+)/', $page, $array)
+				|| (!empty(Sys::$lastCfCookies) && preg_match('/\bbb_session=([^;\s]+)/', Sys::$lastCfCookies, $array)))
+			{
+				rutracker::$sess_cookie = 'bb_session='.$array[1].';';
+				Database::setCookie($tracker, rutracker::$sess_cookie);
+				rutracker::$exucution = TRUE;
+				return;
+			}
+			else
+			{
+				if (rutracker::$warning == NULL) { rutracker::$warning = TRUE; Errors::setWarnings($tracker, 'cant_find_cookie'); }
+			}
+		}
+		else
+		{
+			if (rutracker::$warning == NULL) { rutracker::$warning = TRUE; Errors::setWarnings($tracker, 'cant_get_auth_page'); }
+		}
+		rutracker::$exucution = FALSE;
 	}
 
 	//формируем параметры "проверочного" запроса для curl_multi (резолв куки последовательный, как и раньше)
@@ -183,7 +167,35 @@ class rutracker
 		extract($params);
 		$return = NULL;
 
-		$page = iconv('windows-1251', 'utf-8//IGNORE', $page);
+		// curl_multi не поддерживает Byparr-fallback — обрабатываем CF-страницу здесь
+		if (Sys::isCloudflarePage($page))
+		{
+			$url      = 'https://rutracker.org/forum/viewtopic.php?t='.$torrent_id;
+			$fsResult = Sys::getViaFlareSolverr($url, rutracker::$sess_cookie);
+			if ($fsResult !== null)
+			{
+				$page = $fsResult['body']; // FlareSolverr возвращает UTF-8 — iconv не нужен
+				if (!empty($fsResult['cookies']))
+					rutracker::$cf_cookies = $fsResult['cookies']; // сохраняем cf_clearance для dl.php
+				if (!empty($fsResult['userAgent']))
+					rutracker::$cf_userAgent = $fsResult['userAgent']; // UA должен совпадать при переиспользовании cf_clearance
+			}
+			else
+			{
+				if (rutracker::$warning == NULL)
+				{
+					rutracker::$warning = TRUE;
+					Errors::setWarnings($tracker, 'cant_get_forum_page', $id);
+				}
+				rutracker::$exucution = FALSE;
+				rutracker::$warning = NULL;
+				return NULL;
+			}
+		}
+		else
+			// FlareSolverr мог уже вернуть UTF-8 (если CurlMultiFetcher решил CF сам);
+			// windows-1251 с кириллицей не является валидным UTF-8 — безопасный способ различить
+			$page = mb_check_encoding($page, 'UTF-8') ? $page : iconv('windows-1251', 'utf-8//IGNORE', $page);
 
 		if ( ! empty($page))
 		{
@@ -206,14 +218,20 @@ class rutracker
 						if ($date != $timestamp)
 						{
 							//сохраняем торрент в файл
+							// если FlareSolverr решал CF для viewtopic.php — используем его cookies
+							// (включают cf_clearance), чтобы dl.php не упёрся в CF повторно
+							$dlCookie = !empty(rutracker::$cf_cookies)
+								? rutracker::$cf_cookies.'; bb_dl='.$torrent_id
+								: rutracker::$sess_cookie.'; bb_dl='.$torrent_id;
                             $torrent = Sys::getUrlContent(
                             	array(
                             		'type'           => 'POST',
                             		'returntransfer' => 1,
                             		'url'            => 'https://rutracker.org/forum/dl.php?t='.$torrent_id,
-                            		'cookie'         => rutracker::$sess_cookie.'; bb_dl='.$torrent_id,
-                            		'sendHeader'     => array('Host' => 'rutracker.org', 'Content-length' => strlen(rutracker::$sess_cookie.'; bb_dl='.$torrent_id)),
+                            		'cookie'         => $dlCookie,
+                            		'sendHeader'     => array('Host' => 'rutracker.org', 'Content-length' => strlen($dlCookie)),
                             		'referer'        => 'https://rutracker.org/forum/viewtopic.php?t='.$torrent_id,
+                            		'useragent'      => rutracker::$cf_userAgent,
                             	)
                             );
 

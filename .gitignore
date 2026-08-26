@@ -7,3 +7,4 @@ docs/
 CLAUDE.md
 deploy.sh
 .env
+.DS_Store

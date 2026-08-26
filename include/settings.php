@@ -22,7 +22,7 @@ foreach ($settings as $key => $row)
     $csettings[key($row)] = $row[key($row)];
     extract($row);
 }
-$config = Config::read('ext_filename');
+$config = Config::read('ext_filename') ?: dirname(__FILE__).'/../config.xml';
 if (file_exists($config))
     $csettings['settings'] = file_get_contents($config);
 
@@ -396,7 +396,7 @@ $webhooks = class_exists('Webhook') ? Webhook::getAllSafe() : [];
 
         <div class="mt-4">
             <button type="submit" class="btn btn--primary">Сохранить</button>
-            <button type="button" class="btn btn--secondary" @click="showPage('help')">Помощь по этой настройке</button>
+            <a class="btn btn--secondary" href="https://github.com/PSlava/TorrentMonitor/wiki/Proxy-and-Mirrors" target="_blank" rel="noopener">Помощь по этой настройке</a>
         </div>
 
     </form>

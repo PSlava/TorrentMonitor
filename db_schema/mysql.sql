@@ -93,7 +93,9 @@ VALUES
 	(9,'Pushall','', 'notification'),
 	(10,'Pushall','', 'warning'),
 	(11,'Telegram','', 'notification'),
-	(12,'Telegram','', 'warning');
+	(12,'Telegram','', 'warning'),
+	(13,'Gotify','', 'notification'),
+	(14,'Gotify','', 'warning');
 
 UNLOCK TABLES;
 
@@ -128,7 +130,6 @@ VALUES
 	(19,'serverAddress',''),
 	(20,'deleteDistribution','0'),
 	(24,'sendUpdate','0'),
-	(25,'sendWarning','0'),
 	(29,'debug','0'),
 	(30,'rss','1'),
 	(31,'debugFor',''),

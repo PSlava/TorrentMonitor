@@ -127,7 +127,28 @@ class Notification
             )
         );
 	}
-	
+
+	//self-hosted push (https://gotify.net/) -- адрес хранится как "серверUrl;appToken"
+	public static function sendGotify($gotify, $date, $tracker, $message, $header_message, $name)
+	{
+    	$msg = Notification::generateMessage($date, $tracker, $message, $header_message, $name);
+
+        $pieces = explode(';', $gotify);
+        if ( ! isset($pieces[1]))
+            return;
+        $url = rtrim($pieces[0], '/').'/message?token='.$pieces[1];
+        $postfields = array('title' => $header_message, 'message' => $msg, 'priority' => 5);
+        $forumPage = Sys::getUrlContent(
+            array(
+                'type'           => 'POST',
+                'returntransfer' => 1,
+                'url'            => $url,
+                'ssl_false'      => 1,
+                'postfields'     => $postfields,
+            )
+        );
+	}
+
     public static function sendTelegram($telegram, $date, $tracker, $message, $header_message, $name)
     {
         $msg = Notification::generateMessage($date, $tracker, $message, $header_message, $name);

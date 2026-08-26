@@ -12,6 +12,7 @@ class Migration
         '008' => 'widenSettingsVal',
         '009' => 'convertMysqlToInnodb',
         '010' => 'warningTidNullable',
+        '011' => 'addGotifyNotifications',
     ];
 
     private static $done = false;
@@ -293,6 +294,39 @@ class Migration
             $stmt = Database::newStatement("INSERT INTO `settings` (`key`, `val`) VALUES ('proxyAuth', '')");
             $stmt->execute();
             Database::invalidateSettingsCache();
+        }
+    }
+
+    // Миграция 011: Строки Gotify в notifications (канал добавлен в 3.2.2 апстрима,
+    // в схемах он есть, но на уже развёрнутых БД строк нет — и канал не появляется в списке)
+    private static function addGotifyNotifications()
+    {
+        $dbType = Database::getDbType();
+
+        $check = Database::newStatement("SELECT COUNT(*) AS cnt FROM `notifications` WHERE `service` = 'Gotify'");
+        $check->execute();
+        $row = $check->fetch(PDO::FETCH_ASSOC);
+        if ( ! empty($row['cnt']))
+            return;
+
+        //ставим следующие свободные id, а не 13/14: на форках нумерация могла разойтись
+        $max = Database::newStatement("SELECT MAX(`id`) AS m FROM `notifications`");
+        $max->execute();
+        $maxRow = $max->fetch(PDO::FETCH_ASSOC);
+        $next = (int) $maxRow['m'] + 1;
+
+        foreach (array('notification', 'warning') as $i => $type)
+        {
+            $id = $next + $i;
+            $stmt = Database::newStatement("INSERT INTO `notifications` (`id`, `service`, `address`, `type`) VALUES (:id, 'Gotify', '', :type)");
+            $stmt->execute(array(':id' => $id, ':type' => $type));
+        }
+
+        //postgresql раздаёт id из последовательности - сдвигаем её за вставленные вручную
+        if ($dbType == 'pgsql')
+        {
+            $seq = Database::newStatement("SELECT setval('auto_id_notifications', :val)");
+            $seq->execute(array(':val' => $next + 2));
         }
     }
 

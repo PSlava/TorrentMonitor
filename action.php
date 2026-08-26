@@ -454,7 +454,7 @@ if (isset($_POST['action']))
 		Database::updateSettings('httpTimeout', (int) $_POST['httpTimeout']);
 		Database::updateSettings('flaresolverrUrl', trim($_POST['flaresolverrUrl']));
 
-		$config = Config::read('ext_filename');
+		$config = Config::read('ext_filename') ?: dirname(__FILE__).'/config.xml';
 		if (file_put_contents($config, $_POST['settings']))
 		{
 			$return['error'] = FALSE;
