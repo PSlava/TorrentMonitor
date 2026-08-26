@@ -328,7 +328,10 @@ class Database
 
     public static function getAllCredentials()
     {
-        $stmt = self::newStatement("SELECT `id`, `tracker`, `log`, `pass`, `passkey`, `cookie`, `necessarily` FROM `credentials` ORDER BY `tracker`");
+        //cookie сознательно не выбираем: результат этой функции публикуется целиком —
+        //в GET /api/credentials и в HTML страницы учётных данных. Живая сессия трекера
+        //там оказалась бы в открытом виде. Движкам куки отдаёт Database::getCookie()
+        $stmt = self::newStatement("SELECT `id`, `tracker`, `log`, `pass`, `passkey`, `necessarily` FROM `credentials` ORDER BY `tracker`");
         if ($stmt->execute())
         {
             $i = 0;
@@ -340,7 +343,6 @@ class Database
                 $resultArray[$i]['login'] = $row['log'];
                 $resultArray[$i]['password'] = Crypto::decrypt($row['pass']);
                 $resultArray[$i]['passkey'] = Crypto::decrypt($row['passkey']);
-                $resultArray[$i]['cookie'] = Crypto::decrypt($row['cookie']);
                 $resultArray[$i]['necessarily'] = $row['necessarily'];
                 $i++;
             }
