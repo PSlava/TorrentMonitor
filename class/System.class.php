@@ -4,6 +4,13 @@ class Sys
     //URL для проверки наличия подключения к интернету
     const INTERNET_CHECK_URL = 'https://ya.ru/';
 
+    //предупреждение о прокси пишется в БД один раз за прогон, а не на каждый запрос
+    private static $proxyFailureLogged = FALSE;
+    //диагностические страницы (include/check.php) только распознают сбой, но не пишут его в БД
+    public static $proxyFailureLogging = TRUE;
+    //источник предупреждений о прокси; латиница - значение подставляется в путь иконки img/<where>.ico
+    const PROXY_WARNING_SOURCE = 'Proxy';
+
     //проверяем есть ли конфигурационный файл
     public static function checkConfigExist()
     {
@@ -174,6 +181,45 @@ class Sys
         return $options;
     }
 
+    //распознаём сбой прокси по диагностике curl
+    //без этого запрос через нерабочий прокси возвращает пустую строку, и движок пишет невнятное cant_find_rss
+    //$info: 'http_code' (CURLINFO_RESPONSE_CODE), 'connect_code' (CURLINFO_HTTP_CONNECTCODE), 'errno' (код curl)
+    public static function detectProxyFailure($url, array $info)
+    {
+        //прокси для этого url не используется - винить нечего
+        $proxyOptions = Sys::getProxyOptions($url);
+        if (empty($proxyOptions[CURLOPT_PROXY]))
+            return NULL;
+
+        $httpCode    = isset($info['http_code']) ? (int) $info['http_code'] : 0;
+        $connectCode = isset($info['connect_code']) ? (int) $info['connect_code'] : 0;
+        $errno       = isset($info['errno']) ? (int) $info['errno'] : 0;
+
+        $reason = NULL;
+
+        //407 Proxy Authentication Required. Для https проходит CONNECT-туннель, и 407 попадает
+        //не в код ответа (там 0), а в CURLINFO_HTTP_CONNECTCODE - проверяем оба места
+        if ($httpCode == 407 || $connectCode == 407)
+            $reason = 'proxy_auth_fail';
+        //CURLE_COULDNT_RESOLVE_PROXY(5), CURLE_COULDNT_CONNECT(7), CURLE_PROXY(97) - не добрались до прокси
+        //или прокси отверг соединение (сюда же попадает отказ авторизации SOCKS5, где нет кода 407)
+        elseif (in_array($errno, array(5, 7, 97), TRUE))
+            $reason = 'proxy_connect_fail';
+
+        //прочие ошибки (например CURLE_RECV_ERROR при обрыве со стороны адресата) прокси не приписываем:
+        //иначе недоступный трекер выглядел бы как сломанный прокси, и настоящая причина терялась бы
+        if ($reason === NULL)
+            return NULL;
+
+        if ( ! Sys::$proxyFailureLogged && Sys::$proxyFailureLogging)
+        {
+            Sys::$proxyFailureLogged = TRUE;
+            Errors::setWarnings(Sys::PROXY_WARNING_SOURCE, $reason);
+        }
+
+        return $reason;
+    }
+
     //обёртка для CURL, для более удобного использования
     public static function getUrlContent($param = null)
     {
@@ -238,9 +284,16 @@ class Sys
             if (Database::getSetting('debug'))
                 curl_setopt($ch, CURLOPT_VERBOSE, TRUE);
 
-            $result   = curl_exec($ch);
-            $httpCode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+            $result     = curl_exec($ch);
+            $httpCode   = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+            $proxyInfo  = array(
+                'http_code'    => $httpCode,
+                'connect_code' => curl_getinfo($ch, CURLINFO_HTTP_CONNECTCODE),
+                'errno'        => curl_errno($ch),
+            );
             curl_close($ch);
+
+            Sys::detectProxyFailure($param['url'], $proxyInfo);
 
             if (($httpCode == 403 || $httpCode == 503) && !empty($result) && Sys::isCloudflarePage($result))
             {

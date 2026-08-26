@@ -31,6 +31,9 @@ $torrentClient = $torrentAddress = $pathToDownload = null;
 
 if ($dbOk)
 {
+    //страница диагностики только распознаёт сбой прокси, но не пишет предупреждение и не шлёт уведомление
+    Sys::$proxyFailureLogging = FALSE;
+
     //собираем все проверки доступности (интернет + трекеры + торрент-клиент) в один параллельный пакет
     $fetcher = new CurlMultiFetcher();
     $fetcher->add('internet', Sys::INTERNET_CHECK_URL, Sys::getProxyOptions(Sys::INTERNET_CHECK_URL) + array(CURLOPT_FOLLOWLOCATION => 1));
@@ -144,6 +147,32 @@ if ($internetOk) { ?>
 <?php } else { ?>
     <div class="check-item --error">Отсутствует подключение к интернету.</div>
 <?php }
+
+//прокси проверяем отдельно: сбой прокси возвращает пустой ответ и выглядит как «трекер недоступен»
+$proxyOn = Database::getSetting('proxy');
+if ($proxyOn) {
+    $proxyAddress = Database::getSetting('proxyAddress');
+    $proxyAuthSet = ! empty(Database::getSetting('proxyAuth'));
+    //сбой мог проявиться на любом запросе пакета, не только на проверке интернета
+    $proxyFailure = NULL;
+    foreach ($checkResults as $one)
+    {
+        if ( ! empty($one['proxy_failure']))
+        {
+            $proxyFailure = $one['proxy_failure'];
+            break;
+        }
+    }
+    if (empty($proxyAddress)) { ?>
+    <div class="check-item --error">Прокси включён, но адрес не указан — запросы идут напрямую. Заполните «IP и порт сервера» или отключите прокси.</div>
+    <?php } elseif ($proxyFailure !== NULL) { ?>
+    <div class="check-item --error">Прокси <strong><?= htmlspecialchars($proxyAddress, ENT_QUOTES) ?></strong>: <?= htmlspecialchars(Errors::getWarning($proxyFailure), ENT_QUOTES) ?><?= ($proxyFailure == 'proxy_auth_fail' && ! $proxyAuthSet) ? ' Поле «Авторизация» не заполнено.' : '' ?></div>
+    <?php } elseif ($internetOk) { ?>
+    <div class="check-item">Прокси <strong><?= htmlspecialchars($proxyAddress, ENT_QUOTES) ?></strong> работает<?= $proxyAuthSet ? ' (с авторизацией)' : '' ?>.</div>
+    <?php } else { ?>
+    <div class="check-item --error">Прокси <strong><?= htmlspecialchars($proxyAddress, ENT_QUOTES) ?></strong> включён, но проверочный запрос не прошёл. Проверьте адрес, тип и авторизацию прокси либо отключите его.</div>
+    <?php }
+}
 } ?>
 
 <?php if (Sys::checkConfigExist()) { ?>

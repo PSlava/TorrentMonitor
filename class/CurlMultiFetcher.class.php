@@ -44,6 +44,12 @@ class CurlMultiFetcher
         );
     }
 
+    //идентификатор curl-хэндла: в PHP 8 это объект CurlHandle, в PHP 7.4 - ресурс
+    private static function handleKey($ch)
+    {
+        return is_object($ch) ? spl_object_id($ch) : (int) $ch;
+    }
+
     //выполняем все зарегистрированные запросы параллельно, возвращаем $id => ['body'=>..., 'http_code'=>..., 'error'=>...]
     public function execute()
     {
@@ -56,20 +62,48 @@ class CurlMultiFetcher
         foreach ($this->handles as $ch)
             curl_multi_add_handle($mh, $ch);
 
+        //curl_error()/curl_errno() на multi-хэндлах не заполняются - коды завершения
+        //доступны только через curl_multi_info_read(), собираем их по ходу опроса
+        $codes = array();
         $running = NULL;
         do
         {
             $status = curl_multi_exec($mh, $running);
+            while ($info = curl_multi_info_read($mh))
+            {
+                if ($info['msg'] == CURLMSG_DONE)
+                    $codes[self::handleKey($info['handle'])] = $info['result'];
+            }
             if ($running)
                 curl_multi_select($mh);
         }
         while ($running && $status == CURLM_OK);
 
+        while ($info = curl_multi_info_read($mh))
+        {
+            if ($info['msg'] == CURLMSG_DONE)
+                $codes[self::handleKey($info['handle'])] = $info['result'];
+        }
+
         foreach ($this->handles as $key => $ch)
         {
             $body     = curl_multi_getcontent($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $chKey    = self::handleKey($ch);
+            $errno    = isset($codes[$chKey]) ? $codes[$chKey] : curl_errno($ch);
+            //буфер ошибки на multi-хэндле, как правило, пуст - тогда берём текст по коду завершения
             $error    = curl_error($ch);
+            if ($error === '' && $errno)
+                $error = curl_strerror($errno);
+
+            //сбой прокси возвращает пустое тело - без явного предупреждения это выглядит как «трекер недоступен»
+            $proxyFailure = Sys::detectProxyFailure($this->requestMeta[$key]['url'], array(
+                'http_code'    => $httpCode,
+                'connect_code' => curl_getinfo($ch, CURLINFO_HTTP_CONNECTCODE),
+                'errno'        => $errno,
+            ));
+            if ($proxyFailure !== NULL)
+                $error = Errors::getWarning($proxyFailure).($error !== '' ? ' ('.$error.')' : '');
 
             if (($httpCode == 403 || $httpCode == 503) && !empty($body) && Sys::isCloudflarePage($body))
             {
@@ -86,9 +120,10 @@ class CurlMultiFetcher
             foreach ($this->aliases[$key] as $id)
             {
                 $results[$id] = array(
-                    'body'      => $body,
-                    'http_code' => $httpCode,
-                    'error'     => $error,
+                    'body'         => $body,
+                    'http_code'    => $httpCode,
+                    'error'        => $error,
+                    'proxy_failure'=> $proxyFailure,
                 );
             }
 
