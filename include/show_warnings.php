@@ -66,7 +66,10 @@ if ($trackers != NULL) {
                         ?>
                         <div class="row tm-item">
                             <div class="col --auto">
-                                <div class="tracker-icon" style="background-image: url(img/<?= htmlspecialchars($error['where'], ENT_QUOTES) ?>.ico)" title="<?= htmlspecialchars($error['where'], ENT_QUOTES) ?>"></div>
+                                <?php //у системных источников (TorrentMonitor, Proxy) иконки нет - не подставляем битый url()
+                                $iconFile = 'img/'.$error['where'].'.ico';
+                                $iconStyle = file_exists($dir.$iconFile) ? ' style="background-image: url('.htmlspecialchars($iconFile, ENT_QUOTES).')"' : ''; ?>
+                                <div class="tracker-icon"<?= $iconStyle ?> title="<?= htmlspecialchars($error['where'], ENT_QUOTES) ?>"></div>
                             </div>
                             <div class="col">
                                 <?= Errors::getWarning($error['reason']) ?>
