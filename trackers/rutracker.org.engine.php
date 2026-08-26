@@ -5,6 +5,7 @@ class rutracker
 	protected static $sess_cookie;
 	protected static $exucution;
 	protected static $warning;
+	protected static $cf_bypass_failed = FALSE; // FlareSolverr уже не справился в этом прогоне - повторять бессмысленно
 	protected static $cf_cookies = ''; // cookies от FlareSolverr после решения CF-challenge
 	protected static $cf_userAgent = ''; // UA браузера, решившего challenge — должен совпадать с cf_clearance
 
@@ -171,7 +172,8 @@ class rutracker
 		if (Sys::isCloudflarePage($page))
 		{
 			$url      = 'https://rutracker.org/forum/viewtopic.php?t='.$torrent_id;
-			$fsResult = Sys::getViaFlareSolverr($url, rutracker::$sess_cookie);
+			//если обход уже провалился, не тратим на каждую раздачу ещё по две минуты таймаута
+			$fsResult = rutracker::$cf_bypass_failed ? NULL : Sys::getViaFlareSolverr($url, rutracker::$sess_cookie);
 			if ($fsResult !== null)
 			{
 				$page = $fsResult['body']; // FlareSolverr возвращает UTF-8 — iconv не нужен
@@ -182,13 +184,11 @@ class rutracker
 			}
 			else
 			{
-				if (rutracker::$warning == NULL)
-				{
-					rutracker::$warning = TRUE;
-					Errors::setWarnings($tracker, 'cant_get_forum_page', $id);
-				}
+				rutracker::$cf_bypass_failed = TRUE;
+				//предупреждение привязано к раздаче ($id) и пишется для каждой, поэтому
+				//общий флаг $warning здесь не используется - он для ошибок уровня трекера
+				Errors::setWarnings($tracker, 'cant_get_forum_page', $id);
 				rutracker::$exucution = FALSE;
-				rutracker::$warning = NULL;
 				return NULL;
 			}
 		}
