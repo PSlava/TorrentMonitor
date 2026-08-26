@@ -9,6 +9,8 @@ class Database
     private $dbType;
     private static $instance;
     private static $settingsCache = null;
+    //настройки-секреты: в settings.val хранятся зашифрованными (Crypto), расшифровываются при отдаче
+    private static $encryptedSettings = array('torrentPassword', 'proxyAuth');
 
     private function __construct()
     {
@@ -125,7 +127,6 @@ class Database
         if (self::$settingsCache === null)
         {
             self::$settingsCache = array();
-            // ORDER BY id — сохраняем порядок для getProxy(), где System.class.php полагается на [0]=proxy, [1]=proxyAddress, [2]=proxyType
             $stmt = self::newStatement("SELECT `key`, `val` FROM `settings` ORDER BY `id`");
             if ($stmt->execute())
             {
@@ -137,7 +138,7 @@ class Database
             return null;
 
         $val = self::$settingsCache[$param];
-        if ($param == 'torrentPassword')
+        if (in_array($param, self::$encryptedSettings, TRUE))
         {
             self::reencryptIfLegacy('settings', 'key', $param, array('val' => $val));
             return Crypto::decrypt($val);
@@ -159,7 +160,7 @@ class Database
             foreach ($stmt as $row)
             {
                 $val = $row['val'];
-                if ($row['key'] == 'torrentPassword')
+                if (in_array($row['key'], self::$encryptedSettings, TRUE))
                 {
                     self::reencryptIfLegacy('settings', 'key', $row['key'], array('val' => $val));
                     $val = Crypto::decrypt($val);
@@ -236,7 +237,7 @@ class Database
 
     public static function updateSettings($setting, $val)
     {
-        if ($setting == 'torrentPassword')
+        if (in_array($setting, self::$encryptedSettings, TRUE))
             $val = Crypto::encrypt($val);
         $stmt = self::newStatement("UPDATE `settings` SET `val` = :val WHERE `key` = :setting");
         $stmt->bindParam(':setting', $setting);
@@ -1370,6 +1371,12 @@ class Database
         {
             if (strpos($key, 'proxy') === 0)
             {
+                //в кеше лежат сырые значения из БД, секреты отдаём расшифрованными
+                if (in_array($key, self::$encryptedSettings, TRUE))
+                {
+                    self::reencryptIfLegacy('settings', 'key', $key, array('val' => $val));
+                    $val = Crypto::decrypt($val);
+                }
                 $resultArray[$i]['key'] = $key;
                 $resultArray[$i]['val'] = $val;
                 $i++;
