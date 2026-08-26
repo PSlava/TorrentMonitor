@@ -525,6 +525,7 @@ if (isset($_POST['action']))
         Database::updateSettings('proxy', Sys::strBoolToInt($_POST['proxy']));
 		Database::updateSettings('proxyType', $_POST['proxyType']);
 		Database::updateSettings('proxyAddress', $_POST['proxyAddress']);
+		Database::updateSettings('proxyAuth', isset($_POST['proxyAuth']) ? $_POST['proxyAuth'] : '');
 
         $return['error'] = FALSE;
         $return['msg'] = 'Настройки прокси сохранены.';

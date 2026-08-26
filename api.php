@@ -132,6 +132,7 @@ Router::get('/settings', function() {
     // Скрываем пароли
     unset($result['password']);
     unset($result['torrentPassword']);
+    unset($result['proxyAuth']);
     Router::json(['data' => $result]);
 });
 
@@ -139,7 +140,7 @@ Router::put('/settings', function() {
     apiAuth();
     $input = Router::getInput();
     $allowed = ['serverAddress', 'userAgent', 'send', 'auth', 'rss', 'autoUpdate', 'debug',
-                'proxy', 'proxyType', 'proxyAddress',
+                'proxy', 'proxyType', 'proxyAddress', 'proxyAuth',
                 'useTorrent', 'torrentClient', 'torrentAddress', 'torrentLogin', 'torrentPassword',
                 'pathToDownload', 'deleteDistribution', 'deleteOldFiles'];
     foreach ($input as $key => $val)

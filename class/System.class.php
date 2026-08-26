@@ -114,17 +114,19 @@ class Sys
     //формируем curl-опции прокси для заданного url (общие настройки + потрекерный ext_proxy)
     public static function getProxyOptions($url)
     {
-        $proxy = NULL;
-        $proxyAddress = NULL;
-        $proxyType = NULL;
-
-        $settingProxy = Database::getProxy();
-        if (is_array($settingProxy))
+        //читаем общие настройки по ключам, а не по позиции в выборке
+        $settingProxy = array();
+        $rows = Database::getProxy();
+        if (is_array($rows))
         {
-            $proxy = $settingProxy[0]['val'];
-            $proxyAddress = $settingProxy[1]['val'];
-            $proxyType = $settingProxy[2]['val'];
+            foreach ($rows as $row)
+                $settingProxy[$row['key']] = $row['val'];
         }
+
+        $proxy        = isset($settingProxy['proxy']) ? $settingProxy['proxy'] : NULL;
+        $proxyAddress = isset($settingProxy['proxyAddress']) ? $settingProxy['proxyAddress'] : NULL;
+        $proxyType    = isset($settingProxy['proxyType']) ? $settingProxy['proxyType'] : NULL;
+        $proxyAuth    = isset($settingProxy['proxyAuth']) ? $settingProxy['proxyAuth'] : NULL;
 
         $ext_proxy = Config::read('ext_proxy');
         if ( ! empty($ext_proxy))
@@ -136,17 +138,15 @@ class Sys
                 if ($ext_proxy[$tracker]['use'] == 'yes')
                 {
                     $proxy = TRUE;
-                    if (count($ext_proxy[$tracker]) == 3)
+                    //потрекерный адрес указан не всегда - тогда берём общий
+                    if ( ! empty($ext_proxy[$tracker]['address']))
                     {
                         $proxyAddress = $ext_proxy[$tracker]['address'];
-                        $proxyType = $ext_proxy[$tracker]['type'];
+                        //в config.xml тип принято писать строчными (socks5), в настройках - прописными
+                        if ( ! empty($ext_proxy[$tracker]['type']))
+                            $proxyType = $ext_proxy[$tracker]['type'];
+                        $proxyAuth = isset($ext_proxy[$tracker]['auth']) ? $ext_proxy[$tracker]['auth'] : NULL;
                     }
-                    else
-                    {
-                        $proxyAddress = $settingProxy[1]['val'];
-                        $proxyType = $settingProxy[2]['val'];
-                    }
-                    echo 'Use proxy: '.$proxyAddress;
                 }
                 else
                     $proxy = FALSE;
@@ -157,10 +157,18 @@ class Sys
         if ($proxy)
         {
             $options[CURLOPT_PROXY] = $proxyAddress;
+            $proxyType = strtoupper((string) $proxyType);
             if ($proxyType == 'SOCKS5')
                 $options[CURLOPT_PROXYTYPE] = CURLPROXY_SOCKS5_HOSTNAME;
             elseif ($proxyType == 'HTTP')
                 $options[CURLOPT_PROXYTYPE] = CURLPROXY_HTTP;
+
+            //авторизация на прокси (login:password); без неё сервер рвёт соединение и страница приходит пустой
+            if ( ! empty($proxyAuth))
+            {
+                $options[CURLOPT_PROXYUSERPWD] = $proxyAuth;
+                $options[CURLOPT_PROXYAUTH] = CURLAUTH_ANY;
+            }
         }
 
         return $options;

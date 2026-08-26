@@ -254,6 +254,13 @@ $webhooks = class_exists('Webhook') ? Webhook::getAllSafe() : [];
                         <div class="form-help">Например: 127.0.0.1:9050</div>
                     </div>
                 </label>
+                <label class="row">
+                    <div class="col --2:lg mb-1">Авторизация:</div>
+                    <div class="col --5:lg mb-2">
+                        <input type="text" name="proxyAuth" x-model="options.proxyAuth" placeholder="login:password" autocomplete="off">
+                        <div class="form-help">Логин и пароль прокси в формате login:password. Оставьте пустым, если прокси без авторизации.</div>
+                    </div>
+                </label>
             </div>
         </div>
 
