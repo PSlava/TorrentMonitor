@@ -63,13 +63,29 @@ foreach ($_seriesTrackers as $_tr)
                         <div class="form-help">Пример: http://rutracker.org/forum/viewtopic.php?t=4201572</div>
                     </div>
                 </label>
-                <label class="row">
+                <div class="row">
                     <div class="col --12 mb-1">Директория для скачивания:</div>
                     <div class="col --12 mb-2">
-                        <input type="text" name="path" x-model="theme.path" list="path-history-list">
+                        <div class="path-wrap" @click.away="pathDropdownOpen = false">
+                            <input type="text" name="path" x-model="theme.path" autocomplete="off"
+                                @input="pathDropdownOpen = filteredPaths(theme.path).length > 0; pathHighlight = -1"
+                                @focus="pathOpen()"
+                                @keydown="pathKeydown($event, theme.path, function (v) { theme.path = v })"
+                                @keydown.escape="pathDropdownOpen = false">
+                            <div class="path-dropdown" x-cloak
+                                x-show="pathDropdownOpen && filteredPaths(theme.path).length > 0">
+                                <template x-for="(p, idx) in filteredPaths(theme.path)" :key="p">
+                                    <div class="path-dropdown__item"
+                                        :class="idx === pathHighlight && '--highlighted'"
+                                        x-text="p"
+                                        @mousedown.prevent="theme.path = p; pathDropdownOpen = false; pathHighlight = -1"
+                                        @mouseenter="pathHighlight = idx"></div>
+                                </template>
+                            </div>
+                        </div>
                         <div class="form-help">Например: /var/lib/transmission/downloads или C:/downloads/</div>
                     </div>
-                </label>
+                </div>
                 <label class="row" x-show="$store.tmApp.torrentClient === 'qBittorrent'">
                     <div class="col --12 mb-1">Категория qBittorrent:</div>
                     <div class="col --12 mb-2">
@@ -178,13 +194,29 @@ foreach ($_seriesTrackers as $_tr)
                 </div>
                 </template>
 
-                <label class="row">
+                <div class="row">
                     <div class="col --12 mb-1">Директория для скачивания:</div>
                     <div class="col --12 mb-2">
-                        <input type="text" name="path" x-model="series.path" list="path-history-list">
+                        <div class="path-wrap" @click.away="pathDropdownOpen = false">
+                            <input type="text" name="path" x-model="series.path" autocomplete="off"
+                                @input="pathDropdownOpen = filteredPaths(series.path).length > 0; pathHighlight = -1"
+                                @focus="pathOpen()"
+                                @keydown="pathKeydown($event, series.path, function (v) { series.path = v })"
+                                @keydown.escape="pathDropdownOpen = false">
+                            <div class="path-dropdown" x-cloak
+                                x-show="pathDropdownOpen && filteredPaths(series.path).length > 0">
+                                <template x-for="(p, idx) in filteredPaths(series.path)" :key="p">
+                                    <div class="path-dropdown__item"
+                                        :class="idx === pathHighlight && '--highlighted'"
+                                        x-text="p"
+                                        @mousedown.prevent="series.path = p; pathDropdownOpen = false; pathHighlight = -1"
+                                        @mouseenter="pathHighlight = idx"></div>
+                                </template>
+                            </div>
+                        </div>
                         <div class="form-help">Например: /var/lib/transmission/downloads или C:/downloads</div>
                     </div>
-                </label>
+                </div>
                 <label class="row" x-show="$store.tmApp.torrentClient === 'qBittorrent'">
                     <div class="col --12 mb-1">Категория qBittorrent:</div>
                     <div class="col --12 mb-2">
