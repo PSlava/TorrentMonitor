@@ -411,6 +411,14 @@ if (isset($_POST['action']))
 		echo json_encode($return);
 	}
 
+	//Сбрасываем время обновления - при следующем запуске раздача будет перезакачана
+	if ($_POST['action'] == 'reset_item')
+	{
+		Database::resetItem((int)$_POST['id']);
+		echo json_encode(array('error' => FALSE, 'msg' => 'Сброшено. При следующем запуске будет перезакачано.'));
+		exit;
+	}
+
 	//Удаляем мониторинг
 	if ($_POST['action'] == 'del')
 	{

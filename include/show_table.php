@@ -159,8 +159,39 @@ $useTorrent = Database::getSetting('useTorrent');
             <button @click="modalEditTheme(<?= $id ?>)" class="btn tm-item__icon tm-item__icon--edit"><svg><use href="assets/img/sprite.svg#edit" /></svg></button>
         <?php } ?>
 
+        <?php
+            //сбрасывать нечего, если раздача ещё ни разу не скачивалась
+            $is_empty = (empty($hash) && empty($ep) && (empty($timestamp) || $timestamp == '0000-00-00 00:00:00' || $timestamp == '2000-01-01 00:00:00' || $timestamp == '1970-01-01 00:00:00'));
+        ?>
+        <div class="confirm__wrap" title="Сбросить и перезакачать">
+            <button class="btn tm-item__icon tm-item__icon--reset<?= $is_empty ? ' --disabled' : '' ?>" <?= $is_empty ? 'disabled' : '@click="showReset = true"' ?>><svg viewBox="0 0 24 24"><path fill="currentColor" d="M17.65 6.35A7.96 7.96 0 0 0 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18c-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg></button>
+        </div>
+
         <div class="confirm__wrap" title="Удалить тему">
             <button class="btn tm-item__icon tm-item__icon--delete" @click="showDelete = true"><svg><use href="assets/img/sprite.svg#trash" /></svg></button>
+        </div>
+    </div>
+
+    <div class="modal__backdrop"
+        x-show="showReset"
+        x-transition.opacity
+        @click="showReset = false"
+        style="align-items: center;"
+        >
+        <div class="modal container-sm:max p-0" x-transition.scale @click.stop>
+            <div class="modal__bar">
+                <div class="modal__title">Сбросить и перезакачать?</div>
+                <button class="modal__close" @click="showReset = false"><svg><use href="assets/img/sprite.svg#close" /></svg></button>
+            </div>
+
+            <div class="modal__body">
+                Дата последнего обновления, хеш и номер серии будут очищены — при следующем запуске раздача скачается заново.
+            </div>
+
+            <div class="modal__buttons">
+                <button @click="showReset = false" type="button" class="btn btn--secondary">Отмена</button>
+                <button @click="resetItem(<?= $id ?>)" type="button" class="btn btn--primary">Сбросить</button>
+            </div>
         </div>
     </div>
 
