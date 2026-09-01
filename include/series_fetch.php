@@ -9,9 +9,26 @@ include_once $dir.'class/Errors.class.php';
 
 header('Content-Type: application/json; charset=utf-8');
 
+//на трекер уходит до трёх последовательных запросов (проверка куки, логин, лента),
+//каждый ограничен httpTimeout. Дефолтных 30 секунд на это не хватает, а при выходе
+//за лимит PHP отдаёт пустое тело - фронт получает «Ошибка загрузки списка» без причины
+set_time_limit(180);
+
+$_seriesDone = FALSE;
+register_shutdown_function(function () use (&$_seriesDone) {
+    if ($_seriesDone)
+        return;
+    $err = error_get_last();
+    $msg = ($err !== NULL && $err['type'] === E_ERROR)
+        ? 'Трекер не ответил вовремя'
+        : 'Не удалось получить список';
+    echo json_encode(array('error' => TRUE, 'msg' => $msg), JSON_UNESCAPED_UNICODE);
+});
+
 if ( ! Sys::checkAuth())
 {
     http_response_code(403);
+    $_seriesDone = TRUE;
     echo json_encode(array('error' => TRUE, 'msg' => 'Не авторизован'));
     exit;
 }
@@ -27,6 +44,7 @@ if ($limit < 1 || $limit > 200)
 
 if ( ! in_array($tracker, $allowed, TRUE))
 {
+    $_seriesDone = TRUE;
     echo json_encode(array('error' => TRUE, 'msg' => 'Трекер не поддерживает список сериалов'));
     exit;
 }
@@ -35,6 +53,7 @@ $engineFile = $dir.'trackers/'.$tracker.'.engine.php';
 $className  = Sys::resolveTrackerClass($engineFile, $tracker, 'getSeriesList');
 if ($className === NULL)
 {
+    $_seriesDone = TRUE;
     echo json_encode(array('error' => TRUE, 'msg' => 'Модуль трекера не найден'));
     exit;
 }
@@ -45,12 +64,14 @@ try
 }
 catch (Throwable $e)
 {
+    $_seriesDone = TRUE;
     echo json_encode(array('error' => TRUE, 'msg' => 'Ошибка при получении списка: '.$e->getMessage()));
     exit;
 }
 
 if ( ! is_array($series) || empty($series))
 {
+    $_seriesDone = TRUE;
     echo json_encode(array('error' => TRUE, 'msg' => 'Трекер не вернул список — проверьте учётные данные и доступность трекера'));
     exit;
 }
@@ -82,4 +103,5 @@ usort($filtered, function($a, $b) {
     return strcasecmp($a['name'], $b['name']);
 });
 
+$_seriesDone = TRUE;
 echo json_encode(array('error' => FALSE, 'series' => $filtered), JSON_UNESCAPED_UNICODE);
