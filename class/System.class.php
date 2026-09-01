@@ -848,7 +848,7 @@ class Sys
         );
 
         //читаем xml
-        $page = @simplexml_load_string($page);
+        $page = @simplexml_load_string($page, 'SimpleXMLElement', LIBXML_NONET | LIBXML_NOCDATA);
         if (!empty($page) && isset($page->news->id) && is_countable($page->news->id))
         {
             for ($i=0; $i<count($page->news->id); $i++)
@@ -884,25 +884,28 @@ class Sys
 
         if ($auth)
         {
-            if (isset($_COOKIE['TM']))
+            //в куке лежит хеш пароля - принимаем только его формат (bcrypt или legacy md5).
+            //is_string обязателен: `Cookie: TM[]=x` придёт массивом и уронит preg_match
+            if (isset($_COOKIE['TM']) && is_string($_COOKIE['TM'])
+                && (preg_match('/^\$2[ayb]\$/', $_COOKIE['TM']) || preg_match('/^[a-f0-9]{32}$/i', $_COOKIE['TM'])))
                 $_SESSION['TM'] = $_COOKIE['TM'];
 
-            if (empty($_SESSION['TM']))
+            if (empty($_SESSION['TM']) || ! is_string($_SESSION['TM']))
                 return FALSE;
 
             if ( ! empty($_SESSION['TM']))
             {
                 $hash_pass = Database::getSetting('password');
-                if ($_SESSION['TM'] != $hash_pass)
+                if ( ! is_string($hash_pass) || ! hash_equals($hash_pass, $_SESSION['TM']))
                     return FALSE;
                 else
                     return TRUE;
             }
 
-            if ( ! empty($_COOKIE['hash_pass']))
+            if ( ! empty($_COOKIE['hash_pass']) && is_string($_COOKIE['hash_pass']))
             {
                 $hash_pass = Database::getSetting('password');
-                if ($_COOKIE['hash_pass'] != $hash_pass)
+                if ( ! is_string($hash_pass) || ! hash_equals($hash_pass, $_COOKIE['hash_pass']))
                     return FALSE;
                 else
                     return TRUE;

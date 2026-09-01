@@ -46,7 +46,7 @@ class Update {
     
             (php_sapi_name() == 'cli') ? Update::$isCLI = TRUE : Update::$isCLI = FALSE;
     
-            $xml_page = @simplexml_load_string($page);
+            $xml_page = @simplexml_load_string($page, 'SimpleXMLElement', LIBXML_NONET | LIBXML_NOCDATA);
             $ROOTPATH = str_replace('class', '', dirname(__FILE__));
             $dbType = Config::read('db.type');
             

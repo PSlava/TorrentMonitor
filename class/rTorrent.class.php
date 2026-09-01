@@ -169,7 +169,7 @@ class rTorrent
     #парсим ответ XML-RPC
     private static function parseXmlRpcResponse($xmlString)
     {
-        $xml = @simplexml_load_string($xmlString);
+        $xml = @simplexml_load_string($xmlString, 'SimpleXMLElement', LIBXML_NONET);
         if ($xml === false)
             return false;
 

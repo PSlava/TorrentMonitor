@@ -13,7 +13,7 @@ class Config
 
         if (file_exists($config))
         {
-            $xml = simplexml_load_file($config);
+            $xml = simplexml_load_file($config, 'SimpleXMLElement', LIBXML_NONET | LIBXML_NOCDATA);
             if ( ! empty($xml))
             {
                 $json = json_encode($xml);

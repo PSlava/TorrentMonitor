@@ -1,6 +1,9 @@
 <?php
 class Notification
 {
+	//имя сервиса подставляется в call_user_func - разрешаем только известные
+	private static $allowedServices = array('Mail', 'Pushover', 'Prowl', 'Pushbullet', 'Pushall', 'Gotify', 'Telegram');
+
 	private static $errors;
 
 	public static function findWarning()
@@ -64,7 +67,7 @@ class Notification
         $msg = strip_tags($msg);
 
         $pieces = explode(';', $pushover);
-        $postfields = 'token='.$pieces[1].'&user='.$pieces[0].'&message='.$msg;
+        $postfields = http_build_query(array('token' => $pieces[1], 'user' => $pieces[0], 'message' => $msg));
         $forumPage = Sys::getUrlContent(
         	array(
         		'type'           => 'POST',
@@ -81,7 +84,7 @@ class Notification
 	{
     	$msg = Notification::generateMessage($date, $tracker, $message, $header_message, $name);
 
-        $postfields = 'apikey='.$prowl.'&application=TorrentMonitor&event=Notification&description='.$msg;
+        $postfields = http_build_query(array('apikey' => $prowl, 'application' => 'TorrentMonitor', 'event' => 'Notification', 'description' => $msg));
         $forumPage = Sys::getUrlContent(
             array(
                 'type'           => 'POST',
@@ -215,7 +218,7 @@ class Notification
                     {
                         $name = $id;
                     }
-                    if ( ! empty($service['address']))
+                    if (in_array($service['service'], self::$allowedServices, TRUE) && ! empty($service['address']))
                         call_user_func('Notification::send'.$service['service'], $service['address'], $date, $tracker, $message, $header_message, $name);
                 }
             }
@@ -240,7 +243,7 @@ class Notification
                         $message = str_replace('<br>', "\r\n", $message);
                         $message = strip_tags($message);
                     }
-                    if ( ! empty($service['address']))
+                    if (in_array($service['service'], self::$allowedServices, TRUE) && ! empty($service['address']))
                         call_user_func('Notification::send'.$service['service'], $service['address'], $date, $tracker, $message, $header_message, $name);
                 }
             }

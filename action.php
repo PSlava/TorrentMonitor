@@ -52,7 +52,12 @@ if (isset($_POST['action']))
 			$_SESSION['TM'] = $stored;
 			$return['error'] = FALSE;
 			if ($_POST['remember'] == 'true')
-			    setcookie('TM', $stored, time()+3600*24*31, '/');
+			    setcookie('TM', $stored, array(
+			        'expires'  => time()+3600*24*31,
+			        'path'     => '/',
+			        'httponly' => TRUE,
+			        'samesite' => 'Lax',
+			    ));
 		}
 		else
 		{
@@ -451,12 +456,21 @@ if (isset($_POST['action']))
 	//Обновляем расширенные настройки
 	if ($_POST['action'] == 'update_extended')
 	{
-		Database::updateSettings('httpTimeout', (int) $_POST['httpTimeout']);
-		Database::updateSettings('flaresolverrUrl', trim($_POST['flaresolverrUrl']));
-
 		$config = Config::read('ext_filename') ?: dirname(__FILE__).'/config.xml';
-		if (file_put_contents($config, $_POST['settings']))
+		$settings = $_POST['settings'];
+
+		//битый XML сломал бы загрузку конфига при следующем запуске - проверяем до записи.
+		//проверка идёт раньше updateSettings, иначе при отказе часть настроек уже сохранена
+		if (@simplexml_load_string($settings, 'SimpleXMLElement', LIBXML_NONET) === FALSE)
 		{
+			$return['error'] = TRUE;
+			$return['msg'] = 'Некорректный XML — настройки не сохранены.';
+		}
+		elseif (file_put_contents($config, $settings))
+		{
+			Database::updateSettings('httpTimeout', (int) $_POST['httpTimeout']);
+			Database::updateSettings('flaresolverrUrl', trim($_POST['flaresolverrUrl']));
+
 			$return['error'] = FALSE;
 			$return['msg'] = 'Расширенные настройки сохранены.';
 		}
