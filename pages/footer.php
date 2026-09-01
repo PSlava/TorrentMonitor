@@ -14,6 +14,6 @@
     })
 </script>
 <datalist id="path-history-list"></datalist>
-<script src="assets/js/scripts.min.js"></script>
+<script src="assets/js/scripts.min.js?v=<?= Sys::assetVersion('assets/js/scripts.min.js') ?>"></script>
 </body>
 </html>

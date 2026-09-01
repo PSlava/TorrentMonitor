@@ -9,8 +9,8 @@
     <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700,800&amp;subset=cyrillic-ext" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css?family=Roboto+Condensed:400,700&amp;subset=cyrillic" rel="stylesheet">
 
-    <link rel="stylesheet" href="assets/css/style.min.css">
-    <link rel="stylesheet" href="assets/css/fork.css">
+    <link rel="stylesheet" href="assets/css/style.min.css?v=<?= Sys::assetVersion('assets/css/style.min.css') ?>">
+    <link rel="stylesheet" href="assets/css/fork.css?v=<?= Sys::assetVersion('assets/css/fork.css') ?>">
     <link rel="icon" href="img/favicon.svg" type="image/svg+xml">
     <!--[if lt IE 9]><script src="js/html5shiv.min.js"></script><![endif]-->
 
