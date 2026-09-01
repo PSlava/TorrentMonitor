@@ -23,6 +23,7 @@ TorrentMonitor отправляет уведомления двух типов:
 | **Pushbullet** | Access Token | [pushbullet.com → Settings → Access Tokens](https://www.pushbullet.com/#settings/account) |
 | **Prowl** | API key | [prowlapp.com](https://www.prowlapp.com/) (iOS) |
 | **PushAll** | `ID;KEY` | [pushall.ru](https://pushall.ru/) |
+| **Gotify** | `АДРЕС_СЕРВЕРА;APP_TOKEN`, например `https://gotify.example.com;AbCdEf123` | свой сервер [gotify.net](https://gotify.net/); токен создаётся в разделе Apps |
 
 ### Telegram: отправка в тему (тред) супергруппы
 
@@ -51,3 +52,6 @@ TorrentMonitor отправляет уведомления двух типов:
   и конкретного типа («Отправлять уведомления об обновлениях/ошибках»).
 - Если TM ходит в интернет через прокси, уведомления тоже идут через него —
   проверьте доступность api.telegram.org и других сервисов.
+- **Gotify**: адрес и токен разделяются точкой с запятой; без токена сообщение
+  не отправляется. Проверка сертификата у Gotify отключена, так что self-signed
+  сертификат работать не мешает.
