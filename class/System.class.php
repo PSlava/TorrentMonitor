@@ -958,6 +958,48 @@ class Sys
     }
 
     /**
+     * Готовит текст новости к выводу в HTML.
+     * Новости приходят с внешнего сервера, поэтому оставляем только разметку
+     * форматирования: whitelist тегов, все атрибуты срезаются, у ссылок
+     * сохраняется только href с безопасной схемой.
+     *
+     * @param string $html исходный текст новости
+     * @return string
+     */
+    public static function sanitizeNewsHtml($html)
+    {
+        if ( ! is_string($html))
+            return '';
+
+        $html = strip_tags($html, '<a><b><strong><i><em><br><p><ul><ol><li><h3><h4><code>');
+
+        //срезаем все атрибуты: strip_tags оставляет их как есть, вместе с onclick и javascript:
+        return preg_replace_callback(
+            '~<\s*(/?)\s*([a-z0-9]+)([^>]*)>~i',
+            function ($m)
+            {
+                $tag = strtolower($m[2]);
+
+                if ($m[1] === '/')
+                    return '</'.$tag.'>';
+
+                if ($tag === 'a' && preg_match('~\bhref\s*=\s*("|\x27)?([^"\x27\s>]+)~i', $m[3], $h))
+                {
+                    $href = html_entity_decode($h[2], ENT_QUOTES, 'UTF-8');
+                    //только абсолютные http(s)-ссылки: javascript:, data: и прочие схемы отбрасываем
+                    if (preg_match('~^https?://~i', $href))
+                        return '<a href="'.htmlspecialchars($href, ENT_QUOTES, 'UTF-8').'" target="_blank" rel="noopener noreferrer">';
+
+                    return '<a>';
+                }
+
+                return '<'.$tag.'>';
+            },
+            $html
+        );
+    }
+
+    /**
      * Разбирает RSS-ленту трекера в список сериалов для комбобокса добавления.
      * Названия схлопываются в уникальные, у каждого остаётся максимальный найденный эпизод.
      *

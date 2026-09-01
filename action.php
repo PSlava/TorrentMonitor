@@ -596,6 +596,14 @@ if (isset($_POST['action']))
 		return TRUE;
 	}
 
+    //Помечаем все новости как прочитанные
+	if ($_POST['action'] == 'markAllNews')
+	{
+		Database::markAllNews();
+		echo json_encode(array('error' => FALSE, 'msg' => 'Все новости отмечены прочитанными.'));
+		exit;
+	}
+
 	//Выполняем обновление системы
 	if ($_POST['action'] == 'system_update')
 	{
