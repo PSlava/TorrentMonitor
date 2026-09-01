@@ -5,6 +5,60 @@ class lostfilmmirror
 	protected static $exucution;
 	protected static $warning;
 
+	//требуется ли авторизация для получения списка сериалов
+	public static function seriesListRequiresAuth() { return FALSE; }
+
+	//получение списка сериалов из RSS-ленты зеркала
+	public static function getSeriesList($limit = 50)
+	{
+		$page = Sys::getUrlContent(array(
+			'type'           => 'GET',
+			'returntransfer' => 1,
+			'url'            => 'https://rss.bzda.ru/rss.xml',
+		));
+
+		//основной источник недоступен - пробуем зеркало
+		if (empty($page))
+			$page = Sys::getUrlContent(array(
+				'type'           => 'GET',
+				'returntransfer' => 1,
+				'url'            => lostfilmmirror::MIRROR_URL,
+			));
+
+		if (empty($page))
+			return array();
+
+		$xml = @simplexml_load_string($page, 'SimpleXMLElement', LIBXML_NONET | LIBXML_NOCDATA);
+		if ( ! $xml || empty($xml->channel->item))
+			return array();
+
+		$names = array();
+		foreach ($xml->channel->item as $item)
+		{
+			$title = (string)$item->title;
+			//убираем [Русское название] в начале
+			$title = preg_replace('/^\\[.*?\\]\\s*/u', '', $title);
+			//формат: Name.Of.Show.2026.S01E01.quality.ext
+			if (preg_match('/^(.+?)\\.(S\\d{2}\\.?E\\d{2})/i', $title, $m))
+			{
+				$name = str_replace('.', ' ', $m[1]);
+				//отсекаем год выпуска из названия
+				$name = preg_replace('/\\s+\\d{4}$/', '', $name);
+				$ep = strtoupper(str_replace('.', '', $m[2]));
+				if ( ! isset($names[$name]) || strcmp($ep, $names[$name]) > 0)
+					$names[$name] = $ep;
+			}
+			if (count($names) >= $limit)
+				break;
+		}
+
+		$result = array();
+		foreach ($names as $n => $ep)
+			$result[] = array('name' => $n, 'episode' => $ep);
+		return $result;
+	}
+
+
 	//резервный адрес ленты, используется, если основной источник недоступен
 	const MIRROR_URL = 'https://lf.tormon.ru/rss.xml';
 

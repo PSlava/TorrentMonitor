@@ -956,5 +956,52 @@ class Sys
 
         return null;
     }
+
+    /**
+     * Разбирает RSS-ленту трекера в список сериалов для комбобокса добавления.
+     * Названия схлопываются в уникальные, у каждого остаётся максимальный найденный эпизод.
+     *
+     * @param string $page      тело RSS-ленты (уже перекодированное в utf-8)
+     * @param int    $limit     максимум уникальных названий
+     * @param string $nameRegex регулярка названия сериала, группа 1 — название
+     * @param string $epRegex   регулярка эпизода, группы 1 и 2 — сезон и серия
+     * @param string $epField   поле <item>, в котором искать эпизод ('link' или 'title')
+     * @return array список array('name' => ..., 'episode' => 'S01E02'|null)
+     */
+    public static function parseSeriesFeed($page, $limit, $nameRegex, $epRegex, $epField = 'link')
+    {
+        $xml = @simplexml_load_string($page, 'SimpleXMLElement', LIBXML_NONET | LIBXML_NOCDATA);
+        if ( ! $xml || empty($xml->channel->item))
+            return array();
+
+        $names = array();
+        foreach ($xml->channel->item as $item)
+        {
+            $title = (string)$item->title;
+            if ( ! preg_match($nameRegex, $title, $m))
+                continue;
+
+            $name = trim($m[1]);
+            if ($name === '')
+                continue;
+
+            $ep = NULL;
+            $haystack = ($epField === 'title') ? $title : (string)$item->{$epField};
+            if (preg_match($epRegex, $haystack, $em))
+                $ep = 'S'.str_pad($em[1], 2, '0', STR_PAD_LEFT).'E'.str_pad($em[2], 2, '0', STR_PAD_LEFT);
+
+            if ( ! isset($names[$name]) || ($ep !== NULL && strcmp($ep, (string)$names[$name]) > 0))
+                $names[$name] = $ep;
+
+            if (count($names) >= $limit)
+                break;
+        }
+
+        $result = array();
+        foreach ($names as $n => $ep)
+            $result[] = array('name' => $n, 'episode' => $ep);
+
+        return $result;
+    }
 }
 ?>

@@ -1,9 +1,38 @@
 <?php
 $_tmTorrentClient = Database::getSetting('torrentClient');
 $_tmCategories    = Database::getDistinctCategories();
+
+//трекеры с RSS-лентой сериалов (см. include/series_fetch.php)
+$_seriesTrackers = array('baibako.tv', 'hamsterstudio.org', 'lostfilm.tv', 'lostfilm-mirror', 'newstudio.tv');
+
+//трекеры с заполненными учётными данными
+$_filledCreds = array();
+$_allCreds = Database::getAllCredentials();
+if (is_array($_allCreds))
+{
+    foreach ($_allCreds as $c)
+    {
+        if (trim($c['login']) !== '' && trim($c['password']) !== '')
+            $_filledCreds[] = $c['tracker'];
+    }
+}
+
+//список доступен, если трекер не требует авторизации ИЛИ учётные данные заполнены
+$_credTrackers = array();
+foreach ($_seriesTrackers as $_tr)
+{
+    $_engineFile = dirname(__FILE__).'/../trackers/'.$_tr.'.engine.php';
+    $_cls = Sys::resolveTrackerClass($_engineFile, $_tr, 'getSeriesList');
+    if ($_cls === NULL)
+        continue;
+    if (method_exists($_cls, 'seriesListRequiresAuth') && ! $_cls::seriesListRequiresAuth())
+        $_credTrackers[] = $_tr;
+    elseif (in_array($_tr, $_filledCreds, TRUE))
+        $_credTrackers[] = $_tr;
+}
 ?>
 <div class="modal__backdrop"
-    x-data="add"
+    x-data="add(<?= htmlspecialchars(json_encode(array_values(array_unique($_credTrackers))), ENT_QUOTES) ?>)"
     x-show="modalAdd"
     x-transition.opacity
     >
@@ -81,7 +110,7 @@ $_tmCategories    = Database::getDistinctCategories();
                 <label class="row">
                     <div class="col --12 mb-1">Трекер:</div>
                     <div class="col --12 mb-2">
-                        <select x-model="series.tracker" :required="type == 'series'">
+                        <select x-model="series.tracker" :required="type == 'series'" @change="onTrackerChange()">
                             <option value="" disabled>выберите</option>
                             <template x-for='tracker in ["baibako.tv","hamsterstudio.org","lostfilm.tv","lostfilm-mirror","newstudio.tv"]'>
                                 <option x-text="tracker" :selected="series.tracker == tracker"></option>
@@ -89,13 +118,39 @@ $_tmCategories    = Database::getDistinctCategories();
                         </select>
                     </div>
                 </label>
-                <label class="row">
-                    <div class="col --12 mb-1">Название:</div>
+                <div class="row">
+                    <div class="col --12 mb-1 series-label-row">
+                        <span>Название:</span>
+                        <button type="button" class="btn btn--secondary btn--sm series-fetch-btn"
+                            x-show="series.tracker" x-cloak
+                            :disabled="seriesLoading || !hasCredentials(series.tracker)"
+                            @click="fetchSeriesList()"
+                            x-text="!hasCredentials(series.tracker) ? 'Нет учётных данных' : (seriesLoading ? 'Загрузка…' : (seriesList.length > 0 ? 'Обновить (' + seriesList.length + ')' : 'Загрузить список'))"></button>
+                    </div>
                     <div class="col --12 mb-2">
-                        <input type="text" name="name" x-model="series.name" :required="type == 'series'">
+                        <div class="series-name-wrap" @click.away="seriesDropdownOpen = false">
+                            <input type="text" name="name" x-model="series.name" :required="type == 'series'"
+                                autocomplete="off"
+                                @input="seriesDropdownOpen = seriesList.length > 0; seriesHighlight = -1"
+                                @focus="if (seriesList.length > 0) seriesDropdownOpen = true"
+                                @keydown="seriesKeydown($event)"
+                                @keydown.escape="seriesDropdownOpen = false">
+                            <div class="series-dropdown" x-cloak
+                                x-show="seriesDropdownOpen && filteredSeries().length > 0">
+                                <template x-for="(item, idx) in filteredSeries()" :key="item.name">
+                                    <div class="series-dropdown__item"
+                                        :class="idx === seriesHighlight && '--highlighted'"
+                                        @mousedown.prevent="series.name = item.name; seriesDropdownOpen = false; seriesHighlight = -1"
+                                        @mouseenter="seriesHighlight = idx">
+                                        <span x-text="item.name"></span>
+                                        <span class="series-dropdown__ep" x-show="item.episode" x-text="item.episode"></span>
+                                    </div>
+                                </template>
+                            </div>
+                        </div>
                         <div class="form-help">На английском языке<br/>Пример: House, Lie to me</div>
                     </div>
-                </label>
+                </div>
 
                 <template x-if="series.tracker == 'baibako.tv' || series.tracker == 'hamsterstudio.org' || series.tracker == 'newstudio.tv'">
                 <div class="row">
@@ -132,9 +187,14 @@ $_tmCategories    = Database::getDistinctCategories();
                 </label>
                 <label class="row" x-show="$store.tmApp.torrentClient === 'qBittorrent'">
                     <div class="col --12 mb-1">Категория qBittorrent:</div>
-                    <div class="col --12">
+                    <div class="col --12 mb-2">
                         <input type="text" name="category" x-model="series.category" list="qbit-category-list">
                         <div class="form-help">Не обязательно</div>
+                    </div>
+                </label>
+                <label class="row" @click="series.subdir = !series.subdir">
+                    <div class="col --12 toggler-wrap">
+                        <div class="toggler" :class="series.subdir && '--done'"></div> В подкаталог с названием сериала
                     </div>
                 </label>
             </div>

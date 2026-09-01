@@ -1,0 +1,10 @@
+/* Стили форка: комбобокс выбора сериала в диалоге добавления */
+.series-label-row{display:flex;align-items:center;justify-content:space-between}
+.series-name-wrap{position:relative}
+.series-fetch-btn{white-space:nowrap;transition:none}
+.btn--sm{padding:2px 10px;font-size:.75rem}
+.series-dropdown{position:absolute;top:100%;left:0;right:0;z-index:100;max-height:220px;overflow-y:auto;background:var(--c-input-bg);border:1px solid var(--c-input-bd);border-radius:6px;box-shadow:0 4px 16px var(--c-shadow);margin-top:2px}
+.series-dropdown__item{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;font-size:.875rem;color:var(--c-input-fg);cursor:pointer}
+.series-dropdown__item:hover,.series-dropdown__item.--highlighted{background:var(--c-primary);color:var(--c-white)}
+.series-dropdown__ep{margin-left:10px;font-size:.75rem;opacity:.7;white-space:nowrap}
+

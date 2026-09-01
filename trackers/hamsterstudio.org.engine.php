@@ -10,6 +10,38 @@ class hamsterstudio
 	protected static $log_page;
 	protected static $xml_page;
 
+	//требуется ли авторизация для получения списка сериалов
+	public static function seriesListRequiresAuth() { return TRUE; }
+
+	//получение списка сериалов из RSS-ленты трекера
+	public static function getSeriesList($limit = 50)
+	{
+		$tracker = 'hamsterstudio.org';
+		$cookie = Database::getCookie($tracker);
+		if ( ! hamsterstudio::checkCookie($cookie))
+		{
+			hamsterstudio::getCookie($tracker);
+			$cookie = Database::getCookie($tracker);
+			if (empty($cookie))
+				return array();
+		}
+		$page = Sys::getUrlContent(array(
+			'type'           => 'GET',
+			'returntransfer' => 1,
+			'url'            => 'http://hamsterstudio.org/rss.php?feed=dl',
+			'cookie'         => $cookie,
+			'sendHeader'     => array('Host' => 'hamsterstudio.org', 'Content-length' => strlen($cookie)),
+			'convert'        => array('windows-1251', 'utf-8//IGNORE'),
+		));
+		if (empty($page))
+			return array();
+
+		$page = str_replace('<?xml version="1.0" encoding="windows-1251" ?>', '<?xml version="1.0" encoding="utf-8"?>', $page);
+		$page = str_replace(array("&amp;", "&"), array("&", "&amp;"), $page);
+		return Sys::parseSeriesFeed($page, $limit, "/^'(.+?)'/", '/s(\\d{2})\\.?e(\\d{2})/i', 'link');
+	}
+
+
 	//проверяем cookie
 	public static function checkCookie($sess_cookie)
 	{

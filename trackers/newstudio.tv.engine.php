@@ -10,6 +10,35 @@ class newstudio
 	protected static $log_page;
 	protected static $xml_page;
 
+	//требуется ли авторизация для получения списка сериалов
+	public static function seriesListRequiresAuth() { return TRUE; }
+
+	//получение списка сериалов из RSS-ленты трекера
+	public static function getSeriesList($limit = 50)
+	{
+		$tracker = 'newstudio.tv';
+		$cookie = Database::getCookie($tracker);
+		if ( ! newstudio::checkCookie($cookie))
+		{
+			newstudio::getCookie($tracker);
+			$cookie = Database::getCookie($tracker);
+			if (empty($cookie))
+				return array();
+		}
+		$page = Sys::getUrlContent(array(
+			'type'           => 'GET',
+			'returntransfer' => 1,
+			'url'            => 'https://newstudio.tv/rss.php',
+			'cookie'         => $cookie,
+		));
+		if (empty($page))
+			return array();
+
+		//у newstudio эпизод указан в самом заголовке: «Сезон 1, Серия 2»
+		return Sys::parseSeriesFeed($page, $limit, "/^'(.+?)'/", '/Сезон (\\d{1,2}), Серия (\\d{1,2})/u', 'title');
+	}
+
+
 	//проверяем cookie
 	public static function checkCookie($sess_cookie)
 	{

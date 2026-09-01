@@ -10,6 +10,62 @@ class lostfilm
 	protected static $log_page;
 	protected static $xml_page;
 
+	//лента со списком сериалов отдаётся без авторизации
+	public static function seriesListRequiresAuth() { return FALSE; }
+
+	//получение списка сериалов из RSS-ленты трекера
+	public static function getSeriesList($limit = 50)
+	{
+		//ленту отдают и без сессии, поэтому логиниться ради списка не нужно:
+		//используем сохранённую куку, если она есть, и не трогаем авторизацию
+		$cookie = Database::getCookie('lostfilm.tv');
+		$page = Sys::getUrlContent(array(
+			'type'           => 'GET',
+			'returntransfer' => 1,
+			'url'            => 'https://www.lostfilm.download/rss.xml',
+			'cookie'         => empty($cookie) ? '' : $cookie,
+		));
+		if (empty($page))
+			return array();
+
+		$page = preg_replace('/\\&/', '&amp;', $page);
+		$page = preg_replace('/\\<\\!\\[CDATA\\[/', '', $page);
+		$page = preg_replace('/\\]\\]/', '', $page);
+
+		$xml = @simplexml_load_string($page, 'SimpleXMLElement', LIBXML_NONET | LIBXML_NOCDATA);
+		if ( ! $xml || empty($xml->channel->item))
+			return array();
+
+		$names = array();
+		foreach ($xml->channel->item as $item)
+		{
+			$title = (string)$item->title;
+			$name = NULL;
+			//формат: «Русское название (English Name). Название серии (S01E01)»
+			if (preg_match('/^(.+?)\\s*\\((.+?)\\)\\.\\s/u', $title, $m))
+				$name = $m[2];
+			elseif (preg_match('/^(.+?)\\s+\\(S\\d{2}E\\d{2}\\)/u', $title, $m))
+				$name = $m[1];
+
+			if ($name !== NULL)
+			{
+				$ep = NULL;
+				if (preg_match('/S(\\d{2})E(\\d{2})/i', $title, $em))
+					$ep = 'S'.$em[1].'E'.$em[2];
+				if ( ! isset($names[$name]) || ($ep && strcmp($ep, $names[$name]) > 0))
+					$names[$name] = $ep;
+			}
+			if (count($names) >= $limit)
+				break;
+		}
+
+		$result = array();
+		foreach ($names as $n => $ep)
+			$result[] = array('name' => $n, 'episode' => $ep);
+		return $result;
+	}
+
+
 	//проверяем cookie
 	public static function checkCookie($sess_cookie)
 	{
