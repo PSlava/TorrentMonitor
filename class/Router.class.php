@@ -2,6 +2,13 @@
 class Router
 {
     private static $routes = [];
+    private static $notFound = NULL;
+
+    //ответ на неизвестный маршрут задаётся снаружи, чтобы он был в том же конверте, что и остальные
+    public static function notFound($handler)
+    {
+        self::$notFound = $handler;
+    }
 
     public static function get($path, $handler)
     {
@@ -25,12 +32,12 @@ class Router
 
     public static function dispatch($method, $uri)
     {
-        // Убираем query string
-        $uri = strtok($uri, '?');
-        // Убираем базовый путь к api.php
-        $uri = preg_replace('#^.*/api\.php#', '', $uri);
-        if (empty($uri))
-            $uri = '/';
+        //при заходе через /api/... (RewriteRule в .htaccess) REQUEST_URI остаётся исходным
+        //и не содержит api.php - вырезать по нему нечего, и все маршруты отдавали 404.
+        //Apache в этом случае кладёт путь после скрипта в PATH_INFO, он и есть маршрут
+        $uri = self::pathInfo($uri);
+        if (empty($uri) || $uri[0] !== '/')
+            $uri = '/'.ltrim($uri, '/');
 
         foreach (self::$routes as $route)
         {
@@ -46,7 +53,26 @@ class Router
             }
         }
 
+        if (self::$notFound !== NULL)
+            return call_user_func(self::$notFound);
+
         self::json(['error' => 'Маршрут не найден'], 404);
+    }
+
+    //путь маршрута: PATH_INFO, иначе остаток REQUEST_URI после api.php или /api
+    private static function pathInfo($uri)
+    {
+        foreach (array('PATH_INFO', 'ORIG_PATH_INFO') as $key)
+        {
+            if ( ! empty($_SERVER[$key]) && $_SERVER[$key] !== '/')
+                return strtok($_SERVER[$key], '?');
+        }
+
+        $uri = strtok($uri, '?');
+        if (preg_match('#^.*/api(?:\.php)?(/.*)?$#', $uri, $m))
+            return isset($m[1]) ? $m[1] : '/';
+
+        return $uri;
     }
 
     private static function pathToRegex($path)
@@ -65,7 +91,11 @@ class Router
     {
         $input = file_get_contents('php://input');
         $data = json_decode($input, true);
-        return is_array($data) ? $data : [];
+        if (is_array($data))
+            return $data;
+
+        //тело может приехать и обычной формой - тогда php://input уже разобран в $_POST
+        return is_array($_POST) ? $_POST : [];
     }
 }
 ?>
