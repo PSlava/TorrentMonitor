@@ -78,7 +78,7 @@ class animelayer
     }
 
 	// Функция получения кук
-	protected static function getCookie($tracker)
+	public static function getCookie($tracker)
 	{
 		// Проверяем заполнены ли учётные данные
 		if (Database::checkTrackersCredentialsExist($tracker))

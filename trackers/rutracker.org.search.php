@@ -45,8 +45,8 @@ class rutrackerSearch extends rutracker
 	        	//сбрасываем варнинг
 				Database::clearWarnings($tracker);
 
-	    		preg_match_all('/<a class=\"gen f ts-text\" href=\"tracker\.php\?f=\d{1,9}\">(.*)<\/a>/', $page, $section);
-	    		preg_match_all('/<a data-topic_id=\"\d{3,9}\" class=\"med tLink tt-text ts-text hl-tags bold\" href=\"viewtopic\.php\?t=(\d{3,9})\">(.*)<\/a>/', $page, $threme);
+	    		preg_match_all('/<a class=\"gen f ts-text\" href=\"[^\"]*tracker\.php\?f=\d{1,9}[^\"]*\">(.*)<\/a>/', $page, $section);
+	    		preg_match_all('/<a data-topic_id=\"\d{3,9}\" class=\"med tLink tt-text ts-text hl-tags bold[^\"]*\" href=\"viewtopic\.php\?t=(\d{3,9})\">(.*)<\/a>/', $page, $threme);
 	    		preg_match_all('/<td class=\"row4 small nowrap\" style=\".*\" data-ts_text=\".*\">\n<p>(.*)<\/p>\n(<p>(.*)<\/p>)?\s?<\/td>/', $page, $dates);
 
                 if (count($section[1]) == count($threme[1]) && count($threme[1]) == count($dates[1]))
@@ -59,7 +59,7 @@ class rutrackerSearch extends rutracker
                         else
                             $day = $arr[0];
     	    		    $date = '20'.$arr[2].'-'.Sys::dateStringToNum($arr[1]).'-'.$day;
-	    			    Database::addThremeToBuffer($id, $section[1][$i], $threme[1][$i], $threme[2][$i], $date, $tracker);
+	    			    Database::addThremeToBuffer($id, strip_tags($section[1][$i]), $threme[1][$i], strip_tags($threme[2][$i]), $date, $tracker);
 	    			}
                 }
 	    	}

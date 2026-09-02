@@ -101,26 +101,34 @@ class qBittorrent
             CURLOPT_COOKIE => $cookie,
             CURLOPT_POSTFIELDS => $data
         ));
-        curl_exec($ch);
+        $addResponse = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
         curl_close($ch);
 
         //ожидаем код 200 при успешном добавлении нового и код 202, если торрент уже существует
         if ($httpCode >= 200 && $httpCode <= 204) {
-            sleep(3);
-            
-            //получение хэша торрента
-            $data = array(
-                'filter' => 'all',
-                'limit' => '1',
-                'sort' => 'added_on',
-                'reverse' => 'true'
-            );
-            curl_setopt($MainCurl, CURLOPT_URL, $torrentAddress."/api/v2/torrents/info");
-            curl_setopt($MainCurl, CURLOPT_POSTFIELDS, http_build_query($data));
-            $response = curl_exec($MainCurl);
-            $rdata = json_decode($response)[0];
-            $hashNew = $rdata->hash;
+            // qBittorrent 5.x возвращает хэш прямо в теле ответа
+            $addData = json_decode($addResponse, true);
+            if ( ! empty($addData['added_torrent_ids'][0]))
+            {
+                $hashNew = $addData['added_torrent_ids'][0];
+            }
+            else
+            {
+                // fallback для старых версий qBit: ждём и запрашиваем последний добавленный
+                sleep(3);
+                $data = array(
+                    'filter' => 'all',
+                    'limit' => '1',
+                    'sort' => 'added_on',
+                    'reverse' => 'true'
+                );
+                curl_setopt($MainCurl, CURLOPT_URL, $torrentAddress."/api/v2/torrents/info");
+                curl_setopt($MainCurl, CURLOPT_POSTFIELDS, http_build_query($data));
+                $response = curl_exec($MainCurl);
+                $rdata = json_decode($response)[0];
+                $hashNew = $rdata->hash;
+            }
 
             #обновляем hash в базе
             Database::updateHash($id, $hashNew);

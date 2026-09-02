@@ -13,7 +13,7 @@ $users = Database::getUserToWatch();
     <div class="torrents-fs --empty"><div>Нет пользователей для мониторинга</div></div>
 <?php die; } ?>
 
-<div x-data='users(<?= json_encode($users, JSON_NUMERIC_CHECK) ?>)'>
+<div x-data='users(<?= htmlspecialchars(json_encode($users, JSON_NUMERIC_CHECK), ENT_QUOTES, 'UTF-8') ?>)'>
     <div class="top-bar">
         <div class="top-bar__select">
             <select @change="setUser($el.value)" x-model.number="currentUser">

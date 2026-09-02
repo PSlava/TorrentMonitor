@@ -126,6 +126,57 @@ class Sys
         return 0;
     }
 
+    public static function getLatestVersion()
+    {
+        $page = Sys::getUrlContent(
+            array(
+                'type'           => 'GET',
+                'returntransfer' => 1,
+                'url'            => 'https://xml.tormon.ru/version.xml',
+            )
+        );
+        $xml = @simplexml_load_string($page);
+        if (false !== $xml && isset($xml->current_version))
+            return strval($xml->current_version);
+        return NULL;
+    }
+
+    public static function getChangelog($version)
+    {
+        if (empty($version))
+            return '';
+        $txt = Sys::getUrlContent(
+            array(
+                'type'           => 'GET',
+                'returntransfer' => 1,
+                'url'            => 'https://raw.githubusercontent.com/ElizarovEugene/TorrentMonitor/master/changelog.txt',
+            )
+        );
+        if (empty($txt))
+            return '';
+        $lines = explode("\n", $txt);
+        $found = false;
+        $result = [];
+        foreach ($lines as $line)
+        {
+            if ( ! $found)
+            {
+                if (strpos($line, '- ' . $version . ':') !== false)
+                {
+                    $found = true;
+                    $result[] = rtrim($line);
+                }
+            }
+            else
+            {
+                if (preg_match('/^\d{2}\.\d{2}\.\d{4}\s+-\s+\d+/', trim($line)))
+                    break;
+                $result[] = rtrim($line);
+            }
+        }
+        return trim(implode("\n", $result));
+    }
+
     //формируем curl-опции прокси для заданного url (общие настройки + потрекерный ext_proxy)
     public static function getProxyOptions($url)
     {

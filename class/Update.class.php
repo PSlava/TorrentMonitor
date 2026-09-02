@@ -210,13 +210,20 @@ class Update {
     
             if (Update::$isUpdated)
             {
+                $changelog = Sys::getChangelog(Update::$updVersion);
                 $msg = 'Обновление до версии: ' . Update::$updVersion . ' выполнено успешно.' . "\r\n" . '<br />';
+                $notifyMsg = 'Обновление до версии: ' . Update::$updVersion . ' выполнено успешно.';
+                if ( ! empty($changelog))
+                    $notifyMsg .= "\n\n" . $changelog;
                 echo $msg;
                 $serverAddress = Database::getSetting('serverAddress');
                 Database::clearWarnings('system');
                 Database::setUpdateNotification(0);
+                $newsId = 'updated_' . Update::$updVersion;
+                if ( ! Database::checkNewsExist($newsId))
+                    Database::insertNews($newsId, $notifyMsg);
                 if (Update::$isCLI)
-                    Notification::sendNotification('news', date('r'), 0, $msg, 0);
+                    Notification::sendNotification('news', date('r'), 0, $notifyMsg, 0);
                 else
                     echo 'Перейти на <a href="' . $serverAddress . '">главную страницу</a>.<br />';
             }

@@ -129,6 +129,8 @@ curl -H "Authorization: Bearer ВАШ_КЛЮЧ" \
 |---|---|---|
 | `url` | да | ссылка на тему, например `http://rutracker.org/forum/viewtopic.php?t=4201572` |
 | `name` | нет | своё название |
+| `path` | нет | директория для скачивания (если пусто — берётся из глобальных настроек) |
+| `category` | нет | категория qBittorrent (если пусто — без категории) |
 
 ```bash
 curl -X POST "http://ВАШ_АДРЕС_ТМ/api/torrents" \
@@ -154,6 +156,8 @@ curl -X POST "http://ВАШ_АДРЕС_ТМ/api/torrents" \
 | `tracker` | да | `lostfilm.tv`, `lostfilm-mirror`, `newstudio.tv` или `baibako.tv` |
 | `name` | да | название сериала на английском, например `House` |
 | `hd` | нет | качество: `0` = SD (по умолчанию), `1` = 720p, `2` = 1080p |
+| `path` | нет | директория для скачивания (если пусто — берётся из глобальных настроек) |
+| `category` | нет | категория qBittorrent (если пусто — без категории) |
 
 ```bash
 curl -X POST "http://ВАШ_АДРЕС_ТМ/api/torrents" \

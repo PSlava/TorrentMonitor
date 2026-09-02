@@ -33,16 +33,16 @@ $trackers = Database::getTrackersList();
     <div x-show="tracker.necessarily">
         <form @submit.prevent="updateTracker()" action="action.php">
             <input type="hidden" name="id" x-model="tracker.id">
-            <label class="row">
+            <label class="row" x-show="tracker.tracker != 'nnmclub.to'">
                 <div class="col --2:lg mb-1">Логин:</div>
                 <div class="col --5:lg mb-2">
-                    <input type="text" name="log" x-model="tracker.log" required>
+                    <input type="text" name="log" x-model="tracker.log" :required="tracker.tracker != 'nnmclub.to'">
                 </div>
             </label>
-            <label class="row">
+            <label class="row" x-show="tracker.tracker != 'nnmclub.to'">
                 <div class="col --2:lg mb-1">Пароль:</div>
                 <div class="col --5:lg  mb-2">
-                    <input type="password" name="pass" x-model="tracker.pass" required>
+                    <input type="password" name="pass" x-model="tracker.pass" :required="tracker.tracker != 'nnmclub.to'">
                 </div>
             </label>
 
@@ -53,6 +53,18 @@ $trackers = Database::getTrackersList();
                         <input type="text" name="passkey" x-model="tracker.passkey" required>
                     </div>
                 </label>
+            </template>
+
+            <template x-if="tracker.tracker == 'nnmclub.to'">
+                <div>
+                    <label class="row">
+                        <div class="col --2:lg mb-1">Cookie</div>
+                        <div class="col --5:lg mb-2">
+                            <textarea name="cookie" x-model="tracker.cookie" rows="3" style="font-size:11px;font-family:monospace" placeholder="phpbb2mysql_4_data=...; phpbb2mysql_4_sid=..."></textarea>
+                            <div class="form-help">Вставьте куки из браузера после ручной авторизации на nnm-club.to</div>
+                        </div>
+                    </label>
+                </div>
             </template>
 
             <div class="row mt-2">
