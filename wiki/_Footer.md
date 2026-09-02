@@ -1,1 +1,1 @@
-[TorrentMonitor](https://github.com/ElizarovEugene/TorrentMonitor) · [tormon.ru](https://tormon.ru/) · [Docker-образ](https://github.com/alfonder/torrentmonitor-dockerized) · [Решение проблем](Troubleshooting)
+[Форк PSlava/TorrentMonitor](https://github.com/PSlava/TorrentMonitor) · [Docker-образ](https://hub.docker.com/r/slashp/torrentmonitor) · [Апстрим](https://github.com/ElizarovEugene/TorrentMonitor) · [Решение проблем](Troubleshooting)

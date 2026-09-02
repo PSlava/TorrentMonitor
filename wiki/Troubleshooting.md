@@ -173,7 +173,8 @@ sqlite3 torrentmonitor.sqlite \
 ## Не нашли ответ?
 
 - Раздел **Новости** в интерфейсе TM — там сообщают об известных проблемах трекеров.
-- [Вики Docker-проекта](https://github.com/alfonder/torrentmonitor-dockerized/wiki/Troubleshooting) —
-  проблемы, специфичные для контейнера.
+- [Issues форка](https://github.com/PSlava/TorrentMonitor/issues) — если проблема
+  в доработках форка (API, вебхуки, список сериалов, история каталогов, обход Cloudflare).
+- [Issues апстрима](https://github.com/ElizarovEugene/TorrentMonitor/issues) — если
+  проблема воспроизводится и в оригинальном TorrentMonitor.
 - [Телеграм-чат проекта](https://t.me/joinchat/DFRbKQvV_FQA8TatJjlWRw).
-- [Issues на GitHub](https://github.com/ElizarovEugene/TorrentMonitor/issues).

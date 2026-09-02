@@ -22,4 +22,6 @@
 - [Решение проблем](Troubleshooting)
 
 **Смотрите также**
-- [Вики Docker-образа](https://github.com/alfonder/torrentmonitor-dockerized/wiki)
+- [Репозиторий форка](https://github.com/PSlava/TorrentMonitor)
+- [Docker-образ форка](https://hub.docker.com/r/slashp/torrentmonitor)
+- [Апстрим-проект](https://github.com/ElizarovEugene/TorrentMonitor)

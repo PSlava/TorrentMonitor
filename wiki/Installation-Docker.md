@@ -1,41 +1,79 @@
 # Установка в Docker
 
-Рекомендуемый способ установки TorrentMonitor — готовый Docker-образ
-[**alfonder/torrentmonitor**](https://hub.docker.com/r/alfonder/torrentmonitor).
-Внутри контейнера уже есть всё необходимое: веб-сервер, PHP, база данных и планировщик —
-ничего устанавливать и настраивать на хосте не нужно.
+Рекомендуемый способ установки — образ форка
+[**slashp/torrentmonitor**](https://hub.docker.com/r/slashp/torrentmonitor).
+Внутри контейнера уже есть всё необходимое: Apache, PHP 8.2, база данных и cron,
+который раз в 30 минут запускает проверку раздач — на хосте настраивать нечего.
 
-> Docker-образ — отдельный проект
-> [torrentmonitor-dockerized](https://github.com/alfonder/torrentmonitor-dockerized),
-> который развивает и поддерживает [**Александр Фомичёв** (alfonder)](https://github.com/alfonder) —
-> он не входит в состав TorrentMonitor. Спасибо Александру за контейнеризацию проекта!
-> Вопросы по самому контейнеру (образ, теги, переменные окружения) задавайте
-> в его репозитории.
-
-Минимальный запуск:
+## Быстрый старт
 
 ```bash
-docker run -d \
-  --name torrentmonitor \
-  --restart unless-stopped \
-  -p 8080:80 \
-  -v tm_torrents:/data/htdocs/torrents \
-  -v tm_db:/data/htdocs/db \
-  alfonder/torrentmonitor
+docker pull slashp/torrentmonitor
+docker compose up -d
+```
+
+Или из исходников, если хотите собрать образ сами:
+
+```bash
+git clone https://github.com/PSlava/TorrentMonitor.git
+cd TorrentMonitor
+docker compose up -d --build
 ```
 
 Откройте `http://IP_СЕРВЕРА:8080` — дальше вся работа идёт в веб-интерфейсе:
 [Первоначальная настройка](Getting-Started).
 
-Оба тома обязательно сохраняйте: в `db` живёт база данных (раздачи, учётные данные,
-настройки), в `torrents` — скачанные `.torrent`-файлы.
+## Тома
 
-## Подробные инструкции
+`docker-compose.yml` создаёт два тома, оба обязательно сохраняйте:
 
-Всё, что касается самого контейнера, описано в документации Docker-проекта:
+| Том | Что внутри |
+|---|---|
+| `tm-data` → `/var/www/html/data` | база данных SQLite, служебные файлы |
+| `tm-torrents` → `/var/www/html/torrents` | скачанные `.torrent`-файлы |
 
-- [README](https://github.com/alfonder/torrentmonitor-dockerized) — краткая справка
-  по образу;
-- [Вики torrentmonitor-dockerized](https://github.com/alfonder/torrentmonitor-dockerized/wiki) —
-  установка Docker, запуск через Docker Compose, запуск на NAS (Synology, QNAP),
-  переменные окружения, теги и платформы, обновление образа, решение проблем контейнера.
+## Выбор базы данных
+
+По умолчанию используется SQLite — она не требует ничего дополнительного.
+Для MySQL или PostgreSQL задайте переменные окружения; `config.php` соберётся
+из них при старте контейнера:
+
+```yaml
+environment:
+  - DB_TYPE=mysql        # mysql | pgsql | sqlite
+  - DB_HOST=db
+  - DB_PORT=3306
+  - DB_NAME=torrentmonitor
+  - DB_USER=torrentmonitor
+  - DB_PASS=torrentmonitor
+```
+
+## Обход Cloudflare
+
+Трекеры с «проверкой браузера» (сейчас это `kinozal.me`) без обхода не работают —
+темы падают с ошибкой «Не удалось получить страницу трекера». В compose уже описан
+контейнер [Byparr](https://github.com/ThePhaseless/Byparr) под профилем `cloudflare`:
+
+```bash
+docker compose --profile cloudflare up -d
+```
+
+Затем в **Настройки → Расширенные → FlareSolverr / Byparr URL** укажите
+`http://byparr:8191`. Подробнее — [Прокси и зеркала](Proxy-and-Mirrors#flaresolverr).
+
+## Обновление
+
+```bash
+docker compose pull && docker compose up -d
+```
+
+Данные лежат в томах, схема базы обновляется сама при первом запуске новой версии.
+Подробнее — [Обновление](Updating).
+
+## Docker-образ апстрима
+
+У оригинального проекта есть свой контейнер —
+[torrentmonitor-dockerized](https://github.com/alfonder/torrentmonitor-dockerized)
+от [Александра Фомичёва](https://github.com/alfonder), с
+[собственной вики](https://github.com/alfonder/torrentmonitor-dockerized/wiki).
+Он собирает апстрим, а не этот форк, и доработок форка в нём нет.

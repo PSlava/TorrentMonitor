@@ -7,12 +7,13 @@ TorrentMonitor следит за страницами раздач (темами
 обнаруживает обновления (новые серии, перезаливки раздач) и автоматически скачивает свежие
 `.torrent`-файлы или передаёт их напрямую в ваш торрент-клиент.
 
-- 🏠 Сайт проекта: [tormon.ru](https://tormon.ru/)
-- 📦 Репозиторий: [ElizarovEugene/TorrentMonitor](https://github.com/ElizarovEugene/TorrentMonitor)
-- 🐳 Docker-образ: [alfonder/torrentmonitor-dockerized](https://github.com/alfonder/torrentmonitor-dockerized) —
-  отдельный проект, поддерживаемый [Александром Фомичёвым (alfonder)](https://github.com/alfonder);
-  у него есть [собственная вики](https://github.com/alfonder/torrentmonitor-dockerized/wiki)
-  по всем вопросам контейнера
+Эта вики описывает **форк** [PSlava/TorrentMonitor](https://github.com/PSlava/TorrentMonitor)
+с собственной нумерацией версий (текущая — 3.3-fork.1, основана на v3.3 апстрима).
+
+- 📦 Репозиторий форка: [PSlava/TorrentMonitor](https://github.com/PSlava/TorrentMonitor)
+- 🐳 Docker-образ форка: [slashp/torrentmonitor](https://hub.docker.com/r/slashp/torrentmonitor)
+- ⬆️ Апстрим: [ElizarovEugene/TorrentMonitor](https://github.com/ElizarovEugene/TorrentMonitor),
+  сайт проекта [tormon.ru](https://tormon.ru/)
 
 ---
 
@@ -28,8 +29,8 @@ TorrentMonitor следит за страницами раздач (темами
   новая добавляется; опционально удаляются и старые файлы.
 - **Интеграция с Sonarr**: Sonarr берёт релиз — TorrentMonitor автоматически ставит тему
   на мониторинг и дальше сам скачивает обновления ([инструкция](Sonarr-Integration)).
-- **REST API** для внешних приложений: добавление, список и удаление раздач
-  ([справочник](API)).
+- **REST API** для внешних приложений: добавление, список и удаление раздач,
+  запуск проверки, журнал ошибок, настройки, вебхуки ([справочник](API)).
 - **Уведомления**: E-mail, Telegram (с поддержкой тем/тредов), Pushover, Pushbullet, Prowl,
   PushAll, Gotify ([подробнее](Notifications)).
 - **Отслеживание пользователей**: мониторинг новых раздач выбранного релизёра на трекере.

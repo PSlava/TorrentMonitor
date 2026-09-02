@@ -40,7 +40,14 @@ sudo apt install nginx php-fpm php-curl php-mbstring php-xml php-zip php-mysql m
 
 ```bash
 cd /var/www
-wget https://github.com/ElizarovEugene/TorrentMonitor/archive/refs/heads/master.zip
+git clone https://github.com/PSlava/TorrentMonitor.git torrentmonitor
+```
+
+Или архивом, если git недоступен:
+
+```bash
+cd /var/www
+wget https://github.com/PSlava/TorrentMonitor/archive/refs/heads/master.zip
 unzip master.zip
 mv TorrentMonitor-master torrentmonitor
 ```

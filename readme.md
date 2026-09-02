@@ -1,23 +1,26 @@
 # TorrentMonitor
 
-Форк [ElizarovEugene/TorrentMonitor](https://github.com/ElizarovEugene/TorrentMonitor). Версия 3.0-fork.1 (основана на v3.0 апстрима).
+Форк [ElizarovEugene/TorrentMonitor](https://github.com/ElizarovEugene/TorrentMonitor). Версия 3.3-fork.1 (основана на v3.3 апстрима).
 
 Приложение следит за обновлениями на торрент-трекерах рунета и автоматически скачивает новые серии и перезалитые раздачи через торрент-клиент.
 
 ### Поддерживаемые трекеры
 
 Слежение за темами:
-anidub.com, animelayer.ru, baibako.tv, booktracker.org, casstudio.tv, hamsterstudio.org, kinozal.me, lostfilm.tv, newstudio.tv, nnmclub.to, pornolab.net, riperam.org, rustorka.com, rutor.info, rutracker.org, tfile.cc
+anidub.com, animelayer.ru, baibako.tv (+ форум), booktracker.org, casstudio.tk, hamsterstudio.org, kinozal.me, kinozal.tv, kinozal.guru, lostfilm.tv (+ собственное зеркало), newstudio.tv, nnmclub.to, pornolab.net, riperam.org, rustorka.com, rutor.is, rutracker.org, tfile.cc
 
 Слежение за релизерами:
-booktracker.org, nnm-club.ru, pornolab.net, rutracker.org, tfile.me
+booktracker.org, nnmclub.to, pornolab.net, rutracker.org, tfile.cc
 
 Поиск новых серий (SD/HD 720/HD 1080):
 baibako.tv, hamsterstudio.org, lostfilm.tv (+ собственное зеркало), newstudio.tv
 
+`kinozal.me` закрыт Cloudflare — для него нужен FlareSolverr/Byparr, см. ниже.
+
 ### Возможности
 
-- Работа через прокси (SOCKS5/HTTP)
+- Работа через прокси (SOCKS5/HTTP), глобально и отдельно для каждого трекера
+- Обход Cloudflare через FlareSolverr/Byparr
 - Управление торрент-клиентами (Transmission, qBittorrent, Deluge, rTorrent, aria2, Synology DownloadStation, TorrServer)
 - Уведомления: E-mail, Telegram, Pushbullet, Pushover, Pushall, Prowl
 - REST API для интеграции со сторонними приложениями
@@ -34,8 +37,9 @@ baibako.tv, hamsterstudio.org, lostfilm.tv (+ собственное зерка�
 
 **API для внешних приложений**
 - Встроенный REST API для управления раздачами из сторонних приложений и скриптов
-- Вебхуки: автоматические уведомления внешних сервисов о событиях в системе
-- Обновления интерфейса в реальном времени без перезагрузки страницы
+- Вебхуки с подписью HMAC-SHA256: автоматические уведомления внешних сервисов о событиях
+- Отдельные именованные API-ключи с возможностью отзыва по одному
+- Поток событий Server-Sent Events (`sse.php`) для внешних подписчиков
 
 **Быстродействие**
 - Значительно сокращено количество запросов к базе данных за счёт кеширования
@@ -98,6 +102,15 @@ environment:
 
 Проверка трекеров запускается автоматически каждые 30 минут.
 
+Если трекер закрыт Cloudflare («проверка браузера»), поднимите профиль `cloudflare` —
+он добавит контейнер Byparr:
+
+```bash
+docker compose --profile cloudflare up -d
+```
+
+Затем в **Настройки → Расширенные → FlareSolverr / Byparr URL** укажите `http://byparr:8191`.
+
 ### Установка вручную
 
 Что нужно:
@@ -111,6 +124,9 @@ environment:
 3. Создайте базу данных по схеме из `db_schema/` (для SQLite база создастся автоматически)
 4. Откройте приложение в браузере
 5. Добавьте в cron периодический запуск `php engine.php` (раз в 30 минут)
+
+Для работы REST API по адресу `/api/...` нужен `mod_rewrite` и разрешённый `.htaccess`
+(`AllowOverride All`). Без него API доступен по прямому пути `/api.php/...`.
 
 ### Скриншоты
  ![Screenshot0](https://habrastorage.org/webt/yy/xq/2g/yyxq2gn8o5-b68zr-m_acdv78w8.png "Screenshot0")
