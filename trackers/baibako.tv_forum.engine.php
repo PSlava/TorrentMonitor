@@ -194,7 +194,7 @@ class baibako_f
         extract($params);
 		$return = NULL;
 
-		$page = iconv('windows-1251', 'utf-8//IGNORE', $page);
+		$page = Sys::decodePage($page);
 
 		if ( ! empty($page))
 		{

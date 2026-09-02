@@ -195,7 +195,7 @@ class rutracker
 		else
 			// FlareSolverr мог уже вернуть UTF-8 (если CurlMultiFetcher решил CF сам);
 			// windows-1251 с кириллицей не является валидным UTF-8 — безопасный способ различить
-			$page = mb_check_encoding($page, 'UTF-8') ? $page : iconv('windows-1251', 'utf-8//IGNORE', $page);
+			$page = Sys::decodePage($page);
 
 		if ( ! empty($page))
 		{

@@ -428,6 +428,20 @@ class Sys
         }
     }
 
+    //Страница трекера приходит в его родной кодировке, но CF-фолбэк (FlareSolverr/Byparr)
+    //рендерит её браузером и всегда отдаёт UTF-8. Безусловный iconv() в движке ломал такой
+    //ответ: страница получалась битой, дата не находилась, и обход CF выглядел как «нет даты»
+    public static function decodePage($page, $from = 'windows-1251')
+    {
+        if ($page === NULL || $page === '')
+            return $page;
+
+        if (mb_check_encoding($page, 'UTF-8'))
+            return $page;
+
+        return iconv($from, 'utf-8//IGNORE', $page);
+    }
+
     public static function isCloudflarePage(string $body): bool
     {
         return strpos($body, 'cf-browser-verification') !== false

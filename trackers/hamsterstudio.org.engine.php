@@ -255,7 +255,7 @@ class hamsterstudio
     	extract($params);
 		$return = NULL;
 
-		$page = iconv('windows-1251', 'utf-8//IGNORE', $page);
+		$page = Sys::decodePage($page);
 
         $page = str_replace('<?xml version="1.0" encoding="windows-1251" ?>','<?xml version="1.0" encoding="utf-8"?>', $page);
 		if ( ! empty($page))
