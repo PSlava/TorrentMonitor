@@ -80,7 +80,7 @@ curl -H "Authorization: Bearer ВАШ_КЛЮЧ" \
 
 `{id}` — идентификатор из `GET /api/torrents`. В отличие от списка, возвращает
 полный набор полей темы: дополнительно `path`, `auto_update`, `script`, `pause`,
-`hash` и `category`.
+`hash`, `category` и `url` — готовую ссылку на тему трекера.
 
 ```bash
 curl -H "Authorization: Bearer ВАШ_КЛЮЧ" \
@@ -316,6 +316,79 @@ curl -H "Authorization: Bearer ВАШ_КЛЮЧ" \
 [Интеграция с Sonarr](Sonarr-Integration).
 
 ---
+
+## Остальные эндпоинты
+
+Ответы в том же конверте `{ ok, message, data }`.
+
+### Справочники
+
+| Метод и путь | Что возвращает |
+|---|---|
+| `GET /api/version` | версии системы и схемы БД |
+| `GET /api/users` | пользователи трекеров, поставленные на мониторинг |
+| `GET /api/credentials` | учётные данные по трекерам; пароль приходит как `***`, cookie не отдаётся вовсе |
+| `GET /api/news` | новости, те же, что в разделе **Новости** |
+| `GET /api/tasks` | очередь задач с числом попыток и временем следующего запуска |
+
+### Настройки
+
+| Метод и путь | Описание |
+|---|---|
+| `GET /api/settings` | все настройки; `password`, `torrentPassword`, `proxyAuth` и `ApiKey` вырезаются |
+| `PUT /api/settings` | сохраняет переданные ключи |
+
+`PUT` принимает только ключи из белого списка: `serverAddress`, `userAgent`, `send`,
+`auth`, `rss`, `autoUpdate`, `debug`, `proxy`, `proxyType`, `proxyAddress`, `proxyAuth`,
+`useTorrent`, `torrentClient`, `torrentAddress`, `torrentLogin`, `torrentPassword`,
+`pathToDownload`, `deleteDistribution`, `deleteOldFiles`, `httpTimeout`, `flaresolverrUrl`.
+Остальные молча игнорируются, в `message` возвращается число сохранённых.
+
+```bash
+curl -X PUT "http://ВАШ_АДРЕС_ТМ/api/settings" \
+  -H "Authorization: Bearer ВАШ_КЛЮЧ" \
+  -H "Content-Type: application/json" \
+  -d '{"flaresolverrUrl":"http://byparr:8191"}'
+```
+
+### Счётчик ошибок
+
+| Метод и путь | Описание |
+|---|---|
+| `GET /api/warnings` | количество ошибок по трекерам — то, что показывает бейдж в навигации |
+| `DELETE /api/warnings/{tracker}` | очищает ошибки трекера и снимает отметку «Есть ошибки» с его тем |
+
+Сам журнал ошибок — в `GET /api/errors` выше.
+
+### События
+
+`GET /api/events` — журнал шины событий. Параметры: `since` (id, с которого продолжать)
+и `limit` (по умолчанию 50, максимум 100). В `data` приходят `events` и `lastId`, его
+и передают в `since` следующим запросом.
+
+### Вебхуки
+
+| Метод и путь | Описание |
+|---|---|
+| `GET /api/webhooks` | список вебхуков без секретов |
+| `POST /api/webhooks` | создать: `name`, `url` (обязательны), `events` (по умолчанию `*`), `secret` |
+| `DELETE /api/webhooks/{id}` | удалить |
+
+URL обязан начинаться с `http://` или `https://` — иначе `422`.
+
+### Дополнительные ключи
+
+Кроме ключа из **Настройки → API** можно завести отдельные именованные ключи —
+например, по одному на каждое внешнее приложение, чтобы отзывать их по отдельности.
+
+| Метод и путь | Описание |
+|---|---|
+| `GET /api/tokens` | список ключей: имя, дата создания, последнее использование; сам ключ не возвращается |
+| `POST /api/tokens` | создать: `name`; ключ приходит в ответе один раз |
+| `DELETE /api/tokens/{id}` | отозвать |
+
+> ⚠️ Первый запрос всё равно нужно чем-то авторизовать — заведите ключ в
+> **Настройки → API**, им и создайте остальные.
 
 ## Пример на PHP
 

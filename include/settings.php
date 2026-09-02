@@ -430,15 +430,18 @@ $webhooks = class_exists('Webhook') ? Webhook::getAllSafe() : [];
             <div class="col --2:lg mb-1"></div>
             <div class="col --10:lg mb-2">
                 <div class="form-help">
-                    Авторизация: заголовок <code>Authorization: Bearer API_KEY</code><br><br>
+                    Авторизация: заголовок <code>Authorization: Bearer API_KEY</code> либо <code>?token=</code> в URL.<br>
+                    Ответы в конверте <code>{ ok, message, data }</code>. Полное описание — в <a href="https://github.com/PSlava/TorrentMonitor/wiki/API" target="_blank" rel="noopener">вики</a>.<br><br>
                     <b>GET /api/torrents</b> — список тем. Параметр: <code>?tracker=</code> (опционально).<br>
                     <b>GET /api/torrents/{id}</b> — все поля одной темы по ID.<br>
-                    <b>POST /api/torrents</b> — добавить. Форумный трекер: <code>url</code>. RSS-трекер: <code>tracker</code> + <code>name</code> [+ <code>hd</code>: 0=SD, 1=720p, 2=1080p].<br>
+                    <b>POST /api/torrents</b> — добавить. Форумный трекер: <code>url</code>. RSS-трекер: <code>tracker</code> + <code>name</code> [+ <code>hd</code>: 0=SD, 1=720p, 2=1080p]. Дополнительно: <code>path</code>, <code>category</code>.<br>
                     <b>DELETE /api/torrents/{id}</b> — удалить тему по ID.<br>
                     <b>POST /api/run</b> — запустить движок вручную (асинхронно, возвращает 202).<br>
                     <b>GET /api/errors</b> — список ошибок. Параметр: <code>?tracker=</code> (опционально).<br>
                     <b>GET /api/errors/{id}</b> — ошибки конкретной темы по ID.<br>
-                    <b>POST /api/sonarr</b> — эндпоинт для добавления раздач из Sonarr. Поддерживает <code>?token=</code> и <code>?category=</code> в URL.
+                    <b>POST /api/sonarr</b> — эндпоинт для добавления раздач из Sonarr. Поддерживает <code>?token=</code> и <code>?category=</code> в URL.<br><br>
+                    Ещё: <code>GET /api/version</code>, <code>/users</code>, <code>/credentials</code>, <code>/news</code>, <code>/tasks</code>, <code>/warnings</code>, <code>/events</code>,
+                    <code>GET|PUT /api/settings</code>, <code>GET|POST|DELETE /api/webhooks</code>, <code>GET|POST|DELETE /api/tokens</code>.
                 </div>
             </div>
         </div>
