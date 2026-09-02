@@ -12,6 +12,19 @@ services:
       - DB_TYPE=sqlite
     restart: unless-stopped
 
+  # Обход Cloudflare для трекеров с «проверкой браузера» (сейчас это kinozal.me).
+  # Поднимается отдельно: docker compose --profile cloudflare up -d
+  # После запуска: Настройки → Расширенные → FlareSolverr / Byparr URL = http://byparr:8191
+  byparr:
+    image: ghcr.io/thephaseless/byparr:latest
+    container_name: byparr
+    profiles: ["cloudflare"]
+    ports:
+      - "8191:8191"
+    environment:
+      - LOG_LEVEL=info
+    restart: unless-stopped
+
 volumes:
   tm-data:
   tm-torrents:

@@ -110,10 +110,25 @@ Docker-проекта: [TOR-and-Transmission](https://github.com/alfonder/torren
    Подойдёт и форк [Byparr](https://github.com/ThePhaseless/Byparr) —
    образ `ghcr.io/thephaseless/byparr:latest`, тот же порт.
 
+   В `docker-compose.yml` форка Byparr уже описан под профилем `cloudflare`:
+
+   ```bash
+   docker compose --profile cloudflare up -d
+   ```
+
 2. В TM: **Настройки → Расширенные → FlareSolverr URL** →
-   `http://flaresolverr:8191` (или `http://127.0.0.1:8191`).
+   `http://byparr:8191` (рядом в compose) или `http://127.0.0.1:8191`
+   (если TM работает не в Docker, а Byparr — на том же хосте).
 
 Если поле пустое, обход Cloudflare не используется.
+
+Проверить, что обход поднялся: `curl http://127.0.0.1:8191/health` —
+должен ответить `{"msg":"Byparr is working!", ...}`.
+
+Из трекеров, поддерживаемых ТМ, «проверку браузера» сейчас показывает **kinozal.me**:
+без FlareSolverr его темы падают с ошибкой «Не удалось получить страницу трекера»
+(`cant_get_forum_page`). Зеркала `kinozal.tv` и `kinozal.bz` не отвечают вовсе,
+`kinozal.guru` работает без Cloudflare.
 
 Настроенный прокси пробрасывается и в FlareSolverr — вместе с авторизацией,
 если она задана. Учтите, что через прокси ходит браузер FlareSolverr, а не TM,
