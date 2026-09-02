@@ -1187,10 +1187,22 @@ class Database
     {
         $stmt = self::newStatement("DELETE FROM `warning` WHERE `where` = :tracker");
         $stmt->bindParam(':tracker', $tracker);
-        if ($stmt->execute())
-            return TRUE;
-        else
+        if ( ! $stmt->execute())
             return FALSE;
+
+        //флаг `torrent`.`error` живёт ровно столько же, сколько записи в `warning`:
+        //иначе тема помечена «Есть ошибки» вечно, а счётчик ошибок в навигации показывает ноль
+        self::clearErrorFlags($tracker);
+
+        return TRUE;
+    }
+
+    //снимаем отметку об ошибке со всех тем трекера (для не-трекерных источников просто ничего не совпадёт)
+    public static function clearErrorFlags($tracker)
+    {
+        $stmt = self::newStatement("UPDATE `torrent` SET `error` = 0 WHERE `tracker` = :tracker AND `error` <> 0");
+        $stmt->bindParam(':tracker', $tracker);
+        return $stmt->execute();
     }
 
     public static function getCookie($tracker)

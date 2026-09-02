@@ -751,6 +751,18 @@ if (isset($_GET['action']))
         echo json_encode($item, JSON_NUMERIC_CHECK);
     }
     
+    //Актуальные счётчики для навигации: значения в шапке проставляются при загрузке
+    //страницы и без этого запроса не меняются после прогона движка
+    // action.php?action=counters
+    if ($_GET['action'] == 'counters') {
+        $errors = Database::getWarningsCountSimple();
+        $news   = Database::getNewsCount();
+        echo json_encode(array(
+            'errors' => ( ! empty($errors['count'])) ? (int) $errors['count'] : 0,
+            'news'   => ( ! empty($news['count']))   ? (int) $news['count']   : 0,
+        ));
+    }
+
     // Очистка таблицы Temp
     // action.php?action=temp_clear
     if ($_GET['action'] == 'temp_clear') {
