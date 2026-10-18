@@ -42,6 +42,8 @@ if ($dbOk)
     $credentials = Database::getAllCredentials();
     if ( ! is_array($credentials))
         $credentials = array();
+    //getAllCredentials() куку не выбирает - nnmclub.to, настроенный только кукой, иначе выглядел бы ненастроенным
+    $trackerAccess = Database::getTrackersWithAccess();
 
     foreach ($credentials as $cred)
     {
@@ -373,6 +375,8 @@ foreach ($credentials as $cred)
     <div class="check-item">Учётные данные для работы с трекером <strong><?= htmlspecialchars($tracker, ENT_QUOTES) ?></strong> не требуются.</div>
     <?php } elseif ( ! empty($cred['login']) && ! empty($cred['password'])) { ?>
     <div class="check-item">Учётные данные для работы с трекером <strong><?= htmlspecialchars($tracker, ENT_QUOTES) ?></strong> найдены.</div>
+    <?php } elseif (isset($trackerAccess[$tracker])) { ?>
+    <div class="check-item">Для работы с трекером <strong><?= htmlspecialchars($tracker, ENT_QUOTES) ?></strong> задана кука (срок её действия здесь не проверяется).</div>
     <?php } else { ?>
     <div class="check-item --error">Учётные данные для работы с трекером <strong><?= htmlspecialchars($tracker, ENT_QUOTES) ?></strong> не найдены.</div>
     <?php } ?>

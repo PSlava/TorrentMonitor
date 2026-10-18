@@ -89,10 +89,12 @@ class EngineRunner
     //PHP CLI: под mod_php PHP_BINARY указывает на httpd, а у Apache в PATH может не быть homebrew
     public static function phpBinary()
     {
-        //путь, заданный вручную, важнее автоопределения; неверный путь - ошибка, а не тихий перебор
+        //путь, заданный вручную, берётся как есть: is_executable() под open_basedir отвечает FALSE
+        //для пути вне разрешённых каталогов, а exec() этим ограничением не связан. Неверный путь
+        //даст «Не удалось запустить движок»
         $configured = Config::read('php.cli');
-        if ( ! empty($configured))
-            return is_executable($configured) ? $configured : '';
+        if (is_string($configured) && $configured !== '')
+            return $configured;
         if (PHP_BINARY !== '' && preg_match('/php[0-9.]*(-cli)?(\.exe)?$/i', basename(PHP_BINARY)) && is_executable(PHP_BINARY))
             return PHP_BINARY;
         if (function_exists('shell_exec'))
@@ -152,7 +154,10 @@ class EngineRunner
         $log = (string) @file_get_contents(self::logFile());
         if (trim($log) !== '')
             return array('ok' => TRUE, 'msg' => 'Движок запущен.');
-        return array('ok' => FALSE, 'msg' => 'Не удалось запустить движок.');
+        //stderr фонового процесса уходит в /dev/null, и «command not found» от неверного пути не виден
+        $configured = Config::read('php.cli');
+        return array('ok' => FALSE, 'msg' => 'Не удалось запустить движок.'
+            .(is_string($configured) && $configured !== '' ? ' Проверьте путь php.cli в config.php.' : ''));
     }
 
     //чтение под LOCK_SH: writeProgress() пишет под LOCK_EX, и без блокировки попадался

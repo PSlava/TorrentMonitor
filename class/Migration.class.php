@@ -400,7 +400,6 @@ class Migration
         Database::invalidateSettingsCache();
     }
 
-    // Миграция 008: settings.val VARCHAR(100) → VARCHAR(255). SQLite не проверяет длину.
     // Миграция 012: credentials.cookie VARCHAR(255) -> TEXT. Кука хранится зашифрованной
     // (base64 от IV + шифротекст + MAC), и в 255 символов влезает кука примерно вдвое короче.
     // Вставленная вручную кука nnmclub.to длиннее, и MySQL в строгом режиме отклонял запись
@@ -425,6 +424,7 @@ class Migration
         // SQLite: длина VARCHAR(N) не проверяется, миграция не нужна.
     }
 
+    // Миграция 008: settings.val VARCHAR(100) → VARCHAR(255). SQLite не проверяет длину.
     private static function widenSettingsVal()
     {
         $dbType = Database::getDbType();

@@ -417,20 +417,26 @@ class Database
     //него не показывает. Проверка «логин и пароль заполнены» отсекала трекер целиком: темы не
     //добавлялись, движок их не проверял. Для авторизации логином по-прежнему
     //checkTrackersCredentialsExist() - движки зовут его, когда кука протухла
+    //трекеры, куку которых пользователь вставляет вручную (поле в include/credentials.php).
+    //У остальных куку сохраняет сам движок при входе, и очистить её из интерфейса нельзя -
+    //без этого ограничения трекер со стёртым логином оставался бы «доступным» навсегда
+    public static $cookieOnlyTrackers = array('nnmclub.to');
+
     public static function hasTrackerAccess($tracker)
     {
         $access = self::getTrackersWithAccess();
         return isset($access[$tracker]);
     }
 
-    //['трекер' => TRUE] для всех трекеров с логином и паролем или с кукой
+    //['трекер' => TRUE] для всех трекеров с логином и паролем, а из $cookieOnlyTrackers - и с кукой
     public static function getTrackersWithAccess()
     {
         $result = array();
         $stmt = self::newStatement("SELECT `tracker`, `log`, `pass`, `cookie` FROM `credentials`");
         if ($stmt->execute())
             foreach ($stmt as $row)
-                if (( ! empty($row['log']) && ! empty($row['pass'])) || ! empty($row['cookie']))
+                if (( ! empty($row['log']) && ! empty($row['pass']))
+                    || ( ! empty($row['cookie']) && in_array($row['tracker'], self::$cookieOnlyTrackers)))
                     $result[$row['tracker']] = TRUE;
         return $result;
     }
