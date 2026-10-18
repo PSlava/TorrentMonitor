@@ -73,13 +73,8 @@ if (Sys::checkCurl())
     $time_start_overall = microtime(true);
 
     //Проход 0: один раз получаем список учётных данных вместо запроса на каждой итерации
-    $allCredentials = Database::getAllCredentials();
-    $credentialSet = array();
-    foreach ($allCredentials as $cred)
-    {
-        if ( ! empty($cred['login']) && ! empty($cred['password']))
-            $credentialSet[$cred['tracker']] = TRUE;
-    }
+    //логин с паролем или кука: nnmclub.to работает только по куке, вставленной вручную
+    $credentialSet = Database::getTrackersWithAccess();
 
     $fetcher = new CurlMultiFetcher();
     $pending = array();
@@ -259,7 +254,7 @@ if (Sys::checkCurl())
     	for ($i=0; $i<$count; $i++)
     	{
     		$tracker = $usersList[$i]['tracker'];
-    		if (Database::checkTrackersCredentialsExist($tracker))
+    		if (isset($credentialSet[$tracker]))
     		{
     			$serchFile = $dir.'trackers/'.$tracker.'.search.php';
     			$functionClass = Sys::resolveTrackerClass($serchFile, $tracker, 'mainSearch');

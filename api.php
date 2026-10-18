@@ -142,7 +142,7 @@ Router::post('/torrents', function() {
         $tracker = $parsed['tracker'];
         $threme  = $parsed['threme'];
 
-        if ( ! is_array(Database::getCredentials($tracker)))
+        if ( ! Database::hasTrackerAccess($tracker))
             api_respond(FALSE, "Нет учётных данных для трекера: {$tracker}.", NULL, 422);
 
         if ( ! Database::checkThremExist($tracker, $threme))
@@ -157,7 +157,7 @@ Router::post('/torrents', function() {
         if ( ! in_array($tracker, ['lostfilm.tv', 'lostfilm-mirror', 'newstudio.tv', 'baibako.tv']))
             api_respond(FALSE, "Трекер {$tracker} не является RSS-трекером. Используйте параметр url.", NULL, 422);
 
-        if ( ! is_array(Database::getCredentials($tracker)))
+        if ( ! Database::hasTrackerAccess($tracker))
             api_respond(FALSE, "Нет учётных данных для трекера: {$tracker}.", NULL, 422);
 
         $hd = (int) $str('hd');
@@ -433,7 +433,7 @@ Router::post('/sonarr', function() {
     $tracker = $parsed['tracker'];
     $threme  = $parsed['threme'];
 
-    if ( ! is_array(Database::getCredentials($tracker)))
+    if ( ! Database::hasTrackerAccess($tracker))
     {
         Errors::setWarnings('api', 'api_no_credentials');
         api_respond(FALSE, "Нет учётных данных для трекера: {$tracker}.", NULL, 400);

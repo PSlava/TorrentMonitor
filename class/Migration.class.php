@@ -13,6 +13,7 @@ class Migration
         '009' => 'convertMysqlToInnodb',
         '010' => 'warningTidNullable',
         '011' => 'addGotifyNotifications',
+        '012' => 'widenCredentialsCookie',
     ];
 
     private static $done = false;
@@ -400,6 +401,30 @@ class Migration
     }
 
     // Миграция 008: settings.val VARCHAR(100) → VARCHAR(255). SQLite не проверяет длину.
+    // Миграция 012: credentials.cookie VARCHAR(255) -> TEXT. Кука хранится зашифрованной
+    // (base64 от IV + шифротекст + MAC), и в 255 символов влезает кука примерно вдвое короче.
+    // Вставленная вручную кука nnmclub.to длиннее, и MySQL в строгом режиме отклонял запись
+    private static function widenCredentialsCookie()
+    {
+        $dbType = Database::getDbType();
+
+        if ($dbType == 'mysql')
+        {
+            $alter = Database::newStatement(
+                "ALTER TABLE `credentials` MODIFY COLUMN `cookie` TEXT DEFAULT NULL"
+            );
+            $alter->execute();
+        }
+        elseif ($dbType == 'pgsql')
+        {
+            $alter = Database::newStatement(
+                "ALTER TABLE \"credentials\" ALTER COLUMN \"cookie\" TYPE TEXT"
+            );
+            $alter->execute();
+        }
+        // SQLite: длина VARCHAR(N) не проверяется, миграция не нужна.
+    }
+
     private static function widenSettingsVal()
     {
         $dbType = Database::getDbType();

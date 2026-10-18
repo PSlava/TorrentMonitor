@@ -89,6 +89,10 @@ class EngineRunner
     //PHP CLI: под mod_php PHP_BINARY указывает на httpd, а у Apache в PATH может не быть homebrew
     public static function phpBinary()
     {
+        //путь, заданный вручную, важнее автоопределения; неверный путь - ошибка, а не тихий перебор
+        $configured = Config::read('php.cli');
+        if ( ! empty($configured))
+            return is_executable($configured) ? $configured : '';
         if (PHP_BINARY !== '' && preg_match('/php[0-9.]*(-cli)?(\.exe)?$/i', basename(PHP_BINARY)) && is_executable(PHP_BINARY))
             return PHP_BINARY;
         if (function_exists('shell_exec'))
@@ -112,7 +116,7 @@ class EngineRunner
             return array('ok' => FALSE, 'msg' => 'Функция exec() отключена в настройках PHP.');
         $php = self::phpBinary();
         if ($php === '')
-            return array('ok' => FALSE, 'msg' => 'Не найден PHP CLI.');
+            return array('ok' => FALSE, 'msg' => 'Не найден PHP CLI. Укажите путь в config.php: Config::write(\'php.cli\', \'/usr/bin/php8.3\');');
         //без доступа к блокировке движок работает, но статус его не видит: интерфейс сразу
         //показал бы «Прогон завершён», а кнопка запускала бы второй экземпляр поверх первого
         $lock = self::lockFile();
