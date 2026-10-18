@@ -12,6 +12,7 @@ include_once $dir.'class/Notification.class.php';
 include_once $dir.'class/CurlMultiFetcher.class.php';
 
 Migration::run();
+Database::beginEngineRun();
 
 header('Content-Type: text/html; charset=utf-8');
 

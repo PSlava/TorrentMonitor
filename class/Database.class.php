@@ -1183,8 +1183,45 @@ class Database
     }
 
 
+    //отметка начала прогона движка: максимальный id в `warning` на момент старта
+    private static $runWarningMark = NULL;
+
+    //движки и клиенты зовут clearWarnings() после каждой удачной операции. Внутри прогона это
+    //стирало ошибку соседней раздачи того же трекера: раздача A упала, B прошла - и в «Ошибках»
+    //пусто. После этого вызова очистка трогает только предупреждения прошлых прогонов
+    public static function beginEngineRun()
+    {
+        self::$runWarningMark = 0;
+        $stmt = self::newStatement("SELECT MAX(`id`) AS `mark` FROM `warning`");
+        if ($stmt->execute())
+            foreach ($stmt as $row)
+                self::$runWarningMark = (int) $row['mark'];
+    }
+
     public static function clearWarnings($tracker)
     {
+        if (self::$runWarningMark !== NULL)
+        {
+            $mark = self::$runWarningMark;
+            $stmt = self::newStatement("DELETE FROM `warning` WHERE `where` = :tracker AND `id` <= :mark");
+            $stmt->bindParam(':tracker', $tracker);
+            $stmt->bindParam(':mark', $mark, PDO::PARAM_INT);
+            if ( ! $stmt->execute())
+                return FALSE;
+
+            //свежие предупреждения этого прогона остались - их флаги на темах не снимаем
+            $fresh = 0;
+            $stmt = self::newStatement("SELECT COUNT(*) AS `count` FROM `warning` WHERE `where` = :tracker AND `id` > :mark");
+            $stmt->bindParam(':tracker', $tracker);
+            $stmt->bindParam(':mark', $mark, PDO::PARAM_INT);
+            if ($stmt->execute())
+                foreach ($stmt as $row)
+                    $fresh = (int) $row['count'];
+            if ($fresh == 0)
+                self::clearErrorFlags($tracker);
+            return TRUE;
+        }
+
         $stmt = self::newStatement("DELETE FROM `warning` WHERE `where` = :tracker");
         $stmt->bindParam(':tracker', $tracker);
         if ( ! $stmt->execute())
