@@ -190,12 +190,11 @@ Router::delete('/torrents/{id}', function($p) {
 // Запуск движка в фоне
 Router::post('/run', function() {
     apiAuth();
-    $engineFile = realpath(dirname(__FILE__).'/engine.php');
-    if ( ! $engineFile || ! file_exists($engineFile))
-        api_respond(FALSE, 'engine.php не найден.', NULL, 500);
-
-    exec(PHP_BINARY.' '.escapeshellarg($engineFile).' > /dev/null 2>&1 &');
-    api_respond(TRUE, 'Движок запущен.', NULL, 202);
+    //тот же запуск, что у кнопки «Запуск»: PHP_BINARY под mod_php - это httpd, а не PHP CLI
+    $result = EngineRunner::start();
+    if ( ! $result['ok'])
+        api_respond(FALSE, $result['msg'], NULL, EngineRunner::isRunning() ? 409 : 500);
+    api_respond(TRUE, $result['msg'], NULL, 202);
 });
 
 // Ошибки: тот же журнал, что в разделе «Ошибки» интерфейса

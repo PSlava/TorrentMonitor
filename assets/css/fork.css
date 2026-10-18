@@ -18,3 +18,16 @@
 .path-dropdown{position:absolute;top:100%;left:0;right:0;z-index:100;max-height:180px;overflow-y:auto;background:var(--c-input-bg);border:1px solid var(--c-input-bd);border-radius:6px;box-shadow:0 4px 16px var(--c-shadow);margin-top:2px}
 .path-dropdown__item{padding:8px 12px;font-size:.875rem;color:var(--c-input-fg);cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .path-dropdown__item:hover,.path-dropdown__item.--highlighted{background:var(--c-primary);color:var(--c-white)}
+
+/* Прогресс движка на странице «Запуск» */
+.engine-progress{padding:1rem;background:var(--c-bg-dim);border-radius:6px;border-left:3px solid var(--c-primary)}
+.engine-progress--done{border-left-color:var(--c-success)}
+.engine-progress__phase{font-weight:700;font-size:.875rem;margin-bottom:.5rem}
+.engine-progress__bar{height:8px;background:var(--c-bd);border-radius:4px;overflow:hidden;margin-bottom:.25rem}
+.engine-progress__fill{height:100%;border-radius:4px;background:var(--c-primary);transition:width .4s ease}
+.engine-progress__text{display:flex;justify-content:space-between;font-size:.75rem;color:var(--c-grey)}
+.engine-progress__pct{font-weight:600;color:var(--c-primary)}
+.engine-progress__name{font-size:.8125rem;margin-top:.4rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.engine-progress__tracker{color:var(--c-grey);font-size:.75rem}
+.engine-log{background:var(--c-bg-dim);border-radius:6px;padding:.75rem 1rem;max-height:500px;overflow-y:auto}
+.engine-log pre{margin:0;font-size:.8125rem;line-height:1.5;white-space:pre-wrap;word-break:break-word;color:var(--c-fg);font-family:'SF Mono',Monaco,Menlo,Consolas,monospace}

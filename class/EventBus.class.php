@@ -26,7 +26,7 @@ class EventBus
 
         // Обновляем файл-маркер для SSE (избегает лишних DB-запросов)
         $lastIdFile = dirname(__FILE__).'/../data/last_event_id';
-        @file_put_contents($lastIdFile, self::getLastId(), LOCK_EX);
+        Sys::writeSharedFile($lastIdFile, self::getLastId(), LOCK_EX);
 
         // Отправка вебхуков (через очередь задач)
         Webhook::dispatch($type, $data);

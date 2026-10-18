@@ -883,7 +883,20 @@ class Sys
         $dir = dirname(__FILE__);
         $dir = str_replace('class', '', $dir);
         $date = date('d-m-Y H:i:s');
-        file_put_contents($dir.'/laststart.txt', $date);
+        Sys::writeSharedFile($dir.'/laststart.txt', $date);
+    }
+
+    //запись файла, который пишут разные пользователи системы: движок запускают и cron от владельца,
+    //и «Запуск» от пользователя веб-сервера. Чужой файл не перезаписать, но в общем каталоге его
+    //можно удалить и создать заново - уже доступным на запись обоим
+    public static function writeSharedFile($file, $data, $flags = 0)
+    {
+        if (file_exists($file) && ! is_writable($file))
+            @unlink($file);
+        $result = @file_put_contents($file, $data, $flags);
+        if ($result !== false)
+            @chmod($file, 0666);
+        return $result;
     }
 
     //проверяем что файл является torrent-файлом (ну пытаемся)

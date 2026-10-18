@@ -3,6 +3,8 @@ class Errors
 {
     static $errorsArray;
     private static $instance;
+    //предупреждения, поднятые за этот прогон - по ним движок пишет в лог итог по каждой раздаче
+    private static $raised = array();
     
     private function __construct()
     {
@@ -80,9 +82,21 @@ class Errors
 	 	return Errors::getInstance()->read($warning);
     }
     
+    public static function raisedCount()
+    {
+        return count(self::$raised);
+    }
+
+    //предупреждения, поднятые после отметки raisedCount()
+    public static function raisedSince($mark)
+    {
+        return array_slice(self::$raised, $mark);
+    }
+
 	public static function setWarnings($tracker, $warning, $id = NULL)
     {
         $date = date('Y-m-d H:i:s');
+        self::$raised[] = array('tracker' => $tracker, 'warning' => $warning, 'id' => $id);
         $debug = Database::getSetting('debug');
         //логирование предупреждения не должно ронять прогон: ошибка БД здесь только сообщается
         try
