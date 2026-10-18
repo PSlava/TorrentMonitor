@@ -49,17 +49,27 @@ class CurlMultiFetcher
             //часть запросов собирается без getProxyOptions (торрент-клиент в локальной сети) -
             //их сбои нельзя приписывать прокси только потому, что он включён в настройках
             'proxy'  => ! empty($curlOptions[CURLOPT_PROXY]),
+            //полный набор опций - для повтора запроса с Cloudflare-допуском
+            'options' => $options,
         );
     }
 
     //выполняем запросы параллельно с лимитом одновременных соединений (скользящее окно)
     //возвращаем $id => ['body'=>..., 'http_code'=>..., 'error'=>...]
-    public function execute()
+    //$onDone($done, $total, $ids, $waiting) вызывается после каждого завершённого запроса - для прогресса
+    //в интерфейсе; $waiting = TRUE - перед долгим обходом Cloudflare по этому запросу (он ещё не завершён)
+    public function execute($onDone = NULL)
     {
         $results = array();
 
         if (empty($this->handles))
             return $results;
+
+        $total    = count($this->handles);
+        $done     = 0;
+        //ответы с Cloudflare-челленджем: обходим после опроса, чтобы долгий Byparr
+        //не держал уже полученные ответы остальных трекеров
+        $deferred = array();
 
         $queue    = $this->handles;  // ключ => ch, ещё не добавленные в multi
         $chToKey  = array();         // int(ch) => key, для обратного поиска по handle
@@ -137,36 +147,20 @@ class CurlMultiFetcher
                 // в rutracker.org.engine.php::parse() (сохраняет cf_clearance/UA для dl.php).
                 // Если фолбэк отработает здесь, parse() получит уже решённую (или пустую)
                 // страницу и никогда не увидит CF-challenge — cf_cookies/cf_userAgent не сохранятся.
-                if ($this->cfFallback && ($httpCode == 403 || $httpCode == 503) && !empty($body) && Sys::isCloudflarePage($body) && strpos($meta['url'], 'rutracker.org') === false)
-                {
-                    $fsResult = Sys::getViaFlareSolverr($meta['url'], $meta['cookie']);
-                    if ($fsResult !== null)
-                    {
-                        $body     = $fsResult['body'];
-                        $httpCode = $fsResult['status'];
-                        $error    = '';
-                    }
-                    else
-                    {
-                        // Byparr не смог обойти CF — возвращаем пустое тело,
-                        // чтобы parse() не делал повторный вызов Byparr
-                        $body  = '';
-                        $error = 'cf_bypass_failed';
-                    }
-                }
-
-                foreach ($this->aliases[$key] as $id)
-                {
-                    $results[$id] = array(
-                        'body'          => $body,
-                        'http_code'     => $httpCode,
-                        'error'         => $error,
-                        'proxy_failure' => $proxyFailure,
-                    );
-                }
+                $cfChallenge = $this->cfFallback && ($httpCode == 403 || $httpCode == 503) && !empty($body) && Sys::isCloudflarePage($body) && strpos($meta['url'], 'rutracker.org') === false;
 
                 curl_multi_remove_handle($mh, $ch);
                 curl_close($ch);
+
+                if ($cfChallenge)
+                    $deferred[] = $key;
+                else
+                {
+                    $this->setResult($results, $key, $body, $httpCode, $error, $proxyFailure);
+                    $done++;
+                    if ($onDone !== NULL)
+                        call_user_func($onDone, $done, $total, $this->aliases[$key], FALSE);
+                }
 
                 // добавляем следующий из очереди, если есть
                 if (!empty($queue))
@@ -196,11 +190,72 @@ class CurlMultiFetcher
 
         curl_multi_close($mh);
 
+        foreach ($deferred as $key)
+        {
+            $meta = $this->requestMeta[$key];
+            if ($onDone !== NULL)
+                call_user_func($onDone, $done, $total, $this->aliases[$key], TRUE);
+
+            $page = $this->fetchThroughCloudflare($meta);
+            if ($page !== NULL)
+                $this->setResult($results, $key, $page['body'], $page['http_code'], '', NULL);
+            else
+                // Byparr не смог обойти CF — возвращаем пустое тело,
+                // чтобы parse() не делал повторный вызов Byparr
+                $this->setResult($results, $key, '', 0, 'cf_bypass_failed', NULL);
+
+            $done++;
+            if ($onDone !== NULL)
+                call_user_func($onDone, $done, $total, $this->aliases[$key], FALSE);
+        }
+
         $this->handles     = array();
         $this->aliases     = array();
         $this->requestMeta = array();
 
         return $results;
+    }
+
+    private function setResult(array &$results, $key, $body, $httpCode, $error, $proxyFailure)
+    {
+        foreach ($this->aliases[$key] as $id)
+        {
+            $results[$id] = array(
+                'body'          => $body,
+                'http_code'     => $httpCode,
+                'error'         => $error,
+                'proxy_failure' => $proxyFailure,
+            );
+        }
+    }
+
+    //обход Cloudflare: сначала обычный cURL с допуском, полученным один раз на хост
+    //(CloudflareBypass), и лишь при неудаче - полный рендер страницы через Byparr
+    private function fetchThroughCloudflare(array $meta)
+    {
+        CloudflareBypass::solve($meta['url'], $meta['cookie']);
+        $cf = CloudflareBypass::get($meta['url']);
+        if ($cf !== NULL)
+        {
+            $options = $meta['options'];
+            $options[CURLOPT_COOKIE] = CloudflareBypass::cookieWith($meta['cookie'], $meta['url']);
+            if ($cf['userAgent'] !== '')
+                $options[CURLOPT_USERAGENT] = $cf['userAgent'];
+            $ch = curl_init();
+            curl_setopt_array($ch, $options);
+            $body     = (string) curl_exec($ch);
+            $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            if ($httpCode == 200 && $body !== '' && ! Sys::isCloudflarePage($body))
+                return array('body' => $body, 'http_code' => $httpCode);
+            CloudflareBypass::forget($meta['url']);
+        }
+
+        $fsResult = Sys::getViaFlareSolverr($meta['url'], $meta['cookie']);
+        if ($fsResult === null)
+            return NULL;
+        CloudflareBypass::remember($meta['url'], $fsResult);
+        return array('body' => $fsResult['body'], 'http_code' => $fsResult['status']);
     }
 }
 ?>

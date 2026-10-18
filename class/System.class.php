@@ -403,9 +403,32 @@ class Sys
             Sys::$lastCfUserAgent = '';
 
             $viaFlareSolverr = false;
-            if (($httpCode == 403 || $httpCode == 503) && !empty($result) && Sys::isCloudflarePage($result))
+            //cfRetry - повтор с Cloudflare-допуском: при неудаче отдаём страницу как есть, полный обход делает вызывающий
+            if (empty($param['cfRetry']) && ($httpCode == 403 || $httpCode == 503) && !empty($result) && Sys::isCloudflarePage($result))
             {
                 $existingCookie = isset($param['cookie']) ? $param['cookie'] : '';
+
+                //сначала обычный запрос с допуском, полученным один раз на хост: полный рендер
+                //страницы через Byparr на тяжёлых страницах занимает минуты
+                CloudflareBypass::solve($param['url'], $existingCookie);
+                $cf = CloudflareBypass::get($param['url']);
+                if ($cf !== NULL)
+                {
+                    $retryParam = $param;
+                    $retryParam['cfRetry'] = 1;
+                    $retryParam['cookie']  = CloudflareBypass::cookieWith($existingCookie, $param['url']);
+                    if ($cf['userAgent'] !== '')
+                        $retryParam['useragent'] = $cf['userAgent'];
+                    $retry = Sys::getUrlContent($retryParam);
+                    if ( ! empty($retry) && ! Sys::isCloudflarePage($retry))
+                    {
+                        Sys::$lastCfCookies   = $retryParam['cookie'];
+                        Sys::$lastCfUserAgent = $cf['userAgent'];
+                        return $retry;
+                    }
+                    CloudflareBypass::forget($param['url']);
+                }
+
                 // сохраняем исходный метод запроса — dl.php отдаёт файл только на POST,
                 // "тихий" фолбэк на GET уводит Byparr на неразрешаемый интерактивный челлендж
                 $fsMethod   = isset($param['type']) && $param['type'] == 'POST' ? 'POST' : 'GET';
@@ -416,6 +439,7 @@ class Sys
                 $fsResult = Sys::getViaFlareSolverr($param['url'], $existingCookie, $fsMethod, $fsPostData);
                 if ($fsResult !== null)
                 {
+                    CloudflareBypass::remember($param['url'], $fsResult);
                     $result = $fsResult['body'];
                     $viaFlareSolverr = true;
                     Sys::$lastCfCookies = !empty($fsResult['cookies']) ? $fsResult['cookies'] : '';
