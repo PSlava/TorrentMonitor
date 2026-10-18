@@ -199,6 +199,9 @@ class Sys
         {
             $urlParts = parse_url($url);
             $tracker = preg_replace('/www\./', '', $urlParts['host']);
+            //поддомены трекера (dl.kinozal.me - torrent-файлы) идут через прокси самого трекера
+            while ( ! isset($ext_proxy[$tracker]) && substr_count($tracker, '.') > 1)
+                $tracker = substr($tracker, strpos($tracker, '.') + 1);
             if (isset($ext_proxy[$tracker]))
             {
                 if ($ext_proxy[$tracker]['use'] == 'yes')

@@ -207,9 +207,11 @@ class kinozalme
                     	array(
                     		'type'           => 'GET',
                     		'returntransfer' => 1,
-                    		'url'            => 'https://kinozal.me/download.php?id='.$torrent_id,
+                    		//основной домен закрыт Cloudflare, а обход через Byparr отдаёт только HTML -
+                    		//бинарный torrent-файл так не скачать. Файловый поддомен Cloudflare не прикрыт
+                    		'url'            => 'https://dl.kinozal.me/download.php?id='.$torrent_id,
                     		'cookie'         => kinozalme::$sess_cookie,
-                    		'sendHeader'     => array('Host' => 'kinozal.me', 'Content-length' => strlen(kinozalme::$sess_cookie)),
+                    		'sendHeader'     => array('Host' => 'dl.kinozal.me', 'Content-length' => strlen(kinozalme::$sess_cookie)),
                     		'referer'        => 'https://kinozal.me/details.php?id='.$torrent_id,
                     	)
                     );
